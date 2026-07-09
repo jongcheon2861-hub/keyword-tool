@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests, time, hmac, hashlib, base64
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="centered")
 
 API_KEY     = st.secrets["API_KEY"]
 SECRET      = st.secrets["SECRET"]
@@ -142,9 +142,9 @@ with st.container():
             st.rerun()
 
     if st.session_state.selected:
-        cols = st.columns(10)   # 한 줄에 10개씩
+        cols = st.columns(5)   # 한 줄에 5개씩
         for idx, kw in enumerate(list(st.session_state.selected)):
-            col = cols[idx % 10]
+            col = cols[idx % 5]
             col.button(f"{kw} ✕", key=f"chip_{idx}",
                        on_click=remove_keyword, args=(kw,),
                        use_container_width=True)
