@@ -5,9 +5,6 @@ import requests, time, hmac, hashlib, base64
 st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered",
                    initial_sidebar_state="collapsed")
 
-# ★ 버전 확인용 (숫자 알려주시면 이 줄은 지워도 됩니다)
-st.caption("Streamlit " + st.__version__)
-
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
 SECRET = st.secrets["SECRET"]
@@ -157,7 +154,7 @@ def run_extract():
     else:
         st.session_state.results = []
 
-# ---------- CSS ----------
+# ---------- CSS (Streamlit 1.5x 최신 DOM 기준) ----------
 st.markdown("""
 <style>
 header[data-testid="stHeader"] { display: none !important; }
@@ -165,14 +162,28 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; }
 
+/* ★ 상단 고정바 : 앵커를 직계로 가진 가장 안쪽 수직블록만 sticky */
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 999 !important;
+    background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%) !important;
+    padding: 12px 18px 14px 18px !important;
+    border: 1px solid #e6e8eb !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
+    margin-bottom: 14px !important;
+}
+div.topbar-anchor { height: 0; margin: 0; padding: 0; }
+
 /* 타이틀 */
 .bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
 
 /* 입력창 높이 */
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 
-/* 추출하기 버튼 : 입력창과 동일 52px */
-.stButton button[kind="primary"] {
+/* ★ 추출하기(primary) 버튼 : 최신 DOM = stBaseButton-primary */
+[data-testid="stBaseButton-primary"] {
     height: 52px !important; min-height: 52px !important;
     padding: 0 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
@@ -183,38 +194,46 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 
-/* ★ 복사용 키워드 박스 : 줄바꿈 확실히 (아래로 늘어남, 넘치면 세로 스크롤) */
+/* ★ 복사용 키워드 박스 : 옆으로만 늘어남(줄바꿈 없음, 가로 스크롤) */
 .copy-box {
     background:#f0f7ff; border:1.5px solid #90caf9; border-radius:10px;
     color:#1565c0; font-weight:400; font-size:14px; line-height:1.6;
     padding:12px 16px;
-    white-space: pre-wrap !important;
-    word-break: break-all !important;
-    max-height:160px; overflow-y:auto;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
 }
 
-/* 결과 키워드 버튼 (기본 버튼) */
-.stButton button:not([kind="primary"]) {
-    padding: 8px 14px !important; min-height: 46px !important;
-    border-radius: 12px !important; border: 1.5px solid #e6e8eb !important;
-    background: #ffffff !important; text-align: left !important;
+/* ★ 결과 키워드(secondary) 버튼 : 최신 DOM = stBaseButton-secondary */
+[data-testid="stBaseButton-secondary"] {
+    min-height: 46px !important;
+    padding: 8px 14px !important;
+    border-radius: 12px !important;
+    border: 1.5px solid #e6e8eb !important;
+    background: #ffffff !important;
     transition: all .12s ease !important;
-    white-space: nowrap !important;   /* ★ 담김 시 세로 안 늘어남, 가로 유지 */
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    justify-content: flex-start !important;
 }
-.stButton button:not([kind="primary"]) p {
+[data-testid="stBaseButton-secondary"] p {
     font-size: 18px !important; font-weight: 500 !important; line-height: 1.1 !important;
-    white-space: nowrap !important;
+    white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
-.stButton button:not([kind="primary"]):hover {
+[data-testid="stBaseButton-secondary"]:hover {
     border-color:#ff7043 !important; transform: translateY(-1px);
+}
+
+/* ★ 담긴 상태 : kw-picked 마커를 가진 가로블록의 버튼 배경 채움 (세로 안 늘어남) */
+div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] {
+    background: #eef6ff !important;
+    border-color: #4a90d9 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] p {
+    color: #1565c0 !important; font-weight: 700 !important;
 }
 
 /* 키워드 행 간격 좁힘 */
 div[data-testid="stVerticalBlock"] { gap: 0.25rem !important; }
 div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
-[data-testid="stElementContainer"] { margin: 0 !important; }
 
 /* 지표 텍스트 */
 .metric-val { min-height:46px; display:flex; align-items:center; justify-content:center;
@@ -254,28 +273,27 @@ if st.session_state.get("popup"):
     st.markdown(html, unsafe_allow_html=True)
     st.session_state.popup = None
 
-# ---------- 상단바 ----------
-st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
-ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
-with ta:
-    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
-                  key="raw_input", on_change=run_extract,
-                  label_visibility="collapsed")
-with tb:
-    st.button("🔍 추출하기", use_container_width=True,
-              on_click=run_extract, type="primary")
-
-n = len(st.session_state.selected)
-st.markdown('<div class="copy-head">📋 복사용 키워드 '
-            '<span class="copy-badge">' + str(n) + '개</span></div>',
-            unsafe_allow_html=True)
-if st.session_state.selected:
-    kw_text = ",".join(st.session_state.selected) + ","
-else:
-    kw_text = "아직 담은 키워드가 없어요."
-st.markdown("<div class='copy-box'>" + kw_text + "</div>", unsafe_allow_html=True)
-
-st.divider()
+# ---------- 상단 고정바 ----------
+with st.container():
+    st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
+    ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
+    with ta:
+        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+                      key="raw_input", on_change=run_extract,
+                      label_visibility="collapsed")
+    with tb:
+        st.button("🔍 추출하기", use_container_width=True,
+                  on_click=run_extract, type="primary")
+    n = len(st.session_state.selected)
+    st.markdown('<div class="copy-head">📋 복사용 키워드 '
+                '<span class="copy-badge">' + str(n) + '개</span></div>',
+                unsafe_allow_html=True)
+    if st.session_state.selected:
+        kw_text = ",".join(st.session_state.selected) + ","
+    else:
+        kw_text = "아직 담은 키워드가 없어요."
+    st.markdown("<div class='copy-box'>" + kw_text + "</div>", unsafe_allow_html=True)
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
@@ -284,8 +302,10 @@ if st.session_state.get("results"):
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
         c1, c2, c3 = st.columns([3, 1.4, 1.2])
         already = kw in st.session_state.selected
-        label = ("● " + kw) if already else kw
-        c1.button(label, key="pick_" + str(i),
+        if already:
+            c1.markdown("<div class='kw-picked' style='display:none'></div>",
+                        unsafe_allow_html=True)
+        c1.button(kw, key="pick_" + str(i),
                   on_click=toggle_keyword, args=(kw,), use_container_width=True)
         c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
                     unsafe_allow_html=True)
