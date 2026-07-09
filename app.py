@@ -160,10 +160,9 @@ header[data-testid="stHeader"] { display: none !important; }
 .block-container { padding-top: 0rem !important; margin-top: 0rem !important; }
 [data-testid="stAppViewBlockContainer"] { padding-top: 0rem !important; }
 section.main > div { padding-top: 0rem !important; }
-/* 최상단 요소 사이 간격 최소화 (상단바 위 빈 블록 제거) */
 div[data-testid="stVerticalBlock"] { gap: 0.4rem !important; }
 
-/* ===== 상단바: 항상 최상단 고정 (위 여백 0) ===== */
+/* ===== 상단바 ===== */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
@@ -175,10 +174,9 @@ div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     border-radius: 0 0 12px 12px;
 }
-/* 상단바 anchor가 만드는 빈 높이 제거 */
 div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
 
-/* ===== 사이드바 스타일 ===== */
+/* ===== 사이드바 ===== */
 section[data-testid="stSidebar"] { background: #f7f9fb; }
 section[data-testid="stSidebar"] div[data-testid="column"] .stButton button {
     padding: 3px 4px !important;
@@ -198,14 +196,14 @@ section[data-testid="stSidebar"] div[data-testid="column"] .stButton button:hove
 }
 
 /* ===== 하단 결과 영역 ===== */
-/* 키워드 버튼: 글자 더 크게(36px) */
+/* 키워드 버튼: 글자 더 크게(44px) */
 div:has(div.result-anchor) .stButton button {
-    padding: 10px 16px !important;
-    font-size: 36px !important;
+    padding: 12px 18px !important;
+    font-size: 44px !important;
     font-weight: 800 !important;
     min-height: 0 !important;
-    line-height: 1.25 !important;
-    border-radius: 12px !important;
+    line-height: 1.2 !important;
+    border-radius: 14px !important;
     border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important;
     transition: all .15s ease !important;
@@ -220,15 +218,16 @@ div:has(div.result-anchor) .stButton button:disabled {
     background: #f1f3f5 !important;
     color: #9aa0a6 !important;
 }
-/* 검색량·점수 수치: 작고 얇게 */
+/* 수치 컬럼: 세로 가운데 정렬 */
+div:has(div.result-anchor) div[data-testid="stHorizontalBlock"] {
+    align-items: center !important;
+}
+/* 검색량·점수 수치: 작고 얇게, 세로 중앙 */
 .metric-val {
     font-size: 16px !important;
     font-weight: 400 !important;
     color: #607d8b !important;
-    line-height: 1.25 !important;
-    display: flex;
-    align-items: center;
-    height: 100%;
+    line-height: 1.2 !important;
 }
 .metric-head {
     font-size: 14px !important;
@@ -272,7 +271,7 @@ with st.sidebar:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
 # ============================================================
-# 고정 상단바: 복사용 키워드만 (위 여백 없음)
+# 고정 상단바: 복사용 키워드만
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
@@ -289,12 +288,12 @@ if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
     st.subheader("추출된 키워드 · 클릭하면 담겨요 (관련도 높은 순)")
     st.markdown('<div class="result-anchor"></div>', unsafe_allow_html=True)
-    h1, hs, h2, h3 = st.columns([3, 0.4, 1.4, 1.2])
+    h1, hs, h2, h3 = st.columns([3, 0.4, 1.4, 1.2], vertical_alignment="center")
     h1.markdown("<div class='metric-head'>키워드</div>", unsafe_allow_html=True)
     h2.markdown("<div class='metric-head'>검색량</div>", unsafe_allow_html=True)
     h3.markdown("<div class='metric-head'>점수</div>", unsafe_allow_html=True)
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, cs, c2, c3 = st.columns([3, 0.4, 1.4, 1.2])
+        c1, cs, c2, c3 = st.columns([3, 0.4, 1.4, 1.2], vertical_alignment="center")
         already = kw in st.session_state.selected
         label = f"✔ {kw}" if already else kw
         c1.button(label, key=f"pick_{i}",
