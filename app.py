@@ -80,19 +80,16 @@ def naver_related_keywords(seed):
 # ---------- 상태 ----------
 if "selected" not in st.session_state:
     st.session_state.selected = []
-if "limit_hit" not in st.session_state:
-    st.session_state.limit_hit = False
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
-        st.session_state.limit_hit = False
         return
     if len(st.session_state.selected) >= MAX_KEYWORDS:
-        st.session_state.limit_hit = True
+        # 한도 초과 → 팝업(toast)으로 알림
+        st.toast(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!", icon="⚠️")
         return
     st.session_state.selected.append(kw)
-    st.session_state.limit_hit = False
 
 def run_extract():
     products = st.session_state.get("raw_input", "").split()
@@ -159,7 +156,10 @@ div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !impo
 .bar-title { font-size: 20px; font-weight: 800; color: #263238; line-height: 1.1; margin-bottom: 4px; }
 .mini-label { font-size: 12px; font-weight: 600; color: #78909c; margin: 4px 0 -6px 2px; }
 
-/* 검색창 높이 키워 오른쪽 버튼 하단과 맞춤 */
+/* 검색창 위에 여백 → 오른쪽 추출버튼 하단과 높이 맞춤 */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="column"]:nth-of-type(1) div[data-testid="stTextInput"] {
+    margin-top: 18px !important;
+}
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] input {
     height: 52px !important;
     font-size: 16px !important;
@@ -180,7 +180,6 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
     background: #ff5722; color:#fff; font-size:11px; font-weight:700;
     padding:1px 9px; border-radius:10px;
 }
-/* st.code 컨테이너 자체를 눈에 띄게 */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] {
     background: #f0f7ff !important;
     border: 1.5px solid #90caf9 !important;
@@ -257,7 +256,6 @@ with st.container():
         st.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
         st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
-    # 복사용 키워드 나열 영역
     n = len(st.session_state.selected)
     st.markdown(
         f'<div class="copy-head">📋 복사용 키워드 <span class="copy-badge">{n}개</span></div>',
@@ -267,9 +265,6 @@ with st.container():
         st.code(",".join(st.session_state.selected) + ",", language=None)
     else:
         st.code(" ", language=None)
-
-    if st.session_state.limit_hit:
-        st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
