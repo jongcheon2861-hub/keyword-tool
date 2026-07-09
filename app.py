@@ -2,17 +2,16 @@ import streamlit as st
 import pandas as pd
 import requests, time, hmac, hashlib, base64
 
-st.set_page_config(page_title="쿠팡키워드 추출기",
-                   layout="centered", initial_sidebar_state="expanded")
+st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered", initial_sidebar_state="expanded")
 
-API_KEY     = st.secrets["API_KEY"]
-SECRET      = st.secrets["SECRET"]
+API_KEY = st.secrets["API_KEY"]
+SECRET = st.secrets["SECRET"]
 CUSTOMER_ID = st.secrets["CUSTOMER_ID"]
-N_CLIENT_ID     = st.secrets["NAVER_CLIENT_ID"]
+N_CLIENT_ID = st.secrets["NAVER_CLIENT_ID"]
 N_CLIENT_SECRET = st.secrets["NAVER_CLIENT_SECRET"]
 
 MAX_KEYWORDS = 20
-MIN_VOL = 10  # 최소 검색량 (내부 고정)
+MIN_VOL = 10
 
 TOO_BROAD = ["식품","농산물","축산물","수산물","과일","채소","정육","건어물",
              "가공식품","신선식품","farm","food"]
@@ -37,16 +36,14 @@ def normalize(s):
 
 def get_parent_terms(product):
     url = "https://openapi.naver.com/v1/search/shop.json"
-    headers = {"X-Naver-Client-Id": N_CLIENT_ID,
-               "X-Naver-Client-Secret": N_CLIENT_SECRET}
+    headers = {"X-Naver-Client-Id": N_CLIENT_ID, "X-Naver-Client-Secret": N_CLIENT_SECRET}
     params = {"query": product, "display": 20, "sort": "sim"}
     terms, big_cat = set(), "기타"
     try:
         r = requests.get(url, headers=headers, params=params, timeout=10)
         items = r.json().get("items", [])
         for it in items:
-            cats = [it.get("category1"), it.get("category2"),
-                    it.get("category3"), it.get("category4")]
+            cats = [it.get("category1"), it.get("category2"), it.get("category3"), it.get("category4")]
             joined = " ".join([str(c) for c in cats if c])
             for key, val in CATEGORY_MAP.items():
                 if key in joined:
@@ -60,29 +57,24 @@ def get_parent_terms(product):
                     terms.add(c3)
     except Exception as e:
         st.warning(f"쇼핑 카테고리 조회 실패({product}): {e}")
-    terms = {t for t in terms if t not in TOO_BROAD}
-    return list(terms), big_cat
+    return [t for t in terms if t not in TOO_BROAD], big_cat
 
 def naver_related_keywords(seed):
     base, uri = "https://api.searchad.naver.com", "/keywordstool"
-    ts  = str(round(time.time()*1000))
-    sig = base64.b64encode(hmac.new(SECRET.encode(),
-          f"{ts}.GET.{uri}".encode(), hashlib.sha256).digest()).decode()
-    headers = {"X-Timestamp":ts,"X-API-KEY":API_KEY,
-               "X-Customer":str(CUSTOMER_ID),"X-Signature":sig}
+    ts = str(round(time.time()*1000))
+    sig = base64.b64encode(hmac.new(SECRET.encode(), f"{ts}.GET.{uri}".encode(), hashlib.sha256).digest()).decode()
+    headers = {"X-Timestamp": ts, "X-API-KEY": API_KEY, "X-Customer": str(CUSTOMER_ID), "X-Signature": sig}
     try:
-        r = requests.get(base+uri, params={"hintKeywords":seed,"showDetail":1},
-                         headers=headers, timeout=10)
+        r = requests.get(base+uri, params={"hintKeywords": seed, "showDetail": 1}, headers=headers, timeout=10)
         rows = r.json().get("keywordList", [])
     except Exception:
         return pd.DataFrame(columns=["키워드","검색량"])
-    out=[]
+    out = []
     for k in rows:
         def n(v):
-            v=str(v).replace("<","").replace(",","").strip()
+            v = str(v).replace("<","").replace(",","").strip()
             return int(v) if v.isdigit() else 0
-        out.append({"키워드":k["relKeyword"],
-                    "검색량":n(k["monthlyPcQcCnt"])+n(k["monthlyMobileQcCnt"])})
+        out.append({"키워드": k["relKeyword"], "검색량": n(k["monthlyPcQcCnt"]) + n(k["monthlyMobileQcCnt"])})
     return pd.DataFrame(out)
 
 # ---------- 상태 ----------
@@ -119,9 +111,10 @@ def run_extract():
     st.session_state.related_info = ", ".join(sorted(related_terms)) or "없음"
 
     seeds = list(dict.fromkeys(list(products) + list(related_terms)))[:12]
-    frames=[]
+    frames = []
     for s in seeds:
-        frames.append(naver_related_keywords(s)); time.sleep(0.2)
+        frames.append(naver_related_keywords(s))
+        time.sleep(0.2)
 
     if frames and not all(f.empty for f in frames):
         all_kw = pd.concat(frames, ignore_index=True).drop_duplicates("키워드")
@@ -131,56 +124,90 @@ def run_extract():
             return any(t in nk for t in norm_products) or any(t in nk for t in norm_terms)
         all_kw = all_kw[all_kw["키워드"].apply(is_related)].copy()
         all_kw = all_kw[~all_kw["키워드"].str.contains("|".join(INFO_WORDS))].copy()
-        all_kw = all_kw[all_kw["검색량"]>=MIN_VOL].copy()
+        all_kw = all_kw[all_kw["검색량"] >= MIN_VOL].copy()
         iw = list(intent_words)
         all_kw["구매의도"] = all_kw["키워드"].apply(lambda k: sum(1 for w in iw if w in k))
-        all_kw["상품직결"] = all_kw["키워드"].apply(
-            lambda k: 1 if any(t in normalize(k) for t in norm_products) else 0)
+        all_kw["상품직결"] = all_kw["키워드"].apply(lambda k: 1 if any(t in normalize(k) for t in norm_products) else 0)
         all_kw["구매전환추정점수"] = (
             all_kw["상품직결"] * 0.4 +
             all_kw["검색량"].rank(pct=True) * 0.35 +
             all_kw["구매의도"].rank(pct=True) * 0.25
         ).round(3)
-        result = all_kw.sort_values(
-            ["상품직결", "구매전환추정점수"], ascending=[False, False]
-        ).head(st.session_state.get("top_n", 40))
-        st.session_state.results = result[
-            ["키워드","검색량","구매의도","구매전환추정점수"]].values.tolist()
+        result = all_kw.sort_values(["상품직결", "구매전환추정점수"], ascending=[False, False]).head(st.session_state.get("top_n", 40))
+        st.session_state.results = result[["키워드","검색량","구매의도","구매전환추정점수"]].values.tolist()
     else:
         st.session_state.results = []
 
-# ---------- CSS ----------
+# ---------- CSS (:has() 미사용, 전역 선택자 기반) ----------
 st.markdown("""
 <style>
-/* Streamlit 기본 상단 헤더/툴바 숨김 */
+/* Streamlit 기본 헤더/툴바 제거 → 상단 여백 제거 */
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-/* 앱 본문 상단 여백 완전 제거 */
-.block-container { padding-top: 0rem !important; margin-top: 0rem !important; }
-[data-testid="stAppViewBlockContainer"] { padding-top: 0rem !important; }
-section.main > div { padding-top: 0rem !important; }
-div[data-testid="stVerticalBlock"] { gap: 0.4rem !important; }
+.block-container { padding-top: 0.5rem !important; margin-top: 0 !important; }
+[data-testid="stAppViewBlockContainer"] { padding-top: 0.5rem !important; }
+section.main > div { padding-top: 0 !important; }
 
-/* ===== 상단바 ===== */
-div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
-    position: sticky;
-    top: 0;
-    z-index: 999;
-    margin-top: 0 !important;
+/* 복사용 키워드 바 (직접 클래스로 스타일 지정 → 깨진 블록 없음) */
+.copybar {
+    position: sticky; top: 0; z-index: 999;
     background: linear-gradient(180deg,#ffffff 0%,#fafbfc 100%);
     padding: 8px 14px;
     border-bottom: 1px solid #e6e8eb;
     box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     border-radius: 0 0 12px 12px;
+    margin-bottom: 8px;
 }
-div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
+.copybar-title { font-size: 15px; font-weight: 700; color: #37474f; margin-bottom: 4px; }
 
-/* ===== 사이드바 ===== */
-section[data-testid="stSidebar"] { background: #f7f9fb; }
-section[data-testid="stSidebar"] div[data-testid="column"] .stButton button {
+/* 결과 영역 키워드 버튼 = 전역 메인 버튼 대상. 사이드바는 아래에서 덮어씀 */
+section.main .stButton button {
+    padding: 14px 20px !important;
+    font-size: 40px !important;
+    font-weight: 800 !important;
+    min-height: 0 !important;
+    line-height: 1.2 !important;
+    border-radius: 14px !important;
+    border: 1.5px solid #e6e8eb !important;
+    background: #ffffff !important;
+    text-align: left !important;
+    transition: all .15s ease !important;
+}
+section.main .stButton button:hover {
+    border-color: #ff7043 !important;
+    box-shadow: 0 4px 12px rgba(255,112,67,0.18) !important;
+    transform: translateY(-1px) !important;
+}
+section.main .stButton button:disabled {
+    background: #f1f3f5 !important;
+    color: #9aa0a6 !important;
+}
+
+/* 검색량·점수 수치 : 버튼과 같은 높이로 세로 중앙 정렬 + 가려짐 방지 */
+section.main div[data-testid="stHorizontalBlock"] { align-items: center !important; }
+.metric-val {
+    font-size: 34px !important;
+    font-weight: 800 !important;
+    color: #455a64 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 60px;
+}
+.metric-head {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #90a4ae !important;
+    letter-spacing: .3px;
+    text-align: center;
+}
+
+/* 사이드바 키워드 칩 : 33% 크기(한 줄 3개), 글씨 작게 */
+section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] .stButton button {
     padding: 3px 4px !important;
     font-size: 11px !important;
+    font-weight: 500 !important;
     min-height: 0 !important;
     line-height: 1.15 !important;
     border-radius: 8px !important;
@@ -189,67 +216,28 @@ section[data-testid="stSidebar"] div[data-testid="column"] .stButton button {
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    text-align: center !important;
 }
-section[data-testid="stSidebar"] div[data-testid="column"] .stButton button:hover {
+section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] .stButton button:hover {
     border-color: #ff7043 !important;
     color: #ff5722 !important;
 }
-
-/* ===== 하단 결과 영역 ===== */
-/* 키워드 버튼: 글자 더 크게(44px) */
-div:has(div.result-anchor) .stButton button {
-    padding: 12px 18px !important;
-    font-size: 44px !important;
-    font-weight: 800 !important;
-    min-height: 0 !important;
-    line-height: 1.2 !important;
-    border-radius: 14px !important;
-    border: 1.5px solid #e6e8eb !important;
-    background: #ffffff !important;
-    transition: all .15s ease !important;
-    text-align: left !important;
-}
-div:has(div.result-anchor) .stButton button:hover {
-    border-color: #ff7043 !important;
-    box-shadow: 0 4px 12px rgba(255,112,67,0.18) !important;
-    transform: translateY(-1px) !important;
-}
-div:has(div.result-anchor) .stButton button:disabled {
-    background: #f1f3f5 !important;
-    color: #9aa0a6 !important;
-}
-/* 수치 컬럼: 세로 가운데 정렬 */
-div:has(div.result-anchor) div[data-testid="stHorizontalBlock"] {
-    align-items: center !important;
-}
-/* 검색량·점수 수치: 작고 얇게, 세로 중앙 */
-.metric-val {
-    font-size: 16px !important;
-    font-weight: 400 !important;
-    color: #607d8b !important;
-    line-height: 1.2 !important;
-}
-.metric-head {
+/* 사이드바 일반 버튼(추출하기/전체비우기)는 기본 크기 유지 */
+section[data-testid="stSidebar"] > div > div > div > .stButton button {
     font-size: 14px !important;
-    font-weight: 600 !important;
-    color: #90a4ae !important;
-    letter-spacing: .3px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# 사이드바: 검색 + 추출 컨트롤 + 담은 키워드
-# ============================================================
+# ---------- 사이드바 : 검색 + 담은 키워드 ----------
 with st.sidebar:
     st.header("🛒 쿠팡키워드 추출기")
-    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
-                  key="raw_input", on_change=run_extract)
+    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣", key="raw_input", on_change=run_extract)
     st.slider("추출할 키워드 개수", 10, 50, 40, key="top_n")
     st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
     st.divider()
-    st.subheader(f"담은 키워드  {len(st.session_state.selected)} / {MAX_KEYWORDS}")
+    st.markdown(f"**담은 키워드  {len(st.session_state.selected)} / {MAX_KEYWORDS}**")
     if st.session_state.selected:
         if st.button("전체 비우기", use_container_width=True):
             st.session_state.selected = []
@@ -257,47 +245,39 @@ with st.sidebar:
             st.rerun()
         st.caption("키워드를 누르면 삭제돼요.")
         kws = list(st.session_state.selected)
-        for start in range(0, len(kws), 3):
+        for start in range(0, len(kws), 3):     # 한 줄에 3개
             row = kws[start:start+3]
             cols = st.columns(3)
             for col, kw in zip(cols, row):
                 col.button(f"{kw} ✕", key=f"chip_{start}_{kw}",
-                           on_click=remove_keyword, args=(kw,),
-                           use_container_width=True)
+                           on_click=remove_keyword, args=(kw,), use_container_width=True)
     else:
         st.caption("아직 담은 키워드가 없어요.\n오른쪽에서 키워드를 눌러 담아보세요.")
-
     if st.session_state.limit_hit:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
-# ============================================================
-# 고정 상단바: 복사용 키워드만
-# ============================================================
-with st.container():
-    st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    st.markdown(f"**📋 복사용 키워드 ({len(st.session_state.selected)}개)**")
-    if st.session_state.selected:
-        st.code(",".join(st.session_state.selected) + ",", language=None)
-    else:
-        st.code(" ", language=None)
+# ---------- 상단 복사용 키워드 바 (페이지 최상단 요소) ----------
+st.markdown('<div class="copybar">'
+            f'<div class="copybar-title">📋 복사용 키워드 ({len(st.session_state.selected)}개)</div>'
+            '</div>', unsafe_allow_html=True)
+if st.session_state.selected:
+    st.code(",".join(st.session_state.selected) + ",", language=None)
+else:
+    st.code(" ", language=None)
 
-# ============================================================
-# 추출 결과 + 키워드 클릭 시 담기
-# ============================================================
+# ---------- 결과 표시 ----------
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
     st.subheader("추출된 키워드 · 클릭하면 담겨요 (관련도 높은 순)")
-    st.markdown('<div class="result-anchor"></div>', unsafe_allow_html=True)
-    h1, hs, h2, h3 = st.columns([3, 0.4, 1.4, 1.2], vertical_alignment="center")
-    h1.markdown("<div class='metric-head'>키워드</div>", unsafe_allow_html=True)
+    h1, h2, h3 = st.columns([3, 1.4, 1.2])
+    h1.markdown("<div class='metric-head' style='text-align:left'>키워드</div>", unsafe_allow_html=True)
     h2.markdown("<div class='metric-head'>검색량</div>", unsafe_allow_html=True)
     h3.markdown("<div class='metric-head'>점수</div>", unsafe_allow_html=True)
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, cs, c2, c3 = st.columns([3, 0.4, 1.4, 1.2], vertical_alignment="center")
+        c1, c2, c3 = st.columns([3, 1.4, 1.2])
         already = kw in st.session_state.selected
         label = f"✔ {kw}" if already else kw
-        c1.button(label, key=f"pick_{i}",
-                  on_click=add_keyword, args=(kw,),
+        c1.button(label, key=f"pick_{i}", on_click=add_keyword, args=(kw,),
                   disabled=already, use_container_width=True)
         c2.markdown(f"<div class='metric-val'>{vol:,}</div>", unsafe_allow_html=True)
         c3.markdown(f"<div class='metric-val'>{score}</div>", unsafe_allow_html=True)
