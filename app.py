@@ -8,7 +8,7 @@ CUSTOMER_ID = st.secrets["CUSTOMER_ID"]
 N_CLIENT_ID     = st.secrets["NAVER_CLIENT_ID"]
 N_CLIENT_SECRET = st.secrets["NAVER_CLIENT_SECRET"]
 
-MAX_KEYWORDS = 20   # 담을 수 있는 최대 개수
+MAX_KEYWORDS = 20
 
 TOO_BROAD = ["식품","농산물","축산물","수산물","과일","채소","정육","건어물",
              "가공식품","신선식품","farm","food"]
@@ -81,20 +81,24 @@ def naver_related_keywords(seed):
                     "검색량":n(k["monthlyPcQcCnt"])+n(k["monthlyMobileQcCnt"])})
     return pd.DataFrame(out)
 
-# ---------- 상태 초기화 ----------
+# ---------- 상태 ----------
 if "selected" not in st.session_state:
     st.session_state.selected = []
 if "limit_hit" not in st.session_state:
     st.session_state.limit_hit = False
 
 def add_keyword(kw):
-    """➕ 눌렀을 때: 20개 제한 확인 후 추가"""
     if kw in st.session_state.selected:
         return
     if len(st.session_state.selected) >= MAX_KEYWORDS:
-        st.session_state.limit_hit = True      # 초과 플래그
+        st.session_state.limit_hit = True
         return
     st.session_state.selected.append(kw)
+    st.session_state.limit_hit = False
+
+def remove_keyword(kw):
+    if kw in st.session_state.selected:
+        st.session_state.selected.remove(kw)
     st.session_state.limit_hit = False
 
 st.title("농축수산물 구매전환 키워드 추출기")
@@ -147,51 +151,48 @@ if st.button("추출하기"):
         st.error("수집된 키워드가 없습니다.")
 
 # ============================================================
-# 결과 목록: 큰 ➕ 버튼 + 지표를 한 줄에
+# 결과 목록 + 큰 ➕ 버튼
 # ============================================================
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
-
-    # 20개 초과 경고
     if st.session_state.limit_hit:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요! 아래에서 일부를 지운 뒤 추가하세요.")
-
     st.caption(f"담긴 키워드: {len(st.session_state.selected)} / {MAX_KEYWORDS}")
     st.subheader("추출된 키워드")
 
-    # 헤더 줄
-    h1, h2, h3, h4 = st.columns([1.2, 4, 2, 2])
+    h1, h2, h3, h4 = st.columns([1.4, 4, 2, 2])
     h1.markdown("**담기**"); h2.markdown("**키워드**")
     h3.markdown("**검색량**"); h4.markdown("**점수**")
 
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, c2, c3, c4 = st.columns([1.2, 4, 2, 2])
+        c1, c2, c3, c4 = st.columns([1.4, 4, 2, 2])
         already = kw in st.session_state.selected
         c1.button("담김" if already else "➕ 담기",
                   key=f"add_{i}", on_click=add_keyword, args=(kw,),
-                  disabled=already, use_container_width=True)   # 칸 전체가 클릭영역
-        c2.write(kw)
-        c3.write(f"{vol:,}")
-        c4.write(f"{score}")
+                  disabled=already, use_container_width=True)
+        c2.write(kw); c3.write(f"{vol:,}"); c4.write(f"{score}")
 
 # ============================================================
-# 담은 키워드 (백스페이스로 삭제 가능)
+# 담은 키워드: 각 키워드 옆 ✕ 버튼으로 삭제 (텍스트 편집 X)
 # ============================================================
 st.divider()
 st.subheader(f"담은 키워드 ({len(st.session_state.selected)}/{MAX_KEYWORDS})")
+
 if st.session_state.selected:
-    joined = ",".join(st.session_state.selected) + ","
-    edited_text = st.text_area("직접 수정/삭제 가능 (백스페이스로 지우기)",
-                               value=joined, height=120, key="basket")
-    new_list = [w for w in edited_text.replace("\n", ",").split(",") if w.strip()]
-    st.session_state.selected = new_list[:MAX_KEYWORDS]   # 편집으로도 20개 초과 방지
-    if len(new_list) > MAX_KEYWORDS:
-        st.warning(f"{MAX_KEYWORDS}개까지만 유지돼요. 초과분은 잘렸어요.")
-    col_a, col_b = st.columns(2)
-    if col_a.button("전체 비우기"):
+    # 콤마로 이어진 형태로 보여주기 (복사용, 읽기 전용)
+    st.code(",".join(st.session_state.selected) + ",", language=None)
+
+    # 개별 삭제 버튼
+    st.caption("삭제할 키워드의 ✕ 를 누르세요")
+    for j, kw in enumerate(list(st.session_state.selected)):
+        d1, d2 = st.columns([1, 6])
+        d1.button("✕", key=f"del_{j}", on_click=remove_keyword, args=(kw,),
+                  use_container_width=True)
+        d2.write(kw)
+
+    if st.button("전체 비우기"):
         st.session_state.selected = []
         st.session_state.limit_hit = False
         st.rerun()
-    col_b.write(f"총 {len(st.session_state.selected)}개")
 else:
     st.caption("아직 담은 키워드가 없어요. 위 목록의 '➕ 담기'를 눌러 담아보세요.")
