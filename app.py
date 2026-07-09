@@ -79,21 +79,15 @@ def naver_related_keywords(seed):
                     "검색량":n(k["monthlyPcQcCnt"])+n(k["monthlyMobileQcCnt"])})
     return pd.DataFrame(out)
 
-# ============================================================
-# 선택한 키워드 저장소 초기화
-# ============================================================
 if "selected" not in st.session_state:
-    st.session_state.selected = []   # 담은 키워드 목록
+    st.session_state.selected = []
 
 def add_keyword(kw):
     if kw not in st.session_state.selected:
         st.session_state.selected.append(kw)
 
-# ============================================================
-# 웹 화면
-# ============================================================
 st.title("농축수산물 구매전환 키워드 추출기")
-st.write("상품명을 입력하면 상위어를 자동으로 찾아 관련 키워드를 뽑아요. '+' 버튼으로 아래에 담아보세요.")
+st.write("상품명을 입력하면 상위어를 자동으로 찾아 관련 키워드를 뽑아요.")
 
 raw = st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣")
 top_n = st.slider("추출할 키워드 개수", 10, 50, 30)
@@ -129,43 +123,47 @@ if st.button("추출하기"):
         all_kw["구매의도"] = all_kw["키워드"].apply(lambda k: sum(1 for w in iw if w in k))
         all_kw["상품직결"] = all_kw["키워드"].apply(
             lambda k: 1 if any(t in normalize(k) for t in norm_products) else 0)
-        all_kw["점수"] = (
+        all_kw["구매전환추정점수"] = (
             all_kw["상품직결"] * 0.4 +
             all_kw["검색량"].rank(pct=True) * 0.35 +
             all_kw["구매의도"].rank(pct=True) * 0.25
         ).round(3)
-        result = all_kw.sort_values("점수", ascending=False).head(top_n)
-        # 결과를 세션에 저장 (버튼 눌러도 유지되게)
-        st.session_state.results = result[["키워드","검색량","점수"]].values.tolist()
+        result = all_kw.sort_values("구매전환추정점수", ascending=False).head(top_n)
+        st.session_state.results = result[
+            ["키워드","검색량","구매의도","구매전환추정점수"]].values.tolist()
     else:
         st.session_state.results = []
         st.error("수집된 키워드가 없습니다.")
 
 # ============================================================
-# 추출 결과 + '+' 버튼
+# 결과 표시: (1) 표로 지표 한눈에 (2) 키워드 옆 ➕ 버튼
 # ============================================================
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
-    st.subheader("추출된 키워드")
-    for i, (kw, vol, score) in enumerate(st.session_state.results):
-        c1, c2, c3 = st.columns([5, 2, 1])
-        c1.write(f"**{kw}**")
-        c2.write(f"검색량 {vol:,} / 점수 {score}")
-        c3.button("➕", key=f"add_{i}", on_click=add_keyword, args=(kw,))
+
+    # (1) 지표 표 — 이전처럼 한눈에 보기
+    df = pd.DataFrame(st.session_state.results,
+                      columns=["키워드","검색량","구매의도","구매전환추정점수"])
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    # (2) 키워드 바로 옆에 ➕ 버튼
+    st.subheader("키워드 담기")
+    for i, row in enumerate(st.session_state.results):
+        kw = row[0]
+        c1, c2 = st.columns([1, 6])
+        c1.button("➕", key=f"add_{i}", on_click=add_keyword, args=(kw,))
+        c2.write(kw)
 
 # ============================================================
-# 담은 키워드: 편집(백스페이스 삭제) 가능한 텍스트 영역
+# 담은 키워드 (백스페이스로 삭제 가능)
 # ============================================================
 st.divider()
 st.subheader("담은 키워드")
-
 if st.session_state.selected:
     joined = ",".join(st.session_state.selected) + ","
-    edited = st.text_area("아래에서 직접 수정/삭제할 수 있어요 (백스페이스로 지우기)",
+    edited = st.text_area("직접 수정/삭제 가능 (백스페이스로 지우기)",
                           value=joined, height=120, key="basket")
-    # 사용자가 텍스트를 직접 고치면 그대로 반영
     st.session_state.selected = [w for w in edited.replace("\n", ",").split(",") if w.strip()]
-
     col_a, col_b = st.columns(2)
     if col_a.button("전체 비우기"):
         st.session_state.selected = []
