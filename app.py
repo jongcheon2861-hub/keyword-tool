@@ -100,7 +100,7 @@ def remove_keyword(kw):
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
     st.session_state.limit_hit = False
-
+st.sidebar.metric("담긴 키워드", f"{len(st.session_state.selected)} / {MAX_KEYWORDS}")
 st.title("농축수산물 구매전환 키워드 추출기")
 st.write("상품명을 입력하면 상위어를 자동으로 찾아 관련 키워드를 뽑아요. (최대 20개 담기)")
 
