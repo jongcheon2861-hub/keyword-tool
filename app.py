@@ -155,14 +155,12 @@ st.markdown("""
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-/* 앱 본문 상단 여백 완전 제거 (여러 버전 대응) */
+/* 앱 본문 상단 여백 완전 제거 */
 .block-container {
     padding-top: 0rem !important;
     margin-top: 0rem !important;
 }
-[data-testid="stAppViewBlockContainer"] {
-    padding-top: 0rem !important;
-}
+[data-testid="stAppViewBlockContainer"] { padding-top: 0rem !important; }
 section.main > div { padding-top: 0rem !important; }
 /* 상단바: 항상 최상단 고정 */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
@@ -179,12 +177,12 @@ div:has(div.topbar-anchor) label p {
     font-size: 20px !important;
     font-weight: 700 !important;
 }
-/* 키워드 개수 라벨(작게) */
-.small-label {
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    margin-bottom: -10px !important;
-    color: #555 !important;
+/* 추출하기 버튼을 검색창 높이에 맞춰 아래로 정렬 */
+div:has(div.topbar-anchor) div[data-testid="column"]:nth-of-type(2) .stButton {
+    margin-top: 28px !important;
+}
+div:has(div.topbar-anchor) div[data-testid="column"]:nth-of-type(2) .stButton button {
+    height: 38px !important;
 }
 /* 하단 결과 키워드 버튼: 글씨 크고 진하게 */
 div:has(div.result-anchor) button {
@@ -219,16 +217,19 @@ with st.sidebar:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
 # ============================================================
-# 고정 상단바: 상품명(좌) · [추출하기 위 / 키워드개수 아래](우)
+# 고정 상단바: 상품명(좌) + 추출하기(바로 옆) / 키워드개수(아래)
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    ta, tb = st.columns([3, 2])
-    ta.text_input("상품명", "샤인머스캣", key="raw_input")
-    # 오른쪽: 추출하기(위) + 키워드 개수 게이지(아래)
+    ta, tb = st.columns([3, 1.2])
+    # 검색창: Enter(on_change) 시 추출 실행
+    ta.text_input("상품명", "샤인머스캣", key="raw_input", on_change=run_extract)
+    # 검색창 바로 옆 추출하기 버튼 (높이 정렬은 CSS로)
     tb.button("추출하기", use_container_width=True, on_click=run_extract)
-    tb.markdown('<div class="small-label">키워드 개수</div>', unsafe_allow_html=True)
-    tb.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
+
+    # 키워드 개수 게이지 (아래 줄)
+    st.markdown('<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:-8px">키워드 개수</div>', unsafe_allow_html=True)
+    st.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
 
     # 복사용 키워드 칸: 항상 고정 표시
     st.markdown(f"**복사용 키워드 ({len(st.session_state.selected)}개)**")
