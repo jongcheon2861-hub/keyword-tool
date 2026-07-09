@@ -156,30 +156,83 @@ st.markdown("""
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-/* 앱 본문 상단 여백 완전 제거 */
-.block-container {
-    padding-top: 0rem !important;
-    margin-top: 0rem !important;
-}
-[data-testid="stAppViewBlockContainer"] { padding-top: 0rem !important; }
+/* 앱 본문 상단 여백 제거 */
+.block-container { padding-top: 0.3rem !important; margin-top: 0rem !important; }
+[data-testid="stAppViewBlockContainer"] { padding-top: 0.3rem !important; }
 section.main > div { padding-top: 0rem !important; }
-/* 상단바: 항상 최상단 고정 */
+
+/* ===== 상단바: 항상 최상단 고정 ===== */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
     z-index: 999;
-    background-color: #ffffff;
-    padding: 6px 6px;
-    border-bottom: 2px solid #e0e0e0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    background: linear-gradient(180deg,#ffffff 0%,#fafbfc 100%);
+    padding: 10px 14px;
+    border-bottom: 1px solid #e6e8eb;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    border-radius: 0 0 12px 12px;
 }
-/* 하단 결과 키워드 버튼: 글씨 크고 진하게 */
-div:has(div.result-anchor) button {
-    padding: 8px 12px !important;
-    font-size: 30px !important;
+
+/* ===== 사이드바 스타일 ===== */
+section[data-testid="stSidebar"] {
+    background: #f7f9fb;
+}
+/* 사이드바 담은 키워드 칩: 작고 촘촘하게 (33% 폭 → 한 줄 3개) */
+section[data-testid="stSidebar"] div[data-testid="column"] .stButton button {
+    padding: 3px 4px !important;
+    font-size: 11px !important;
+    min-height: 0 !important;
+    line-height: 1.15 !important;
+    border-radius: 8px !important;
+    border: 1px solid #dfe3e8 !important;
+    background: #ffffff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+section[data-testid="stSidebar"] div[data-testid="column"] .stButton button:hover {
+    border-color: #ff7043 !important;
+    color: #ff5722 !important;
+}
+
+/* ===== 하단 결과 영역 ===== */
+/* 키워드 버튼: 글자 크게(32px), 고급스러운 테두리 */
+div:has(div.result-anchor) .stButton button {
+    padding: 10px 16px !important;
+    font-size: 32px !important;
     font-weight: 800 !important;
     min-height: 0 !important;
-    line-height: 1.3 !important;
+    line-height: 1.25 !important;
+    border-radius: 12px !important;
+    border: 1.5px solid #e6e8eb !important;
+    background: #ffffff !important;
+    transition: all .15s ease !important;
+    text-align: left !important;
+}
+div:has(div.result-anchor) .stButton button:hover {
+    border-color: #ff7043 !important;
+    box-shadow: 0 4px 12px rgba(255,112,67,0.18) !important;
+    transform: translateY(-1px) !important;
+}
+div:has(div.result-anchor) .stButton button:disabled {
+    background: #f1f3f5 !important;
+    color: #9aa0a6 !important;
+}
+/* 검색량·점수 수치: 키워드 버튼과 동일 크기(32px) */
+.metric-val {
+    font-size: 32px !important;
+    font-weight: 700 !important;
+    color: #37474f !important;
+    line-height: 1.25 !important;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+.metric-head {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #78848f !important;
+    letter-spacing: .3px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -188,11 +241,11 @@ div:has(div.result-anchor) button {
 # 사이드바: 검색 + 추출 컨트롤 + 담은 키워드
 # ============================================================
 with st.sidebar:
-    st.header("쿠팡키워드 추출기")
+    st.header("🛒 쿠팡키워드 추출기")
     st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
                   key="raw_input", on_change=run_extract)
     st.slider("추출할 키워드 개수", 10, 50, 40, key="top_n")
-    st.button("추출하기", use_container_width=True, on_click=run_extract)
+    st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
     st.divider()
     st.subheader(f"담은 키워드  {len(st.session_state.selected)} / {MAX_KEYWORDS}")
@@ -202,10 +255,15 @@ with st.sidebar:
             st.session_state.limit_hit = False
             st.rerun()
         st.caption("키워드를 누르면 삭제돼요.")
-        for idx, kw in enumerate(list(st.session_state.selected)):
-            st.button(f"{kw}  ✕", key=f"chip_{idx}",
-                      on_click=remove_keyword, args=(kw,),
-                      use_container_width=True)
+        # 한 줄에 3개씩
+        kws = list(st.session_state.selected)
+        for start in range(0, len(kws), 3):
+            row = kws[start:start+3]
+            cols = st.columns(3)
+            for col, kw in zip(cols, row):
+                col.button(f"{kw} ✕", key=f"chip_{start}_{kw}",
+                           on_click=remove_keyword, args=(kw,),
+                           use_container_width=True)
     else:
         st.caption("아직 담은 키워드가 없어요.\n오른쪽에서 키워드를 눌러 담아보세요.")
 
@@ -217,31 +275,33 @@ with st.sidebar:
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    st.markdown(f"**복사용 키워드 ({len(st.session_state.selected)}개)**")
+    st.markdown(f"**📋 복사용 키워드 ({len(st.session_state.selected)}개)**")
     if st.session_state.selected:
         st.code(",".join(st.session_state.selected) + ",", language=None)
     else:
         st.code(" ", language=None)
 
-st.divider()
+st.write("")
 
 # ============================================================
 # 추출 결과 + 키워드 클릭 시 담기
 # ============================================================
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
-    st.subheader("추출된 키워드 (클릭하면 담겨요 · 관련도 높은 순)")
+    st.subheader("추출된 키워드 · 클릭하면 담겨요 (관련도 높은 순)")
     st.markdown('<div class="result-anchor"></div>', unsafe_allow_html=True)
-    h1, hs, h2, h3 = st.columns([2.5, 2.5, 2, 2])
-    h1.markdown("**키워드**"); h2.markdown("**검색량**"); h3.markdown("**점수**")
+    h1, hs, h2, h3 = st.columns([3, 0.4, 1.4, 1.2])
+    h1.markdown("<div class='metric-head'>키워드</div>", unsafe_allow_html=True)
+    h2.markdown("<div class='metric-head'>검색량</div>", unsafe_allow_html=True)
+    h3.markdown("<div class='metric-head'>점수</div>", unsafe_allow_html=True)
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, cs, c2, c3 = st.columns([2.5, 2.5, 2, 2])
+        c1, cs, c2, c3 = st.columns([3, 0.4, 1.4, 1.2])
         already = kw in st.session_state.selected
         label = f"✔ {kw}" if already else kw
         c1.button(label, key=f"pick_{i}",
                   on_click=add_keyword, args=(kw,),
                   disabled=already, use_container_width=True)
-        c2.write(f"{vol:,}")
-        c3.write(f"{score}")
+        c2.markdown(f"<div class='metric-val'>{vol:,}</div>", unsafe_allow_html=True)
+        c3.markdown(f"<div class='metric-val'>{score}</div>", unsafe_allow_html=True)
 elif "results" in st.session_state:
     st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
