@@ -165,16 +165,15 @@ header[data-testid="stHeader"] { display: none !important; }
 /* 타이틀 */
 .bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
 
-/* 입력창 · 버튼 높이 통일 (52px) */
+/* 입력창 높이 (라벨은 collapsed로 숨김 → 공간 유지) */
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
-div[data-testid="stTextInput"] label { display:none !important; }
 
-/* ★ 추출하기 버튼 : 라벨 없이 입력창과 위·아래 높이 완전 일치 */
+/* ★ 추출하기 버튼 : 입력창과 동일한 52px, 튀어나옴 방지 */
 .stButton button[kind="primary"] {
     height: 52px !important;
     min-height: 52px !important;
     padding: 0 !important;
-    margin-top: 0 !important;
+    margin: 0 !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
 }
@@ -184,14 +183,16 @@ div[data-testid="stTextInput"] label { display:none !important; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 
-/* 복사용 코드박스 */
+/* ★ 복사용 코드박스 : 줄바꿈 허용(텍스트 잘림 방지) */
 [data-testid="stCode"] pre, code {
     background:#f0f7ff !important; border:1.5px solid #90caf9 !important;
     color:#1565c0 !important; font-weight:400 !important;
-    white-space:nowrap !important; overflow-x:auto !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-x: visible !important;
 }
 
-/* 결과 키워드 버튼 (primary 아닌 기본 버튼) */
+/* 결과 키워드 버튼 (기본 버튼) */
 .stButton button:not([kind="primary"]) {
     padding: 8px 14px !important; min-height: 46px !important;
     border-radius: 12px !important; border: 1.5px solid #e6e8eb !important;
@@ -205,7 +206,17 @@ div[data-testid="stTextInput"] label { display:none !important; }
     border-color:#ff7043 !important; transform: translateY(-1px);
 }
 
-/* ★ 키워드 행 간격 좁힘 : 전역 세로 블록 gap 축소 */
+/* ★ 담긴 상태 : kw-picked 마커가 있는 가로블록의 버튼 배경 채움 */
+div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
+    background: #eef6ff !important;
+    border-color: #4a90d9 !important;
+    color: #1565c0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p {
+    color: #1565c0 !important; font-weight: 700 !important;
+}
+
+/* 키워드 행 간격 좁힘 */
 div[data-testid="stVerticalBlock"] { gap: 0.25rem !important; }
 div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
 [data-testid="stElementContainer"] { margin: 0 !important; }
@@ -214,22 +225,15 @@ div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
 .metric-val { min-height:46px; display:flex; align-items:center; justify-content:center;
     font-size:17px; font-weight:600; color:#607d8b; }
 
-/* ===== ★ 화면 상단 30% 중앙 팝업 : 1초 표시 ===== */
+/* ===== 화면 상단 30% 중앙 팝업 : 1초 ===== */
 .center-popup {
-    position: fixed;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 100000;
-    padding: 12px 26px;
-    border-radius: 16px;
-    font-size: 22px;
-    font-weight: 800;
-    color: #ffffff;
+    position: fixed; top: 30%; left: 50%;
+    transform: translate(-50%, -50%); z-index: 100000;
+    padding: 12px 26px; border-radius: 16px;
+    font-size: 22px; font-weight: 800; color: #ffffff;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 45%, #f093fb 100%);
     box-shadow: 0 12px 30px rgba(118,75,162,0.45);
-    pointer-events: none;
-    white-space: nowrap;
+    pointer-events: none; white-space: nowrap;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -257,10 +261,11 @@ if st.session_state.get("popup"):
 
 # ---------- 상단바 ----------
 st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
-ta, tb = st.columns([3, 1.2])
+ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
 with ta:
-    st.text_input("상품명", "샤인머스캣", key="raw_input",
-                  on_change=run_extract, placeholder="상품명 (여러 개는 띄어쓰기)")
+    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+                  key="raw_input", on_change=run_extract,
+                  label_visibility="collapsed")
 with tb:
     st.button("🔍 추출하기", use_container_width=True,
               on_click=run_extract, type="primary")
@@ -283,8 +288,10 @@ if st.session_state.get("results"):
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
         c1, c2, c3 = st.columns([3, 1.4, 1.2])
         already = kw in st.session_state.selected
-        label = ("✔ " + kw) if already else kw
-        c1.button(label, key="pick_" + str(i),
+        # ★ 담긴 상태 마커 div (배경 채우기용)
+        if already:
+            c1.markdown("<div class='kw-picked'></div>", unsafe_allow_html=True)
+        c1.button(kw, key="pick_" + str(i),
                   on_click=toggle_keyword, args=(kw,), use_container_width=True)
         c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
                     unsafe_allow_html=True)
