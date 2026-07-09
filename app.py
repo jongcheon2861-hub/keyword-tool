@@ -85,12 +85,12 @@ if "selected" not in st.session_state:
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
-        st.toast("'" + kw + "' 삭제됨 · 현재 " + str(len(st.session_state.selected)) + "개", icon="🗑️")
+        st.toast(str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS), icon="➖")
     elif len(st.session_state.selected) >= MAX_KEYWORDS:
-        st.toast("최대 " + str(MAX_KEYWORDS) + "개까지만 담을 수 있어요!", icon="⚠️")
+        st.toast(str(MAX_KEYWORDS) + " / " + str(MAX_KEYWORDS), icon="🚫")
     else:
         st.session_state.selected.append(kw)
-        st.toast("'" + kw + "' 담김 · 현재 " + str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS) + "개", icon="✅")
+        st.toast(str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS), icon="➕")
 
 def run_extract():
     products = st.session_state.get("raw_input", "").split()
@@ -178,6 +178,22 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"]
     background: transparent !important; color: #1565c0 !important;
     font-size: 14px !important; font-weight: 400 !important;
     white-space: nowrap !important; overflow-x: auto !important; word-break: normal !important;
+}
+
+/* ===== st.toast 를 크고 예쁘게 (수량 강조) ===== */
+div[data-testid="stToast"] {
+    min-width: 120px !important;
+    padding: 18px 26px !important;
+    border-radius: 18px !important;
+    background: linear-gradient(135deg,#263238 0%,#37474f 100%) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.28) !important;
+    border: none !important;
+}
+div[data-testid="stToast"] * {
+    color: #ffffff !important;
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
 }
 
 /* 결과 키워드 버튼 */
