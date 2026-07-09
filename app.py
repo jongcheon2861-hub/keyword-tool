@@ -83,18 +83,16 @@ if "selected" not in st.session_state:
 if "limit_hit" not in st.session_state:
     st.session_state.limit_hit = False
 
-def add_keyword(kw):
+def toggle_keyword(kw):
+    # 이미 담겨 있으면 삭제, 아니면 추가 (토글)
     if kw in st.session_state.selected:
+        st.session_state.selected.remove(kw)
+        st.session_state.limit_hit = False
         return
     if len(st.session_state.selected) >= MAX_KEYWORDS:
         st.session_state.limit_hit = True
         return
     st.session_state.selected.append(kw)
-    st.session_state.limit_hit = False
-
-def remove_keyword(kw):
-    if kw in st.session_state.selected:
-        st.session_state.selected.remove(kw)
     st.session_state.limit_hit = False
 
 def run_extract():
@@ -171,7 +169,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
     transition: all .15s ease !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
-/* ★ 버튼 '안의 글자'에 폰트 크기 직접 지정 */
+/* 버튼 안의 글자 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
@@ -184,15 +182,16 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
     box-shadow: 0 5px 16px rgba(255,112,67,0.20) !important;
     transform: translateY(-1px) !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:disabled {
+/* 담긴 상태 강조 (kw-picked 마커가 있는 행) */
+div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
     background: #eef6ff !important;
-    border-color: #cfe3f7 !important;
+    border-color: #4a90d9 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:disabled p {
-    color: #4a90d9 !important;
+div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p {
+    color: #2f6fb3 !important;
 }
 
-/* ★ 결과 버튼 행 사이 세로 간격 축소 */
+/* 결과 버튼 행 사이 세로 간격 축소 */
 div[data-testid="stVerticalBlock"]:has(.kw-row) {
     gap: 0.3rem !important;
 }
@@ -200,7 +199,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) {
     margin-bottom: 0 !important;
 }
 
-/* 검색량·점수 수치 : 세로 중앙 정렬, 적당한 크기 */
+/* 검색량·점수 수치 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !important; }
 .metric-val {
     font-size: 17px !important;
@@ -218,30 +217,14 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !importa
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 사이드바 : 검색 + 담은 키워드 ----------
+# ---------- 사이드바 : 검색만 ----------
 with st.sidebar:
     st.header("🛒 쿠팡키워드 추출기")
     st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣", key="raw_input", on_change=run_extract)
     st.slider("추출할 키워드 개수", 10, 50, 40, key="top_n")
     st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
-
     st.divider()
-    st.markdown(f"**담은 키워드  {len(st.session_state.selected)} / {MAX_KEYWORDS}**")
-    if st.session_state.selected:
-        if st.button("전체 비우기", use_container_width=True):
-            st.session_state.selected = []
-            st.session_state.limit_hit = False
-            st.rerun()
-        st.caption("키워드를 누르면 삭제돼요.")
-        kws = list(st.session_state.selected)
-        for start in range(0, len(kws), 3):
-            row = kws[start:start+3]
-            cols = st.columns(3)
-            for col, kw in zip(cols, row):
-                col.button(f"{kw} ✕", key=f"chip_{start}_{kw}",
-                           on_click=remove_keyword, args=(kw,), use_container_width=True)
-    else:
-        st.caption("아직 담은 키워드가 없어요.\n왼쪽 위에서 상품명을 넣고 추출해 보세요.")
+    st.caption("키워드를 누르면 담기고,\n다시 누르면 삭제돼요.")
     if st.session_state.limit_hit:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
@@ -257,15 +240,16 @@ else:
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
-    st.subheader("추출된 키워드 · 클릭하면 담겨요 (관련도 높은 순)")
+    st.subheader("추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)")
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        # ★ 키워드 폭 3→2.1 축소, 여백 컬럼 0.9 추가 (가로 길이 약 30% ↓)
         c1, cgap, c2, c3 = st.columns([2.1, 0.9, 1.4, 1.2])
-        c1.markdown("<div class='kw-row'></div>", unsafe_allow_html=True)
         already = kw in st.session_state.selected
+        # 담긴 행은 kw-picked 마커도 추가 → 파란 강조
+        marker = "kw-row kw-picked" if already else "kw-row"
+        c1.markdown(f"<div class='{marker}'></div>", unsafe_allow_html=True)
         label = f"✔ {kw}" if already else kw
-        c1.button(label, key=f"pick_{i}", on_click=add_keyword, args=(kw,),
-                  disabled=already, use_container_width=True)
+        c1.button(label, key=f"pick_{i}", on_click=toggle_keyword, args=(kw,),
+                  use_container_width=True)
         c2.markdown(f"<div class='metric-val'>{vol:,}</div>", unsafe_allow_html=True)
         c3.markdown(f"<div class='metric-val'>{score}</div>", unsafe_allow_html=True)
 elif "results" in st.session_state:
