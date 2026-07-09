@@ -138,30 +138,50 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
-/* Streamlit 기본 헤더/툴바 제거 → 상단 여백 제거 */
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; margin-top: 0 !important; }
 [data-testid="stAppViewBlockContainer"] { padding-top: 0.5rem !important; }
 
-/* ===== 상단 고정바 (검색 + 복사용 키워드) ===== */
+/* ===== 상단 고정바 ===== */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
     position: sticky; top: 0; z-index: 999;
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
-    padding: 10px 16px 12px 16px;
+    padding: 12px 18px 14px 18px;
     border: 1px solid #e6e8eb;
-    border-radius: 14px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-    margin-bottom: 10px;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
 }
 div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
-.bar-title { font-size: 18px; font-weight: 800; color: #263238; margin-bottom: 6px; }
-.copy-title { font-size: 14px; font-weight: 700; color: #37474f; margin-top: 6px; }
 
-/* 상단바 추출 버튼 세로 정렬 */
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="column"]:nth-of-type(3) .stButton {
-    margin-top: 28px !important;
+/* 라벨 스타일 */
+.bar-title { font-size: 20px; font-weight: 800; color: #263238; line-height: 1.1; margin-bottom: 4px; }
+.mini-label { font-size: 12px; font-weight: 600; color: #78909c; margin: 4px 0 -6px 2px; }
+
+/* 상단바 추출 버튼 : 게이지와 높이 맞춤 */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
+    height: 44px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+}
+
+/* ===== 복사용 키워드 블록 (강조) ===== */
+.copybox {
+    background: linear-gradient(135deg,#fff7f2 0%,#fff1e8 100%);
+    border: 1.5px solid #ffccb0;
+    border-radius: 14px;
+    padding: 10px 14px 4px 14px;
+    margin-top: 10px;
+}
+.copybox-title {
+    font-size: 14px; font-weight: 800; color: #e2521c;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+}
+.copybox-badge {
+    background: #ff5722; color: #fff; font-size: 11px; font-weight: 700;
+    padding: 1px 9px; border-radius: 10px;
 }
 
 /* ===== 결과 키워드 버튼 박스 ===== */
@@ -187,7 +207,6 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
     box-shadow: 0 5px 16px rgba(255,112,67,0.20) !important;
     transform: translateY(-1px) !important;
 }
-/* 담긴 상태 강조 */
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
     background: #eef6ff !important;
     border-color: #4a90d9 !important;
@@ -196,12 +215,11 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p {
     color: #2f6fb3 !important;
 }
 
-/* 결과 버튼 행 사이 세로 간격 축소 */
+/* 결과 버튼 행 간격 축소 */
 div[data-testid="stVerticalBlock"]:has(.kw-row) { gap: 0.3rem !important; }
-div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important; }
+div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important; align-items: center !important; }
 
 /* 검색량·점수 수치 */
-div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !important; }
 .metric-val {
     font-size: 17px !important;
     font-weight: 600 !important;
@@ -212,19 +230,30 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !importa
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 상단 고정바 : 검색 + 복사용 키워드 ----------
+# ---------- 상단 고정바 ----------
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
 
-    ta, tb, tc = st.columns([3, 1.4, 1.2])
-    ta.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
-                  key="raw_input", on_change=run_extract)
-    tb.slider("키워드 개수", 10, 50, 40, key="top_n")
-    tc.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
+    # 좌: 제목/상품명/검색창   우: 키워드개수/게이지/추출하기
+    left, right = st.columns([2.3, 1.7])
 
-    st.markdown(f'<div class="copy-title">📋 복사용 키워드 ({len(st.session_state.selected)}개)</div>',
-                unsafe_allow_html=True)
+    with left:
+        st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
+        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+                      key="raw_input", on_change=run_extract)
+
+    with right:
+        st.markdown('<div class="mini-label">키워드 개수</div>', unsafe_allow_html=True)
+        st.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
+        st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
+
+    # 복사용 키워드 블록 (강조 박스)
+    n = len(st.session_state.selected)
+    st.markdown(
+        f'<div class="copybox"><div class="copybox-title">📋 복사용 키워드 '
+        f'<span class="copybox-badge">{n}개</span></div></div>',
+        unsafe_allow_html=True,
+    )
     if st.session_state.selected:
         st.code(",".join(st.session_state.selected) + ",", language=None)
     else:
