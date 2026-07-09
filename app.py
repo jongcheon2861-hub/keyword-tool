@@ -138,7 +138,7 @@ def run_extract():
     else:
         st.session_state.results = []
 
-# ---------- CSS (:has() 미사용, 전역 선택자 기반) ----------
+# ---------- CSS ----------
 st.markdown("""
 <style>
 /* Streamlit 기본 헤더/툴바 제거 → 상단 여백 제거 */
@@ -147,84 +147,59 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; margin-top: 0 !important; }
 [data-testid="stAppViewBlockContainer"] { padding-top: 0.5rem !important; }
-section.main > div { padding-top: 0 !important; }
 
-/* 복사용 키워드 바 (직접 클래스로 스타일 지정 → 깨진 블록 없음) */
+/* 복사용 키워드 바 */
 .copybar {
     position: sticky; top: 0; z-index: 999;
-    background: linear-gradient(180deg,#ffffff 0%,#fafbfc 100%);
-    padding: 8px 14px;
-    border-bottom: 1px solid #e6e8eb;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
-    border-radius: 0 0 12px 12px;
-    margin-bottom: 8px;
+    background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
+    padding: 10px 16px;
+    border: 1px solid #e6e8eb;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+    margin-bottom: 10px;
 }
-.copybar-title { font-size: 15px; font-weight: 700; color: #37474f; margin-bottom: 4px; }
+.copybar-title { font-size: 15px; font-weight: 700; color: #37474f; }
 
-/* 결과 영역 키워드 버튼 = 전역 메인 버튼 대상. 사이드바는 아래에서 덮어씀 */
-section.main .stButton button {
-    padding: 14px 20px !important;
-    font-size: 40px !important;
+/* ===== 결과 키워드 버튼 : row-marker 다음 형제 블록의 버튼을 타겟 ===== */
+.stElementContainer:has(> div > .kw-row) + div .stButton button,
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
+    padding: 16px 22px !important;
+    font-size: 34px !important;
     font-weight: 800 !important;
-    min-height: 0 !important;
+    min-height: 74px !important;
     line-height: 1.2 !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
     border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important;
     text-align: left !important;
     transition: all .15s ease !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
-section.main .stButton button:hover {
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
     border-color: #ff7043 !important;
-    box-shadow: 0 4px 12px rgba(255,112,67,0.18) !important;
+    box-shadow: 0 5px 16px rgba(255,112,67,0.20) !important;
     transform: translateY(-1px) !important;
 }
-section.main .stButton button:disabled {
-    background: #f1f3f5 !important;
-    color: #9aa0a6 !important;
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:disabled {
+    background: #eef6ff !important;
+    color: #4a90d9 !important;
+    border-color: #cfe3f7 !important;
 }
 
-/* 검색량·점수 수치 : 버튼과 같은 높이로 세로 중앙 정렬 + 가려짐 방지 */
-section.main div[data-testid="stHorizontalBlock"] { align-items: center !important; }
+/* 검색량·점수 수치 : 세로 중앙 정렬, 적당한 크기 */
+div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !important; }
 .metric-val {
-    font-size: 34px !important;
-    font-weight: 800 !important;
-    color: #455a64 !important;
-    line-height: 1.2 !important;
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    color: #607d8b !important;
     text-align: center !important;
-    display: flex; align-items: center; justify-content: center;
-    min-height: 60px;
+    line-height: 1.2 !important;
 }
 .metric-head {
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
     color: #90a4ae !important;
-    letter-spacing: .3px;
     text-align: center;
-}
-
-/* 사이드바 키워드 칩 : 33% 크기(한 줄 3개), 글씨 작게 */
-section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] .stButton button {
-    padding: 3px 4px !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
-    min-height: 0 !important;
-    line-height: 1.15 !important;
-    border-radius: 8px !important;
-    border: 1px solid #dfe3e8 !important;
-    background: #ffffff !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    text-align: center !important;
-}
-section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] .stButton button:hover {
-    border-color: #ff7043 !important;
-    color: #ff5722 !important;
-}
-/* 사이드바 일반 버튼(추출하기/전체비우기)는 기본 크기 유지 */
-section[data-testid="stSidebar"] > div > div > div > .stButton button {
-    font-size: 14px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -245,20 +220,20 @@ with st.sidebar:
             st.rerun()
         st.caption("키워드를 누르면 삭제돼요.")
         kws = list(st.session_state.selected)
-        for start in range(0, len(kws), 3):     # 한 줄에 3개
+        for start in range(0, len(kws), 3):
             row = kws[start:start+3]
             cols = st.columns(3)
             for col, kw in zip(cols, row):
                 col.button(f"{kw} ✕", key=f"chip_{start}_{kw}",
                            on_click=remove_keyword, args=(kw,), use_container_width=True)
     else:
-        st.caption("아직 담은 키워드가 없어요.\n오른쪽에서 키워드를 눌러 담아보세요.")
+        st.caption("아직 담은 키워드가 없어요.\n왼쪽 위에서 상품명을 넣고 추출해 보세요.")
     if st.session_state.limit_hit:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
-# ---------- 상단 복사용 키워드 바 (페이지 최상단 요소) ----------
+# ---------- 상단 복사용 키워드 바 ----------
 st.markdown('<div class="copybar">'
-            f'<div class="copybar-title">📋 복사용 키워드 ({len(st.session_state.selected)}개)</div>'
+            f'<span class="copybar-title">📋 복사용 키워드 ({len(st.session_state.selected)}개)</span>'
             '</div>', unsafe_allow_html=True)
 if st.session_state.selected:
     st.code(",".join(st.session_state.selected) + ",", language=None)
@@ -269,12 +244,10 @@ else:
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
     st.subheader("추출된 키워드 · 클릭하면 담겨요 (관련도 높은 순)")
-    h1, h2, h3 = st.columns([3, 1.4, 1.2])
-    h1.markdown("<div class='metric-head' style='text-align:left'>키워드</div>", unsafe_allow_html=True)
-    h2.markdown("<div class='metric-head'>검색량</div>", unsafe_allow_html=True)
-    h3.markdown("<div class='metric-head'>점수</div>", unsafe_allow_html=True)
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
         c1, c2, c3 = st.columns([3, 1.4, 1.2])
+        # 이 행을 식별하는 마커. 같은 HorizontalBlock 안에 있으므로 :has()로 버튼 타겟팅
+        c1.markdown("<div class='kw-row'></div>", unsafe_allow_html=True)
         already = kw in st.session_state.selected
         label = f"✔ {kw}" if already else kw
         c1.button(label, key=f"pick_{i}", on_click=add_keyword, args=(kw,),
