@@ -123,10 +123,11 @@ div:has(div.topbar-anchor) button {
     min-height: 0 !important;
     line-height: 1.2 !important;
 }
-/* 하단 결과 키워드 버튼 (글씨 약간만 작게) */
+/* 하단 결과 키워드 버튼: 글씨 크고 볼드 */
 div:has(div.result-anchor) button {
-    padding: 2px 8px !important;
-    font-size: 13px !important;
+    padding: 6px 10px !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
     min-height: 0 !important;
     line-height: 1.3 !important;
 }
@@ -207,8 +208,9 @@ if st.button("추출하기"):
             all_kw["검색량"].rank(pct=True) * 0.35 +
             all_kw["구매의도"].rank(pct=True) * 0.25
         ).round(3)
-        # 검색량 큰 순(대형 키워드 우선)으로 정렬
-        result = all_kw.sort_values("검색량", ascending=False).head(top_n)
+        # 입력 상품 관련도(상품직결) 최우선 → 그다음 점수 순 정렬
+        result = all_kw.sort_values(
+            ["상품직결", "구매전환추정점수"], ascending=[False, False]).head(top_n)
         st.session_state.results = result[
             ["키워드","검색량","구매의도","구매전환추정점수"]].values.tolist()
     else:
@@ -220,12 +222,12 @@ if st.button("추출하기"):
 # ============================================================
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
-    st.subheader("추출된 키워드 (클릭하면 담겨요 · 검색량 큰 순)")
+    st.subheader("추출된 키워드 (클릭하면 담겨요 · 관련도 높은 순)")
     st.markdown('<div class="result-anchor"></div>', unsafe_allow_html=True)
-    h1, h2, h3 = st.columns([5, 2, 2])
+    h1, hs, h2, h3 = st.columns([2.5, 2.5, 2, 2])
     h1.markdown("**키워드**"); h2.markdown("**검색량**"); h3.markdown("**점수**")
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, c2, c3 = st.columns([5, 2, 2])
+        c1, cs, c2, c3 = st.columns([2.5, 2.5, 2, 2])
         already = kw in st.session_state.selected
         label = f"✔ {kw}" if already else kw
         c1.button(label, key=f"pick_{i}",
