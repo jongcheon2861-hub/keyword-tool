@@ -154,7 +154,7 @@ def run_extract():
     else:
         st.session_state.results = []
 
-# ---------- CSS (Streamlit 1.5x 최신 DOM 기준) ----------
+# ---------- CSS ----------
 st.markdown("""
 <style>
 header[data-testid="stHeader"] { display: none !important; }
@@ -162,7 +162,7 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; }
 
-/* ★ 상단 고정바 : 앵커를 포함한 수직블록 중 가장 안쪽만 sticky (직계 > 조건 완화) */
+/* 상단 고정바 */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor):not(:has(div[data-testid="stVerticalBlock"] div.topbar-anchor)) {
     position: sticky !important;
     top: 0 !important;
@@ -174,6 +174,9 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor):not(:has(div[data-test
     box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
 }
 div.topbar-anchor { height: 0; margin: 0; padding: 0; }
+
+/* 간격용 스페이서 */
+.gap-spacer { height: 40px; }
 
 /* 타이틀 */
 .bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
@@ -193,7 +196,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 
-/* 복사용 코드박스 : 한 줄 유지 + 가로 스크롤 + 복사버튼 유지 */
+/* 복사용 코드박스 */
 [data-testid="stCode"] {
     background: #f0f7ff !important;
     border: 1.5px solid #90caf9 !important;
@@ -207,10 +210,8 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     padding: 10px 44px 10px 14px !important;
 }
 [data-testid="stCode"] code {
-    color: #1565c0 !important;
-    font-weight: 400 !important;
-    font-size: 14px !important;
-    white-space: nowrap !important;
+    color: #1565c0 !important; font-weight: 400 !important;
+    font-size: 14px !important; white-space: nowrap !important;
 }
 [data-testid="stCodeCopyButton"], [data-testid="stCode"] button { opacity: 1 !important; }
 
@@ -284,11 +285,6 @@ if st.session_state.get("popup"):
 
 # ---------- 상단 고정바 ----------
 with st.container():
-    st.code(kw_text, language=None)
-
-# ★ 테스트용
-st.markdown("<h1 style='color:red'>여기 간격 테스트</h1>", unsafe_allow_html=True)
-
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
     ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
@@ -309,8 +305,8 @@ st.markdown("<h1 style='color:red'>여기 간격 테스트</h1>", unsafe_allow_h
         kw_text = " "
     st.code(kw_text, language=None)
 
-# ★ 상단바와 목록 사이 간격 (실제 빈 공간)
-st.markdown("<div style='height:36px'></div>", unsafe_allow_html=True)
+# ---------- 상단바와 목록 사이 간격 ----------
+st.markdown("<div class='gap-spacer'></div>", unsafe_allow_html=True)
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
