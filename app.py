@@ -159,17 +159,24 @@ div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !impo
 .bar-title { font-size: 20px; font-weight: 800; color: #263238; line-height: 1.1; margin-bottom: 4px; }
 .mini-label { font-size: 12px; font-weight: 600; color: #78909c; margin: 4px 0 -6px 2px; }
 
+/* 검색창 : 제목 아래로 여백 + 안쪽 오른쪽에 돋보기 아이콘 */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="column"]:nth-of-type(1) div[data-testid="stTextInput"] {
     margin-top: 18px !important;
+    position: relative !important;
+}
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"]::after {
+    content: "🔍";
+    position: absolute;
+    right: 16px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    opacity: 0.6;
+    pointer-events: none;
 }
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] input {
     height: 52px !important;
     font-size: 16px !important;
-}
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
-    height: 52px !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
+    padding-right: 46px !important;   /* 돋보기 자리 확보 */
 }
 
 /* 복사용 키워드 헤더 */
@@ -192,9 +199,9 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"]
     background: transparent !important;
     color: #1565c0 !important;
     font-size: 14px !important;
-    font-weight: 400 !important;          /* 글자 얇게 */
-    white-space: nowrap !important;        /* 줄바꿈 금지 → 옆으로만 */
-    overflow-x: auto !important;           /* 가로 스크롤 */
+    font-weight: 400 !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
     word-break: normal !important;
 }
 
@@ -203,13 +210,13 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"]
     position: fixed;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 100000;
+    z-index: 100000 !important;
     padding: 16px 28px;
     border-radius: 14px;
     font-size: 16px; font-weight: 700;
     color: #fff;
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    animation: popfade 1.6s ease forwards;
+    animation: popfade 2.2s ease forwards;
     pointer-events: none;
     white-space: nowrap;
 }
@@ -218,8 +225,8 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"]
 .pop-warn { background: #e53935; }
 @keyframes popfade {
     0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
-    15%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    12%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    82%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
 }
 
@@ -266,7 +273,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important;
 """, unsafe_allow_html=True)
 
 # ---------- 화면 정중앙 팝업 표시 (1회성) ----------
-if st.session_state.popup:
+if st.session_state.get("popup"):
     kind, msg = st.session_state.popup
     cls = {"ok": "pop-ok", "info": "pop-info", "warn": "pop-warn"}[kind]
     st.markdown(f"<div class='center-popup {cls}'>{msg}</div>", unsafe_allow_html=True)
@@ -280,13 +287,12 @@ with st.container():
 
     with left:
         st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
-        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+        st.text_input("상품명 (여러 개는 띄어쓰기 · Enter로 검색)", "샤인머스캣",
                       key="raw_input", on_change=run_extract)
 
     with right:
         st.markdown('<div class="mini-label">키워드 개수</div>', unsafe_allow_html=True)
         st.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
-        st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
     n = len(st.session_state.selected)
     st.markdown(
