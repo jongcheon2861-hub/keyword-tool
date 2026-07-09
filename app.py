@@ -162,8 +162,8 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; }
 
-/* 상단 고정바 */
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) {
+/* ★ 상단 고정바 : 앵커를 포함한 수직블록 중 가장 안쪽만 sticky (직계 > 조건 완화) */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor):not(:has(div[data-testid="stVerticalBlock"] div.topbar-anchor)) {
     position: sticky !important;
     top: 0 !important;
     z-index: 999 !important;
@@ -172,7 +172,6 @@ div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] d
     border: 1px solid #e6e8eb !important;
     border-radius: 16px !important;
     box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
-    margin-bottom: 32px !important;   /* ★ 14px → 32px 로 간격 넓힘 */
 }
 div.topbar-anchor { height: 0; margin: 0; padding: 0; }
 
@@ -194,30 +193,26 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 
-/* ★ 상단바 안 복사용 코드박스 : 한 줄 유지 + 가로 스크롤 + 복사버튼 유지 */
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) [data-testid="stCode"] {
+/* 복사용 코드박스 : 한 줄 유지 + 가로 스크롤 + 복사버튼 유지 */
+[data-testid="stCode"] {
     background: #f0f7ff !important;
     border: 1.5px solid #90caf9 !important;
     border-radius: 10px !important;
     margin: 0 !important;
 }
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) [data-testid="stCode"] pre {
+[data-testid="stCode"] pre {
     background: transparent !important;
     white-space: nowrap !important;
     overflow-x: auto !important;
     padding: 10px 44px 10px 14px !important;
 }
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) [data-testid="stCode"] code {
+[data-testid="stCode"] code {
     color: #1565c0 !important;
     font-weight: 400 !important;
     font-size: 14px !important;
     white-space: nowrap !important;
 }
-/* 복사 버튼 항상 보이게 */
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) [data-testid="stCodeCopyButton"],
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) [data-testid="stCode"] button {
-    opacity: 1 !important;
-}
+[data-testid="stCodeCopyButton"], [data-testid="stCode"] button { opacity: 1 !important; }
 
 /* 결과 키워드(secondary) 버튼 */
 [data-testid="stBaseButton-secondary"] {
@@ -237,10 +232,9 @@ div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] d
     border-color:#ff7043 !important; transform: translateY(-1px);
 }
 
-/* 담긴 상태 : kw-picked 마커 가로블록의 버튼 배경 채움 (세로 안 늘어남) */
+/* 담긴 상태 */
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] {
-    background: #eef6ff !important;
-    border-color: #4a90d9 !important;
+    background: #eef6ff !important; border-color: #4a90d9 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] p {
     color: #1565c0 !important; font-weight: 700 !important;
@@ -308,8 +302,10 @@ with st.container():
         kw_text = ",".join(st.session_state.selected) + ","
     else:
         kw_text = " "
-    # st.code = 오른쪽 상단 복사버튼(📋) 자동 제공
     st.code(kw_text, language=None)
+
+# ★ 상단바와 목록 사이 간격 (실제 빈 공간)
+st.markdown("<div style='height:36px'></div>", unsafe_allow_html=True)
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
