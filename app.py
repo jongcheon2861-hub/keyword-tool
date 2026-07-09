@@ -100,10 +100,43 @@ def remove_keyword(kw):
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
     st.session_state.limit_hit = False
-st.sidebar.metric("담긴 키워드", f"{len(st.session_state.selected)} / {MAX_KEYWORDS}")
-st.title("농축수산물 구매전환 키워드 추출기")
-st.write("상품명을 입력하면 상위어를 자동으로 찾아 관련 키워드를 뽑아요. (최대 20개 담기)")
 
+st.title("농축수산물 구매전환 키워드 추출기")
+
+# ============================================================
+# 상단바: 담은 키워드 (칩 형태, 클릭하면 삭제)
+# ============================================================
+with st.container(border=True):
+    top1, top2 = st.columns([6, 1])
+    top1.markdown(f"**담은 키워드  {len(st.session_state.selected)} / {MAX_KEYWORDS}**")
+    if st.session_state.selected:
+        if top2.button("비우기", use_container_width=True):
+            st.session_state.selected = []
+            st.session_state.limit_hit = False
+            st.rerun()
+
+    if st.session_state.selected:
+        # 담은 키워드를 가로로 나열, 각 버튼 누르면 삭제
+        cols = st.columns(5)   # 한 줄에 5개씩
+        for idx, kw in enumerate(list(st.session_state.selected)):
+            col = cols[idx % 5]
+            col.button(f"{kw}  ✕", key=f"chip_{idx}",
+                       on_click=remove_keyword, args=(kw,),
+                       use_container_width=True)
+        st.caption("키워드를 누르면 삭제돼요.  복사용 ↓")
+        st.code(",".join(st.session_state.selected) + ",", language=None)
+    else:
+        st.caption("아직 담은 키워드가 없어요. 아래에서 '➕ 담기'를 눌러보세요.")
+
+    if st.session_state.limit_hit:
+        st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요! 위에서 일부를 지운 뒤 추가하세요.")
+
+st.divider()
+
+# ============================================================
+# 입력 + 추출
+# ============================================================
+st.write("상품명을 입력하면 상위어를 자동으로 찾아 관련 키워드를 뽑아요.")
 raw = st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣")
 top_n = st.slider("추출할 키워드 개수", 10, 50, 30)
 min_vol = st.slider("최소 검색량", 0, 200, 10)
@@ -151,19 +184,14 @@ if st.button("추출하기"):
         st.error("수집된 키워드가 없습니다.")
 
 # ============================================================
-# 결과 목록 + 큰 ➕ 버튼
+# 추출 결과 + ➕ 담기 버튼
 # ============================================================
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
-    if st.session_state.limit_hit:
-        st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요! 아래에서 일부를 지운 뒤 추가하세요.")
-    st.caption(f"담긴 키워드: {len(st.session_state.selected)} / {MAX_KEYWORDS}")
     st.subheader("추출된 키워드")
-
     h1, h2, h3, h4 = st.columns([1.4, 4, 2, 2])
     h1.markdown("**담기**"); h2.markdown("**키워드**")
     h3.markdown("**검색량**"); h4.markdown("**점수**")
-
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
         c1, c2, c3, c4 = st.columns([1.4, 4, 2, 2])
         already = kw in st.session_state.selected
@@ -171,28 +199,3 @@ if st.session_state.get("results"):
                   key=f"add_{i}", on_click=add_keyword, args=(kw,),
                   disabled=already, use_container_width=True)
         c2.write(kw); c3.write(f"{vol:,}"); c4.write(f"{score}")
-
-# ============================================================
-# 담은 키워드: 각 키워드 옆 ✕ 버튼으로 삭제 (텍스트 편집 X)
-# ============================================================
-st.divider()
-st.subheader(f"담은 키워드 ({len(st.session_state.selected)}/{MAX_KEYWORDS})")
-
-if st.session_state.selected:
-    # 콤마로 이어진 형태로 보여주기 (복사용, 읽기 전용)
-    st.code(",".join(st.session_state.selected) + ",", language=None)
-
-    # 개별 삭제 버튼
-    st.caption("삭제할 키워드의 ✕ 를 누르세요")
-    for j, kw in enumerate(list(st.session_state.selected)):
-        d1, d2 = st.columns([1, 6])
-        d1.button("✕", key=f"del_{j}", on_click=remove_keyword, args=(kw,),
-                  use_container_width=True)
-        d2.write(kw)
-
-    if st.button("전체 비우기"):
-        st.session_state.selected = []
-        st.session_state.limit_hit = False
-        st.rerun()
-else:
-    st.caption("아직 담은 키워드가 없어요. 위 목록의 '➕ 담기'를 눌러 담아보세요.")
