@@ -176,7 +176,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
     font-size: 20px !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     line-height: 1.2 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
