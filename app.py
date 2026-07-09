@@ -175,39 +175,31 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor):not(:has(div[data-test
 }
 div.topbar-anchor { height: 0; margin: 0; padding: 0; }
 
-/* 간격용 스페이서 */
-.gap-spacer { height: 40px; }
-
-/* 타이틀 */
 .bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
-
-/* 입력창 높이 */
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
-
-/* 추출하기(primary) 버튼 */
 [data-testid="stBaseButton-primary"] {
     height: 52px !important; min-height: 52px !important;
     padding: 0 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
 }
-
-/* 복사용 키워드 헤더 */
 .copy-head { font-size: 15px; font-weight: 700; color: #37474f; margin: 10px 0 6px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 
-/* 복사용 코드박스 */
+/* 복사용 코드박스 : 텍스트 없어도 높이 고정 */
 [data-testid="stCode"] {
     background: #f0f7ff !important;
     border: 1.5px solid #90caf9 !important;
     border-radius: 10px !important;
     margin: 0 !important;
+    min-height: 46px !important;
 }
 [data-testid="stCode"] pre {
     background: transparent !important;
     white-space: nowrap !important;
     overflow-x: auto !important;
-    padding: 10px 44px 10px 14px !important;
+    padding: 12px 44px 12px 14px !important;
+    min-height: 22px !important;
 }
 [data-testid="stCode"] code {
     color: #1565c0 !important; font-weight: 400 !important;
@@ -215,7 +207,6 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 }
 [data-testid="stCodeCopyButton"], [data-testid="stCode"] button { opacity: 1 !important; }
 
-/* 결과 키워드(secondary) 버튼 */
 [data-testid="stBaseButton-secondary"] {
     min-height: 46px !important;
     padding: 8px 14px !important;
@@ -232,24 +223,16 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 [data-testid="stBaseButton-secondary"]:hover {
     border-color:#ff7043 !important; transform: translateY(-1px);
 }
-
-/* 담긴 상태 */
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] {
     background: #eef6ff !important; border-color: #4a90d9 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] p {
     color: #1565c0 !important; font-weight: 700 !important;
 }
-
-/* 키워드 행 간격 좁힘 */
 div[data-testid="stVerticalBlock"] { gap: 0.25rem !important; }
 div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
-
-/* 지표 텍스트 */
 .metric-val { min-height:46px; display:flex; align-items:center; justify-content:center;
     font-size:17px; font-weight:600; color:#607d8b; }
-
-/* 화면 상단 30% 중앙 팝업 : 1초 */
 .center-popup {
     position: fixed; top: 30%; left: 50%;
     transform: translate(-50%, -50%); z-index: 100000;
@@ -262,7 +245,7 @@ div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 상단 30% 중앙 팝업 (1초) ----------
+# ---------- 팝업 ----------
 if st.session_state.get("popup"):
     pid = str(st.session_state.popup_id)
     msg = st.session_state.popup
@@ -305,8 +288,12 @@ with st.container():
         kw_text = " "
     st.code(kw_text, language=None)
 
-# ---------- 상단바와 목록 사이 간격 ----------
-st.markdown("<div class='gap-spacer'></div>", unsafe_allow_html=True)
+# ---------- ★ 진단용 초록 띠 (이게 보이면 코드 반영 O) ----------
+st.markdown(
+    "<div style='height:40px;background:#43e97b;color:#fff;"
+    "text-align:center;line-height:40px;font-weight:800;border-radius:8px;'>"
+    "간격 확인 (이 초록띠가 보이면 코드가 반영된 것)</div>",
+    unsafe_allow_html=True)
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
