@@ -17,45 +17,34 @@ MAX_KEYWORDS = 20
 MIN_VOL = 10
 TOP_N = 50
 
-TOO_BROAD = ["선물", "추천", "인기", "판매", "브랜드", "세트", "모음"]
-
 CATEGORY_MAP = {
     "과일": ["샤인머스캣", "사과", "포도", "귤", "딸기", "복숭아"],
     "채소": ["양파", "감자", "당근", "고구마"],
     "생활": ["휴지", "물티슈", "세제"],
 }
-
 BUY_COMMON = ["구매", "주문", "배송", "택배", "가격", "최저가", "특가", "무료배송", "당일배송"]
-
 BUY_CAT = {
     "과일": ["kg", "박스", "산지직송", "제철", "당도", "달콤한"],
     "채소": ["kg", "박스", "국내산", "신선"],
     "생활": ["대용량", "묶음", "리필"],
 }
-
 INFO_WORDS = ["효능", "칼로리", "방법", "레시피", "뜻", "의미", "부작용", "후기만", "나무위키"]
 
 # ---------- 함수 ----------
 def normalize(s):
-    s = s.replace(" ", "")
-    s = s.replace("머스켓", "머스캣")
-    return s
+    return s.replace(" ", "").replace("머스켓", "머스캣")
 
 def get_parent_terms(product):
-    """네이버 쇼핑 검색으로 상위어(카테고리) 추출"""
     terms, big = [], ""
     try:
         url = "https://openapi.naver.com/v1/search/shop.json"
-        headers = {
-            "X-Naver-Client-Id": N_CLIENT_ID,
-            "X-Naver-Client-Secret": N_CLIENT_SECRET,
-        }
+        headers = {"X-Naver-Client-Id": N_CLIENT_ID,
+                   "X-Naver-Client-Secret": N_CLIENT_SECRET}
         params = {"query": product, "display": 10}
         r = requests.get(url, headers=headers, params=params, timeout=5)
         if r.status_code == 200:
-            items = r.json().get("items", [])
             cats = set()
-            for it in items:
+            for it in r.json().get("items", []):
                 for k in ("category1", "category2", "category3"):
                     v = it.get(k, "").strip()
                     if v:
@@ -77,17 +66,12 @@ def _naver_sign(ts, method, path):
     return base64.b64encode(sig).decode("utf-8")
 
 def naver_related_keywords(seed):
-    """네이버 검색광고 키워드도구 API"""
     try:
         path = "/keywordstool"
         ts = str(round(time.time() * 1000))
         sig = _naver_sign(ts, "GET", path)
-        headers = {
-            "X-Timestamp": ts,
-            "X-API-KEY": API_KEY,
-            "X-Customer": str(CUSTOMER_ID),
-            "X-Signature": sig,
-        }
+        headers = {"X-Timestamp": ts, "X-API-KEY": API_KEY,
+                   "X-Customer": str(CUSTOMER_ID), "X-Signature": sig}
         params = {"hintKeywords": seed.replace(" ", ""), "showDetail": 1}
         r = requests.get("https://api.searchad.naver.com" + path,
                          headers=headers, params=params, timeout=5)
@@ -95,9 +79,6 @@ def naver_related_keywords(seed):
             return pd.DataFrame(columns=["키워드", "검색량"])
         rows = []
         for it in r.json().get("keywordList", []):
-            kw = it.get("relKeyword", "")
-            pc = it.get("monthlyPcQcCnt", 0)
-            mo = it.get("monthlyMobileQcCnt", 0)
             def to_int(x):
                 if isinstance(x, str):
                     x = x.replace("<", "").replace(",", "").strip()
@@ -105,8 +86,8 @@ def naver_related_keywords(seed):
                     return int(x)
                 except Exception:
                     return 0
-            vol = to_int(pc) + to_int(mo)
-            rows.append({"키워드": kw, "검색량": vol})
+            vol = to_int(it.get("monthlyPcQcCnt", 0)) + to_int(it.get("monthlyMobileQcCnt", 0))
+            rows.append({"키워드": it.get("relKeyword", ""), "검색량": vol})
         return pd.DataFrame(rows)
     except Exception:
         return pd.DataFrame(columns=["키워드", "검색량"])
@@ -114,16 +95,21 @@ def naver_related_keywords(seed):
 # ---------- 상태 ----------
 if "selected" not in st.session_state:
     st.session_state.selected = []
+if "popup" not in st.session_state:
+    st.session_state.popup = None
+if "popup_id" not in st.session_state:
+    st.session_state.popup_id = 0
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
-        st.toast(str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS), icon="✅")
+        st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
     elif len(st.session_state.selected) >= MAX_KEYWORDS:
-        st.toast(str(MAX_KEYWORDS) + " / " + str(MAX_KEYWORDS), icon="✅")
+        st.session_state.popup = str(MAX_KEYWORDS) + " / " + str(MAX_KEYWORDS)
     else:
         st.session_state.selected.append(kw)
-        st.toast(str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS), icon="✅")
+        st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
+    st.session_state.popup_id += 1
 
 def run_extract():
     products = st.session_state.get("raw_input", "").split()
@@ -161,8 +147,8 @@ def run_extract():
             all_kw["검색량"].rank(pct=True) * 0.35 +
             all_kw["구매의도"].rank(pct=True) * 0.25
         ).round(3)
-        result = all_kw.sort_values(
-            ["상품직결", "구매전환추정점수"], ascending=[False, False]).head(TOP_N)
+        result = all_kw.sort_values(["상품직결", "구매전환추정점수"],
+                                    ascending=[False, False]).head(TOP_N)
         st.session_state.results = result[
             ["키워드", "검색량", "구매의도", "구매전환추정점수"]].values.tolist()
     else:
@@ -171,39 +157,30 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
-/* 기본 헤더/툴바 숨김 */
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-
-.block-container { padding-top: 0.5rem !important; margin-top: 0 !important; }
-
-/* ★ 상단 고정바 : 앵커의 '가장 안쪽' 블록만 sticky (전체 고정 방지) */
-div[data-testid="stVerticalBlock"]:has(> div.element-container div.topbar-anchor):not(:has(div[data-testid="stVerticalBlock"] div.topbar-anchor)) {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 999 !important;
-    background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%) !important;
-    padding: 12px 18px 14px 18px !important;
-    border: 1px solid #e6e8eb !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
-    margin-bottom: 14px !important;
-}
-div.topbar-anchor { height: 0; margin: 0; padding: 0; }
+.block-container { padding-top: 0.5rem !important; }
 
 /* 타이틀 */
 .bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
 
-/* 입력창 · 버튼 높이 맞춤 */
+/* 입력창 · 버튼 높이 통일 (52px) */
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
-    height: 52px !important; margin-top: 30px !important;
-    font-weight: 700 !important; border-radius: 10px !important;
+div[data-testid="stTextInput"] label { display:none !important; }
+
+/* ★ 추출하기 버튼 : 라벨 없이 입력창과 위·아래 높이 완전 일치 */
+.stButton button[kind="primary"] {
+    height: 52px !important;
+    min-height: 52px !important;
+    padding: 0 !important;
+    margin-top: 0 !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
 }
 
 /* 복사용 키워드 헤더 */
-.copy-head { font-size: 15px; font-weight: 700; color: #37474f; margin: 4px 0 6px 0; }
+.copy-head { font-size: 15px; font-weight: 700; color: #37474f; margin: 10px 0 6px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 
@@ -214,87 +191,98 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
     white-space:nowrap !important; overflow-x:auto !important;
 }
 
-/* 결과 키워드 버튼 */
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
-    padding: 11px 15px !important; min-height: 52px !important;
-    border-radius: 14px !important; border: 1.5px solid #e6e8eb !important;
+/* 결과 키워드 버튼 (primary 아닌 기본 버튼) */
+.stButton button:not([kind="primary"]) {
+    padding: 8px 14px !important; min-height: 46px !important;
+    border-radius: 12px !important; border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important; text-align: left !important;
-    transition: all .15s ease !important; box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+    transition: all .12s ease !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
-    font-size: 20px !important; font-weight: 500 !important; line-height: 1.2 !important;
+.stButton button:not([kind="primary"]) p {
+    font-size: 18px !important; font-weight: 500 !important; line-height: 1.1 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
-    border-color:#ff7043 !important; box-shadow:0 4px 12px rgba(255,112,67,0.18) !important;
-    transform: translateY(-1px);
-}
-div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
-    background:#eef6ff !important; border-color:#4a90d9 !important; color:#1565c0 !important;
+.stButton button:not([kind="primary"]):hover {
+    border-color:#ff7043 !important; transform: translateY(-1px);
 }
 
-/* ★ 결과 행 간격 좁힘 */
-div[data-testid="stVerticalBlock"]:has(.kw-row) { gap: 0.15rem !important; }
-div[data-testid="stVerticalBlock"] > div:has(.kw-row) { margin-bottom: 0 !important; }
-div[data-testid="stHorizontalBlock"]:has(.kw-row) {
-    margin-top: 0 !important; margin-bottom: 0 !important; gap: 0.4rem !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton { margin-bottom: 0 !important; }
+/* ★ 키워드 행 간격 좁힘 : 전역 세로 블록 gap 축소 */
+div[data-testid="stVerticalBlock"] { gap: 0.25rem !important; }
+div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
+[data-testid="stElementContainer"] { margin: 0 !important; }
 
 /* 지표 텍스트 */
-.metric-val { min-height:52px; display:flex; align-items:center; justify-content:center;
+.metric-val { min-height:46px; display:flex; align-items:center; justify-content:center;
     font-size:17px; font-weight:600; color:#607d8b; }
 
-/* ===== ★ 알림(토스트) : 60% 축소 + 밝은 색상 ===== */
-div[data-testid="stToast"] {
-    min-width: 52px !important;
-    width: auto !important;
-    padding: 7px 12px !important;
-    border-radius: 12px !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 45%, #f093fb 100%) !important;
-    box-shadow: 0 6px 16px rgba(118, 75, 162, 0.40) !important;
-    border: none !important;
-}
-div[data-testid="stToast"] * {
-    color: #ffffff !important;
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.3px !important;
+/* ===== ★ 화면 상단 30% 중앙 팝업 : 1초 표시 ===== */
+.center-popup {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100000;
+    padding: 12px 26px;
+    border-radius: 16px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 45%, #f093fb 100%);
+    box-shadow: 0 12px 30px rgba(118,75,162,0.45);
+    pointer-events: none;
+    white-space: nowrap;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 상단 고정바 ----------
-with st.container():
-    st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
-    ta, tb = st.columns([3, 1.2])
-    with ta:
-        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
-                      key="raw_input", on_change=run_extract)
-    with tb:
-        st.button("🔍 추출하기", use_container_width=True,
-                  on_click=run_extract, type="primary")
-    n = len(st.session_state.selected)
-    st.markdown(
-        '<div class="copy-head">📋 복사용 키워드 '
-        '<span class="copy-badge">' + str(n) + '개</span></div>',
-        unsafe_allow_html=True)
-    if st.session_state.selected:
-        st.code(",".join(st.session_state.selected) + ",")
-    else:
-        st.code(" ")
+# ---------- 상단 30% 중앙 팝업 (1초) ----------
+if st.session_state.get("popup"):
+    pid = str(st.session_state.popup_id)
+    msg = st.session_state.popup
+    anim = "popfade" + pid
+    html = """
+    <style>
+    @keyframes ANIM {
+        0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        15%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    }
+    #popup-PID { animation: ANIM 1s ease forwards; }
+    </style>
+    <div class="center-popup" id="popup-PID">✅ MSG</div>
+    """
+    html = html.replace("ANIM", anim).replace("PID", pid).replace("MSG", msg)
+    st.markdown(html, unsafe_allow_html=True)
+    st.session_state.popup = None
+
+# ---------- 상단바 ----------
+st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
+ta, tb = st.columns([3, 1.2])
+with ta:
+    st.text_input("상품명", "샤인머스캣", key="raw_input",
+                  on_change=run_extract, placeholder="상품명 (여러 개는 띄어쓰기)")
+with tb:
+    st.button("🔍 추출하기", use_container_width=True,
+              on_click=run_extract, type="primary")
+
+n = len(st.session_state.selected)
+st.markdown('<div class="copy-head">📋 복사용 키워드 '
+            '<span class="copy-badge">' + str(n) + '개</span></div>',
+            unsafe_allow_html=True)
+if st.session_state.selected:
+    st.code(",".join(st.session_state.selected) + ",")
+else:
+    st.code(" ")
+
+st.divider()
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info", ""))
     st.subheader("추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)")
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, cgap, c2, c3 = st.columns([2.1, 0.9, 1.4, 1.2])
+        c1, c2, c3 = st.columns([3, 1.4, 1.2])
         already = kw in st.session_state.selected
-        marker = "kw-row kw-picked" if already else "kw-row"
-        c1.markdown("<div class='" + marker + "'></div>", unsafe_allow_html=True)
         label = ("✔ " + kw) if already else kw
         c1.button(label, key="pick_" + str(i),
                   on_click=toggle_keyword, args=(kw,), use_container_width=True)
