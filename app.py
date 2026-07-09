@@ -162,7 +162,7 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; }
 
-/* 상단 고정바 : 앵커를 직계로 가진 가장 안쪽 수직블록만 sticky */
+/* 상단 고정바 */
 div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] div.topbar-anchor) {
     position: sticky !important;
     top: 0 !important;
@@ -172,7 +172,7 @@ div[data-testid="stVerticalBlock"]:has(> div[data-testid="stElementContainer"] d
     border: 1px solid #e6e8eb !important;
     border-radius: 16px !important;
     box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
-    margin-bottom: 14px !important;
+    margin-bottom: 32px !important;   /* ★ 14px → 32px 로 간격 넓힘 */
 }
 div.topbar-anchor { height: 0; margin: 0; padding: 0; }
 
