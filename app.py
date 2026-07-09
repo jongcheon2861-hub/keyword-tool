@@ -104,10 +104,54 @@ def remove_keyword(kw):
         st.session_state.selected.remove(kw)
     st.session_state.limit_hit = False
 
+def run_extract():
+    products = st.session_state.get("raw_input", "").split()
+    if not products:
+        st.session_state.results = []
+        return
+    norm_products = [normalize(p) for p in products]
+    related_terms, intent_words = set(), set(BUY_COMMON)
+    for p in products:
+        terms, big = get_parent_terms(p)
+        related_terms |= set(terms)
+        intent_words |= set(BUY_CAT.get(big, []))
+    st.session_state.related_info = ", ".join(sorted(related_terms)) or "없음"
+
+    seeds = list(dict.fromkeys(list(products) + list(related_terms)))[:12]
+    frames=[]
+    for s in seeds:
+        frames.append(naver_related_keywords(s)); time.sleep(0.2)
+
+    if frames and not all(f.empty for f in frames):
+        all_kw = pd.concat(frames, ignore_index=True).drop_duplicates("키워드")
+        norm_terms = [normalize(t) for t in related_terms]
+        def is_related(kw):
+            nk = normalize(kw)
+            return any(t in nk for t in norm_products) or any(t in nk for t in norm_terms)
+        all_kw = all_kw[all_kw["키워드"].apply(is_related)].copy()
+        all_kw = all_kw[~all_kw["키워드"].str.contains("|".join(INFO_WORDS))].copy()
+        all_kw = all_kw[all_kw["검색량"]>=MIN_VOL].copy()
+        iw = list(intent_words)
+        all_kw["구매의도"] = all_kw["키워드"].apply(lambda k: sum(1 for w in iw if w in k))
+        all_kw["상품직결"] = all_kw["키워드"].apply(
+            lambda k: 1 if any(t in normalize(k) for t in norm_products) else 0)
+        all_kw["구매전환추정점수"] = (
+            all_kw["상품직결"] * 0.4 +
+            all_kw["검색량"].rank(pct=True) * 0.35 +
+            all_kw["구매의도"].rank(pct=True) * 0.25
+        ).round(3)
+        result = all_kw.sort_values(
+            ["상품직결", "구매전환추정점수"], ascending=[False, False]
+        ).head(st.session_state.get("top_n", 40))
+        st.session_state.results = result[
+            ["키워드","검색량","구매의도","구매전환추정점수"]].values.tolist()
+    else:
+        st.session_state.results = []
+
 # ---------- CSS ----------
 st.markdown("""
 <style>
-/* 상단바: 고정 (복사용 텍스트만 있어 짧음) */
+/* 상단바: 고정 */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
@@ -149,71 +193,22 @@ with st.sidebar:
     if st.session_state.limit_hit:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
-st.title("농축수산물 구매전환 키워드 추출기")
-
 # ============================================================
-# 고정 상단바: 복사용 키워드만 표시
+# 고정 상단바: 검색 + 추출 컨트롤 + 복사용 키워드
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
+    st.markdown("### 농축수산물 구매전환 키워드 추출기")
+    ta, tb = st.columns([3, 1])
+    ta.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣", key="raw_input")
+    tb.slider("키워드 개수", 10, 50, 40, key="top_n")
+    st.button("추출하기", use_container_width=True, on_click=run_extract)
+
     if st.session_state.selected:
         st.markdown(f"**복사용 키워드 ({len(st.session_state.selected)}개)**")
         st.code(",".join(st.session_state.selected) + ",", language=None)
-    else:
-        st.caption("담은 키워드가 여기에 복사용으로 표시됩니다. (관리는 왼쪽 사이드바에서)")
 
 st.divider()
-
-# ============================================================
-# 입력 + 추출
-# ============================================================
-st.write("상품명을 입력하면 상위어를 자동으로 찾아 관련 키워드를 뽑아요.")
-raw = st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣")
-top_n = st.slider("추출할 키워드 개수", 10, 50, 40)
-
-if st.button("추출하기"):
-    products = raw.split()
-    norm_products = [normalize(p) for p in products]
-    related_terms, intent_words = set(), set(BUY_COMMON)
-    with st.spinner("상위 카테고리 분석 중..."):
-        for p in products:
-            terms, big = get_parent_terms(p)
-            related_terms |= set(terms)
-            intent_words |= set(BUY_CAT.get(big, []))
-    st.session_state.related_info = ", ".join(sorted(related_terms)) or "없음"
-
-    seeds = list(dict.fromkeys(list(products) + list(related_terms)))[:12]
-    frames=[]
-    with st.spinner("연관 키워드 수집 중..."):
-        for s in seeds:
-            frames.append(naver_related_keywords(s)); time.sleep(0.2)
-
-    if frames and not all(f.empty for f in frames):
-        all_kw = pd.concat(frames, ignore_index=True).drop_duplicates("키워드")
-        norm_terms = [normalize(t) for t in related_terms]
-        def is_related(kw):
-            nk = normalize(kw)
-            return any(t in nk for t in norm_products) or any(t in nk for t in norm_terms)
-        all_kw = all_kw[all_kw["키워드"].apply(is_related)].copy()
-        all_kw = all_kw[~all_kw["키워드"].str.contains("|".join(INFO_WORDS))].copy()
-        all_kw = all_kw[all_kw["검색량"]>=MIN_VOL].copy()
-        iw = list(intent_words)
-        all_kw["구매의도"] = all_kw["키워드"].apply(lambda k: sum(1 for w in iw if w in k))
-        all_kw["상품직결"] = all_kw["키워드"].apply(
-            lambda k: 1 if any(t in normalize(k) for t in norm_products) else 0)
-        all_kw["구매전환추정점수"] = (
-            all_kw["상품직결"] * 0.4 +
-            all_kw["검색량"].rank(pct=True) * 0.35 +
-            all_kw["구매의도"].rank(pct=True) * 0.25
-        ).round(3)
-        # 입력 상품 관련도(상품직결) 최우선 → 그다음 점수 순 정렬
-        result = all_kw.sort_values(
-            ["상품직결", "구매전환추정점수"], ascending=[False, False]).head(top_n)
-        st.session_state.results = result[
-            ["키워드","검색량","구매의도","구매전환추정점수"]].values.tolist()
-    else:
-        st.session_state.results = []
-        st.error("수집된 키워드가 없습니다.")
 
 # ============================================================
 # 추출 결과 + 키워드 클릭 시 담기
@@ -233,3 +228,5 @@ if st.session_state.get("results"):
                   disabled=already, use_container_width=True)
         c2.write(f"{vol:,}")
         c3.write(f"{score}")
+elif "results" in st.session_state:
+    st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
