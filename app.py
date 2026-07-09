@@ -156,28 +156,30 @@ st.markdown("""
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-/* 앱 본문 상단 여백 제거 */
-.block-container { padding-top: 0.3rem !important; margin-top: 0rem !important; }
-[data-testid="stAppViewBlockContainer"] { padding-top: 0.3rem !important; }
+/* 앱 본문 상단 여백 완전 제거 */
+.block-container { padding-top: 0rem !important; margin-top: 0rem !important; }
+[data-testid="stAppViewBlockContainer"] { padding-top: 0rem !important; }
 section.main > div { padding-top: 0rem !important; }
+/* 최상단 요소 사이 간격 최소화 (상단바 위 빈 블록 제거) */
+div[data-testid="stVerticalBlock"] { gap: 0.4rem !important; }
 
-/* ===== 상단바: 항상 최상단 고정 ===== */
+/* ===== 상단바: 항상 최상단 고정 (위 여백 0) ===== */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
     z-index: 999;
+    margin-top: 0 !important;
     background: linear-gradient(180deg,#ffffff 0%,#fafbfc 100%);
-    padding: 10px 14px;
+    padding: 8px 14px;
     border-bottom: 1px solid #e6e8eb;
     box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     border-radius: 0 0 12px 12px;
 }
+/* 상단바 anchor가 만드는 빈 높이 제거 */
+div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
 
 /* ===== 사이드바 스타일 ===== */
-section[data-testid="stSidebar"] {
-    background: #f7f9fb;
-}
-/* 사이드바 담은 키워드 칩: 작고 촘촘하게 (33% 폭 → 한 줄 3개) */
+section[data-testid="stSidebar"] { background: #f7f9fb; }
 section[data-testid="stSidebar"] div[data-testid="column"] .stButton button {
     padding: 3px 4px !important;
     font-size: 11px !important;
@@ -196,10 +198,10 @@ section[data-testid="stSidebar"] div[data-testid="column"] .stButton button:hove
 }
 
 /* ===== 하단 결과 영역 ===== */
-/* 키워드 버튼: 글자 크게(32px), 고급스러운 테두리 */
+/* 키워드 버튼: 글자 더 크게(36px) */
 div:has(div.result-anchor) .stButton button {
     padding: 10px 16px !important;
-    font-size: 32px !important;
+    font-size: 36px !important;
     font-weight: 800 !important;
     min-height: 0 !important;
     line-height: 1.25 !important;
@@ -218,20 +220,20 @@ div:has(div.result-anchor) .stButton button:disabled {
     background: #f1f3f5 !important;
     color: #9aa0a6 !important;
 }
-/* 검색량·점수 수치: 키워드 버튼과 동일 크기(32px) */
+/* 검색량·점수 수치: 작고 얇게 */
 .metric-val {
-    font-size: 32px !important;
-    font-weight: 700 !important;
-    color: #37474f !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    color: #607d8b !important;
     line-height: 1.25 !important;
     display: flex;
     align-items: center;
     height: 100%;
 }
 .metric-head {
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    color: #78848f !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #90a4ae !important;
     letter-spacing: .3px;
 }
 </style>
@@ -255,7 +257,6 @@ with st.sidebar:
             st.session_state.limit_hit = False
             st.rerun()
         st.caption("키워드를 누르면 삭제돼요.")
-        # 한 줄에 3개씩
         kws = list(st.session_state.selected)
         for start in range(0, len(kws), 3):
             row = kws[start:start+3]
@@ -271,7 +272,7 @@ with st.sidebar:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
 # ============================================================
-# 고정 상단바: 복사용 키워드만
+# 고정 상단바: 복사용 키워드만 (위 여백 없음)
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
@@ -280,8 +281,6 @@ with st.container():
         st.code(",".join(st.session_state.selected) + ",", language=None)
     else:
         st.code(" ", language=None)
-
-st.write("")
 
 # ============================================================
 # 추출 결과 + 키워드 클릭 시 담기
