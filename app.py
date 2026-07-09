@@ -284,11 +284,10 @@ if st.session_state.get("popup"):
 
 # ---------- 상단 고정바 ----------
 with st.container():
-      st.code(kw_text, language=None)
+        st.code(kw_text, language=None)
 
-# ★ 테스트용 - 이 빨간 문구가 화면에 보이나요?
+# ★ 테스트용
 st.markdown("<h1 style='color:red'>여기 간격 테스트</h1>", unsafe_allow_html=True)
-
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
     ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
