@@ -151,7 +151,7 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
-/* 상단바: 고정 */
+/* 상단바: 항상 최상단 고정 */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
@@ -160,6 +160,11 @@ div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     padding: 8px 6px;
     border-bottom: 2px solid #e0e0e0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+/* 상단바 상품명 라벨 크게 */
+div:has(div.topbar-anchor) label p {
+    font-size: 20px !important;
+    font-weight: 700 !important;
 }
 /* 하단 결과 키워드 버튼: 글씨 크고 진하게 */
 div:has(div.result-anchor) button {
@@ -194,15 +199,15 @@ with st.sidebar:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
 # ============================================================
-# 고정 상단바: 검색 + 추출 컨트롤 + 복사용 키워드
+# 고정 상단바: 상품명 · 키워드 개수 · 추출하기 (한 줄)
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    st.markdown("### 농축수산물 구매전환 키워드 추출기")
-    ta, tb = st.columns([3, 1])
+    ta, tb, tc = st.columns([3, 1.5, 1.2])
     ta.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣", key="raw_input")
     tb.slider("키워드 개수", 10, 50, 40, key="top_n")
-    st.button("추출하기", use_container_width=True, on_click=run_extract)
+    tc.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+    tc.button("추출하기", use_container_width=True, on_click=run_extract)
 
     if st.session_state.selected:
         st.markdown(f"**복사용 키워드 ({len(st.session_state.selected)}개)**")
