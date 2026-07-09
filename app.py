@@ -12,7 +12,7 @@ N_CLIENT_SECRET = st.secrets["NAVER_CLIENT_SECRET"]
 
 MAX_KEYWORDS = 20
 MIN_VOL = 10
-TOP_N = 50   # 추출 키워드 개수 (고정)
+TOP_N = 50
 
 TOO_BROAD = ["식품","농산물","축산물","수산물","과일","채소","정육","건어물",
              "가공식품","신선식품","farm","food"]
@@ -83,17 +83,19 @@ if "selected" not in st.session_state:
     st.session_state.selected = []
 if "popup" not in st.session_state:
     st.session_state.popup = None
+if "popup_id" not in st.session_state:
+    st.session_state.popup_id = 0     # 팝업 애니메이션 재실행용 카운터
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
         st.session_state.popup = ("info", f"'{kw}' 삭제됨 · 현재 {len(st.session_state.selected)}개")
-        return
-    if len(st.session_state.selected) >= MAX_KEYWORDS:
+    elif len(st.session_state.selected) >= MAX_KEYWORDS:
         st.session_state.popup = ("warn", f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
-        return
-    st.session_state.selected.append(kw)
-    st.session_state.popup = ("ok", f"'{kw}' 담김 · 현재 {len(st.session_state.selected)} / {MAX_KEYWORDS}개")
+    else:
+        st.session_state.selected.append(kw)
+        st.session_state.popup = ("ok", f"'{kw}' 담김 · 현재 {len(st.session_state.selected)} / {MAX_KEYWORDS}개")
+    st.session_state.popup_id += 1    # 매번 증가 → 새 요소로 인식
 
 def run_extract():
     products = st.session_state.get("raw_input", "").split()
@@ -156,123 +158,103 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
     margin-bottom: 12px;
 }
 div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
-
 .bar-title { font-size: 20px; font-weight: 800; color: #263238; line-height: 1.1; margin-bottom: 4px; }
 
-/* 검색창 : 제목 아래 여백 + 버튼과 높이 맞춤 */
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] {
-    margin-top: 30px !important;
-}
+/* 입력창 높이 */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] input {
     height: 52px !important;
     font-size: 16px !important;
 }
+/* 추출 버튼: 입력창과 같은 높이 + 상단 정렬 (버튼 컬럼 위 빈 라벨로 baseline 맞춤) */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
     height: 52px !important;
-    margin-top: 30px !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
 }
+/* 버튼 컬럼 위 빈 라벨 (입력창 라벨과 같은 높이 확보) */
+.btn-spacer { height: 22px; }
 
-/* 복사용 키워드 헤더 */
-.copy-head {
-    font-size: 14px; font-weight: 800; color: #37474f;
-    margin: 8px 0 2px 2px; display:flex; align-items:center; gap:6px;
-}
-.copy-badge {
-    background: #ff5722; color:#fff; font-size:11px; font-weight:700;
-    padding:1px 9px; border-radius:10px;
-}
-/* 복사용 코드박스 : 세로 고정 + 가로 스크롤, 글자 얇게 */
+/* 복사용 키워드 */
+.copy-head { font-size: 14px; font-weight: 800; color: #37474f;
+    margin: 8px 0 2px 2px; display:flex; align-items:center; gap:6px; }
+.copy-badge { background: #ff5722; color:#fff; font-size:11px; font-weight:700;
+    padding:1px 9px; border-radius:10px; }
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] {
-    background: #f0f7ff !important;
-    border: 1.5px solid #90caf9 !important;
-    border-radius: 12px !important;
+    background: #f0f7ff !important; border: 1.5px solid #90caf9 !important; border-radius: 12px !important;
 }
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] pre,
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] code {
-    background: transparent !important;
-    color: #1565c0 !important;
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    white-space: nowrap !important;
-    overflow-x: auto !important;
-    word-break: normal !important;
+    background: transparent !important; color: #1565c0 !important;
+    font-size: 14px !important; font-weight: 400 !important;
+    white-space: nowrap !important; overflow-x: auto !important; word-break: normal !important;
 }
 
 /* ===== 화면 정중앙 팝업 ===== */
 .center-popup {
-    position: fixed;
-    top: 50%; left: 50%;
+    position: fixed; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     z-index: 100000 !important;
-    padding: 16px 28px;
-    border-radius: 14px;
-    font-size: 16px; font-weight: 700;
-    color: #fff;
+    padding: 16px 28px; border-radius: 14px;
+    font-size: 16px; font-weight: 700; color: #fff;
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
     animation: popfade 2.2s ease forwards;
-    pointer-events: none;
-    white-space: nowrap;
+    pointer-events: none; white-space: nowrap;
 }
-.pop-ok   { background: #2e7d32; }
+.pop-ok { background: #2e7d32; }
 .pop-info { background: #455a64; }
 .pop-warn { background: #e53935; }
 @keyframes popfade {
-    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
-    12%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    82%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+    12% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
 }
 
-/* ===== 결과 키워드 버튼 박스 ===== */
+/* ===== 결과 키워드 버튼 ===== */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
-    padding: 11px 15px !important;
-    min-height: 52px !important;
-    margin-top: 0 !important;
-    border-radius: 16px !important;
-    border: 1.5px solid #e6e8eb !important;
-    background: #ffffff !important;
-    text-align: left !important;
-    transition: all .15s ease !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+    padding: 11px 15px !important; min-height: 52px !important;
+    border-radius: 16px !important; border: 1.5px solid #e6e8eb !important;
+    background: #ffffff !important; text-align: left !important;
+    transition: all .15s ease !important; box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
-    font-size: 20px !important;
-    font-weight: 600 !important;
-    line-height: 1.2 !important;
+    font-size: 20px !important; font-weight: 600 !important; line-height: 1.2 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
-    border-color: #ff7043 !important;
-    box-shadow: 0 5px 16px rgba(255,112,67,0.20) !important;
+    border-color: #ff7043 !important; box-shadow: 0 5px 16px rgba(255,112,67,0.20) !important;
     transform: translateY(-1px) !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
-    background: #eef6ff !important;
-    border-color: #4a90d9 !important;
+    background: #eef6ff !important; border-color: #4a90d9 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p {
-    color: #2f6fb3 !important;
+div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p { color: #2f6fb3 !important; }
+
+/* ★ 결과 행 간격 좁게 (강하게 지정) */
+div[data-testid="stVerticalBlock"]:has(.kw-row),
+div[data-testid="stVerticalBlock"]:has(.kw-row) > div[data-testid="stVerticalBlock"] {
+    gap: 0.15rem !important;
 }
-div[data-testid="stVerticalBlock"]:has(.kw-row) { gap: 0.3rem !important; }
-div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important; align-items: center !important; }
+div[data-testid="stHorizontalBlock"]:has(.kw-row) {
+    margin-top: 0 !important; margin-bottom: 0 !important;
+    padding-top: 0 !important; padding-bottom: 0 !important;
+    align-items: center !important;
+}
 .metric-val {
-    font-size: 17px !important;
-    font-weight: 600 !important;
-    color: #607d8b !important;
-    text-align: center !important;
-    line-height: 1.2 !important;
+    font-size: 17px !important; font-weight: 600 !important;
+    color: #607d8b !important; text-align: center !important; line-height: 1.2 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 화면 정중앙 팝업 표시 ----------
+# ---------- 화면 정중앙 팝업 (매번 재실행) ----------
 if st.session_state.get("popup"):
     kind, msg = st.session_state.popup
     cls = {"ok": "pop-ok", "info": "pop-info", "warn": "pop-warn"}[kind]
-    st.markdown(f"<div class='center-popup {cls}'>{msg}</div>", unsafe_allow_html=True)
+    pid = st.session_state.popup_id
+    # data-pid로 매번 다른 요소 → 애니메이션 재실행
+    st.markdown(f"<div class='center-popup {cls}' data-pid='{pid}'>{msg}</div>", unsafe_allow_html=True)
     st.session_state.popup = None
 
 # ---------- 상단 고정바 ----------
@@ -281,9 +263,13 @@ with st.container():
     st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
 
     ta, tb = st.columns([3, 1.2])
-    ta.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
-                  key="raw_input", on_change=run_extract)
-    tb.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
+    with ta:
+        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+                      key="raw_input", on_change=run_extract)
+    with tb:
+        # 입력창 라벨과 같은 높이의 빈 공간 → 버튼이 입력창과 상단 정렬
+        st.markdown('<div class="btn-spacer"></div>', unsafe_allow_html=True)
+        st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
     n = len(st.session_state.selected)
     st.markdown(
