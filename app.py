@@ -151,13 +151,17 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
+/* 앱 전체 상단 여백 줄이기 (상단바를 화면 맨 위로) */
+div[data-testid="stAppViewContainer"] .main .block-container {
+    padding-top: 1rem !important;
+}
 /* 상단바: 항상 최상단 고정 */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
     z-index: 999;
     background-color: #ffffff;
-    padding: 8px 6px;
+    padding: 6px 6px;
     border-bottom: 2px solid #e0e0e0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
@@ -199,7 +203,7 @@ with st.sidebar:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
 # ============================================================
-# 고정 상단바: 상품명 · 키워드 개수 · 추출하기 (한 줄)
+# 고정 상단바: 상품명 · 키워드 개수 · 추출하기 + 복사용 키워드(항상 표시)
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
@@ -209,9 +213,12 @@ with st.container():
     tc.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
     tc.button("추출하기", use_container_width=True, on_click=run_extract)
 
+    # 복사용 키워드 칸: 항상 고정 표시
+    st.markdown(f"**복사용 키워드 ({len(st.session_state.selected)}개)**")
     if st.session_state.selected:
-        st.markdown(f"**복사용 키워드 ({len(st.session_state.selected)}개)**")
         st.code(",".join(st.session_state.selected) + ",", language=None)
+    else:
+        st.code(" ", language=None)
 
 st.divider()
 
