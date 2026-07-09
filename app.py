@@ -6,10 +6,18 @@ API_KEY     = st.secrets["API_KEY"]
 SECRET      = st.secrets["SECRET"]
 CUSTOMER_ID = st.secrets["CUSTOMER_ID"]
 
+# ============================================================
+# 카테고리 자동 분류
+# ============================================================
 CATEGORY_HINTS = {
-    "과일": ["사과","딸기","감귤","귤","포도","배","복숭아","머스캣","수박","참외","토마토","과일"],
-    "축산": ["한우","소고기","돼지","삼겹","닭","계란","오리","한돈","정육","갈비"],
-    "수산": ["갈치","고등어","새우","오징어","굴","전복","연어","김","건어물","생선","해물"],
+    "과일": ["사과","딸기","감귤","귤","포도","샤인","머스캣","머스켓","배","복숭아",
+            "수박","참외","자두","체리","블루베리","망고","키위","감","토마토","무화과",
+            "한라봉","천혜향","멜론","앵두","살구","석류","과일"],
+    "축산": ["한우","소고기","돼지","삼겹","목살","항정","닭","계란","오리","한돈",
+            "정육","갈비","불고기","스테이크","우유","양고기","곱창","막창","차돌"],
+    "수산": ["갈치","고등어","새우","오징어","굴","전복","연어","조기","광어","우럭",
+            "문어","낙지","주꾸미","김","미역","다시마","건어물","생선","해물","젓갈",
+            "명란","멸치","가리비","홍합","바지락","대게","킹크랩","랍스터","장어","아귀"],
 }
 
 def guess_category(kw):
@@ -18,6 +26,41 @@ def guess_category(kw):
             return cat
     return "기타"
 
+# ============================================================
+# 구매 의도 단어 (카테고리 공통 + 카테고리별)
+# ============================================================
+BUY_COMMON = ["선물","선물세트","세트","가격","특가","할인","최저가","주문","구매",
+              "택배","당일","당일배송","산지직송","직송","배송","박스","1박스","kg",
+              "1kg","2kg","3kg","5kg","10kg","대용량","소포장","실속","프리미엄","명절",
+              "추석","설","설날","제수용","차례","성묘"]
+
+BUY_BY_CAT = {
+    "과일": ["송이","알","브릭스","당도","생과일","제철","가정용","못난이","흠집",
+            "정품","특상","특대","왕대","한알","냉장","GAP"],
+    "축산": ["1++","1+","등급","한근","600g","300g","구이용","국거리","불고기용",
+            "찜용","냉장","냉동","급냉","무항생제","암소","살치","등심","안심","채끝",
+            "부채살","우삼겹","수육용","훈제"],
+    "수산": ["손질","손질완료","냉동","급냉","생물","활","활어","자연산","양식","국산",
+            "제철","횟감","구이용","조림용","탕용","무염","반건조","진공","특대","왕"],
+}
+
+# 전환과 거리가 먼 정보성 단어 → 제외
+INFO_WORDS = ["효능","효과","보관","보관법","칼로리","키우","재배","묘목","모종",
+              "레시피","요리","먹는법","손질법","뜻","영어","유래","종류","차이",
+              "가격동향","시세","도매","경매","농사","양식장","축제","축제일정",
+              "나무","꽃","씨앗","파종","수확시기"]
+
+def build_intent_words(products):
+    """입력 상품의 카테고리에 맞는 구매의도 단어를 합쳐서 반환"""
+    words = set(BUY_COMMON)
+    for p in products:
+        cat = guess_category(p)
+        words |= set(BUY_BY_CAT.get(cat, []))
+    return list(words)
+
+# ============================================================
+# 네이버 검색광고 키워드도구
+# ============================================================
 def naver_related_keywords(seed):
     base, uri = "https://api.searchad.naver.com", "/keywordstool"
     ts  = str(round(time.time()*1000))
@@ -41,27 +84,55 @@ def naver_related_keywords(seed):
                     "검색량":n(k["monthlyPcQcCnt"])+n(k["monthlyMobileQcCnt"])})
     return pd.DataFrame(out)
 
-st.title("농축수산물 연관 키워드 추출기")
-st.write("상품명을 입력하면 연관 키워드와 구매신호 점수를 뽑아드려요.")
+# ============================================================
+# 웹 화면
+# ============================================================
+st.title("농축수산물 구매전환 키워드 추출기")
+st.write("상품명을 입력하면 관련된 '구매 의도 높은' 키워드를 뽑아드려요.")
 
-raw = st.text_input("상품명 (여러 개는 띄어쓰기)", "사과 한우 갈치")
+raw = st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣")
 
 if st.button("추출하기"):
     products = raw.split()
+    intent_words = build_intent_words(products)
     frames=[]
     with st.spinner("수집 중..."):
         for p in products:
-            df = naver_related_keywords(p); df["입력상품"]=p
+            df = naver_related_keywords(p)
+            df["입력상품"]=p
             frames.append(df); time.sleep(0.3)
+
     if frames and not all(f.empty for f in frames):
         all_kw = pd.concat(frames, ignore_index=True).drop_duplicates("키워드")
+
+        # 입력 상품명이 실제 포함된 키워드만 (엉뚱한 과일 제거)
+        mask = all_kw.apply(
+            lambda r: any(p.replace(" ","") in r["키워드"].replace(" ","")
+                          for p in products), axis=1)
+        all_kw = all_kw[mask].copy()
+
+        # 정보성 키워드 제외
+        all_kw = all_kw[~all_kw["키워드"].str.contains("|".join(INFO_WORDS))].copy()
+
+        # 노이즈 제거
+        all_kw = all_kw[all_kw["검색량"]>=50].copy()
         all_kw["카테고리"] = all_kw["키워드"].apply(guess_category)
-        all_kw = all_kw[all_kw["검색량"]>=100].copy()
-        all_kw["구매신호점수"] = all_kw["검색량"].rank(pct=True).round(3)
-        result = all_kw.sort_values("구매신호점수", ascending=False)
-        st.success(f"완료! 키워드 {len(result)}개 추출")
-        st.dataframe(result[["키워드","카테고리","검색량","구매신호점수"]])
-        st.download_button("엑셀(CSV) 다운로드",
+
+        # 구매의도 점수
+        def intent_score(kw):
+            return sum(1 for w in intent_words if w in kw)
+        all_kw["구매의도"] = all_kw["키워드"].apply(intent_score)
+
+        # 구매전환 추정점수 = 검색량 + 구매의도
+        all_kw["구매전환추정점수"] = (
+            all_kw["검색량"].rank(pct=True) * 0.5 +
+            all_kw["구매의도"].rank(pct=True) * 0.5
+        ).round(3)
+
+        result = all_kw.sort_values("구매전환추정점수", ascending=False)
+        st.success(f"완료! '{raw}' 관련 키워드 {len(result)}개")
+        st.dataframe(result[["키워드","카테고리","검색량","구매의도","구매전환추정점수"]])
+        st.download_button("CSV 다운로드",
             result.to_csv(index=False).encode("utf-8-sig"),
             "연관키워드_결과.csv", "text/csv")
     else:
