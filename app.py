@@ -193,34 +193,39 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"]
 if st.session_state.get("popup"):
     kind, msg = st.session_state.popup
     color = {"ok": "#2e7d32", "info": "#455a64", "warn": "#e53935"}[kind]
-    pid = st.session_state.popup_id
-    anim = f"popfade{pid}"   # 매번 다른 애니메이션 이름 → 강제 재실행
-    st.markdown(
-        f"""
-        <style>
-        @keyframes {anim} {{
-            0%   {{ opacity: 0; transform: translate(-50%, -50%) scale(0.85); }}
-            12%  {{ opacity: 1; transform: translate(-50%, -50%) scale(1); }}
-            82%  {{ opacity: 1; transform: translate(-50%, -50%) scale(1); }}
-            100% {{ opacity: 0; transform: translate(-50%, -50%) scale(0.95); }}
-        }}
-        #popup-{pid} {{
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100000;
-            padding: 16px 28px; border-radius: 14px;
-            font-size: 16px; font-weight: 700; color: #fff;
-            background: {color};
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            animation: {anim} 2.2s ease forwards;
-            pointer-events: none; white-space: nowrap;
-        }}
-        </style>
-        <div id="popup-{pid}">{msg}</div>
-        """,
-        unsafe_allow_html=True,
-    )
+    pid = str(st.session_state.popup_id)
+    anim = "popfade" + pid
+
+    popup_html = """
+    <style>
+    @keyframes ANIM {
+        0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+        12%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        82%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+    }
+    #popup-PID {
+        position: fixed; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100000;
+        padding: 16px 28px; border-radius: 14px;
+        font-size: 16px; font-weight: 700; color: #fff;
+        background: COLOR;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        animation: ANIM 2.2s ease forwards;
+        pointer-events: none; white-space: nowrap;
+    }
+    </style>
+    <div id="popup-PID">MSG</div>
+    """
+    popup_html = (popup_html
+                  .replace("ANIM", anim)
+                  .replace("PID", pid)
+                  .replace("COLOR", color)
+                  .replace("MSG", msg))
+    st.markdown(popup_html, unsafe_allow_html=True)
     st.session_state.popup = None
+
 
 
 /* ===== 결과 키워드 버튼 ===== */
