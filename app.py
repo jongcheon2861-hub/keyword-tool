@@ -104,7 +104,7 @@ def remove_keyword(kw):
         st.session_state.selected.remove(kw)
     st.session_state.limit_hit = False
 
-# ---------- sticky 상단바 CSS ----------
+# ---------- CSS ----------
 st.markdown("""
 <style>
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
@@ -122,6 +122,13 @@ div:has(div.topbar-anchor) button {
     font-size: 11px !important;
     min-height: 0 !important;
     line-height: 1.2 !important;
+}
+/* 하단 결과 키워드 버튼만 작게 */
+div:has(div.result-anchor) button {
+    padding: 1px 6px !important;
+    font-size: 12px !important;
+    min-height: 0 !important;
+    line-height: 1.3 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -213,6 +220,7 @@ if st.button("추출하기"):
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
     st.subheader("추출된 키워드 (클릭하면 담겨요)")
+    st.markdown('<div class="result-anchor"></div>', unsafe_allow_html=True)
     h1, h2, h3 = st.columns([5, 2, 2])
     h1.markdown("**키워드**"); h2.markdown("**검색량**"); h3.markdown("**점수**")
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
