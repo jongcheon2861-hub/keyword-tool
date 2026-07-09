@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests, time, hmac, hashlib, base64
 
-st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered", initial_sidebar_state="expanded")
+st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered", initial_sidebar_state="collapsed")
 
 API_KEY = st.secrets["API_KEY"]
 SECRET = st.secrets["SECRET"]
@@ -84,7 +84,6 @@ if "limit_hit" not in st.session_state:
     st.session_state.limit_hit = False
 
 def toggle_keyword(kw):
-    # 이미 담겨 있으면 삭제, 아니면 추가 (토글)
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
         st.session_state.limit_hit = False
@@ -146,17 +145,24 @@ header[data-testid="stHeader"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; margin-top: 0 !important; }
 [data-testid="stAppViewBlockContainer"] { padding-top: 0.5rem !important; }
 
-/* 복사용 키워드 바 */
-.copybar {
+/* ===== 상단 고정바 (검색 + 복사용 키워드) ===== */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
     position: sticky; top: 0; z-index: 999;
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
-    padding: 10px 16px;
+    padding: 10px 16px 12px 16px;
     border: 1px solid #e6e8eb;
     border-radius: 14px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
     margin-bottom: 10px;
 }
-.copybar-title { font-size: 15px; font-weight: 700; color: #37474f; }
+div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
+.bar-title { font-size: 18px; font-weight: 800; color: #263238; margin-bottom: 6px; }
+.copy-title { font-size: 14px; font-weight: 700; color: #37474f; margin-top: 6px; }
+
+/* 상단바 추출 버튼 세로 정렬 */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="column"]:nth-of-type(3) .stButton {
+    margin-top: 28px !important;
+}
 
 /* ===== 결과 키워드 버튼 박스 ===== */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
@@ -169,7 +175,6 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
     transition: all .15s ease !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
-/* 버튼 안의 글자 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
@@ -182,7 +187,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
     box-shadow: 0 5px 16px rgba(255,112,67,0.20) !important;
     transform: translateY(-1px) !important;
 }
-/* 담긴 상태 강조 (kw-picked 마커가 있는 행) */
+/* 담긴 상태 강조 */
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
     background: #eef6ff !important;
     border-color: #4a90d9 !important;
@@ -192,12 +197,8 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p {
 }
 
 /* 결과 버튼 행 사이 세로 간격 축소 */
-div[data-testid="stVerticalBlock"]:has(.kw-row) {
-    gap: 0.3rem !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.kw-row) {
-    margin-bottom: 0 !important;
-}
+div[data-testid="stVerticalBlock"]:has(.kw-row) { gap: 0.3rem !important; }
+div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important; }
 
 /* 검색량·점수 수치 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !important; }
@@ -208,34 +209,29 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !importa
     text-align: center !important;
     line-height: 1.2 !important;
 }
-.metric-head {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #90a4ae !important;
-    text-align: center;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 사이드바 : 검색만 ----------
-with st.sidebar:
-    st.header("🛒 쿠팡키워드 추출기")
-    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣", key="raw_input", on_change=run_extract)
-    st.slider("추출할 키워드 개수", 10, 50, 40, key="top_n")
-    st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
-    st.divider()
-    st.caption("키워드를 누르면 담기고,\n다시 누르면 삭제돼요.")
+# ---------- 상단 고정바 : 검색 + 복사용 키워드 ----------
+with st.container():
+    st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
+
+    ta, tb, tc = st.columns([3, 1.4, 1.2])
+    ta.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+                  key="raw_input", on_change=run_extract)
+    tb.slider("키워드 개수", 10, 50, 40, key="top_n")
+    tc.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
+
+    st.markdown(f'<div class="copy-title">📋 복사용 키워드 ({len(st.session_state.selected)}개)</div>',
+                unsafe_allow_html=True)
+    if st.session_state.selected:
+        st.code(",".join(st.session_state.selected) + ",", language=None)
+    else:
+        st.code(" ", language=None)
+
     if st.session_state.limit_hit:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
-
-# ---------- 상단 복사용 키워드 바 ----------
-st.markdown('<div class="copybar">'
-            f'<span class="copybar-title">📋 복사용 키워드 ({len(st.session_state.selected)}개)</span>'
-            '</div>', unsafe_allow_html=True)
-if st.session_state.selected:
-    st.code(",".join(st.session_state.selected) + ",", language=None)
-else:
-    st.code(" ", language=None)
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
@@ -244,7 +240,6 @@ if st.session_state.get("results"):
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
         c1, cgap, c2, c3 = st.columns([2.1, 0.9, 1.4, 1.2])
         already = kw in st.session_state.selected
-        # 담긴 행은 kw-picked 마커도 추가 → 파란 강조
         marker = "kw-row kw-picked" if already else "kw-row"
         c1.markdown(f"<div class='{marker}'></div>", unsafe_allow_html=True)
         label = f"✔ {kw}" if already else kw
