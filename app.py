@@ -12,6 +12,7 @@ N_CLIENT_SECRET = st.secrets["NAVER_CLIENT_SECRET"]
 
 MAX_KEYWORDS = 20
 MIN_VOL = 10
+TOP_N = 50   # 추출 키워드 개수 (고정)
 
 TOO_BROAD = ["식품","농산물","축산물","수산물","과일","채소","정육","건어물",
              "가공식품","신선식품","farm","food"]
@@ -81,7 +82,7 @@ def naver_related_keywords(seed):
 if "selected" not in st.session_state:
     st.session_state.selected = []
 if "popup" not in st.session_state:
-    st.session_state.popup = None      # 화면 중앙 팝업 메시지
+    st.session_state.popup = None
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
@@ -130,7 +131,7 @@ def run_extract():
             all_kw["검색량"].rank(pct=True) * 0.35 +
             all_kw["구매의도"].rank(pct=True) * 0.25
         ).round(3)
-        result = all_kw.sort_values(["상품직결", "구매전환추정점수"], ascending=[False, False]).head(st.session_state.get("top_n", 40))
+        result = all_kw.sort_values(["상품직결", "구매전환추정점수"], ascending=[False, False]).head(TOP_N)
         st.session_state.results = result[["키워드","검색량","구매의도","구매전환추정점수"]].values.tolist()
     else:
         st.session_state.results = []
@@ -157,26 +158,20 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
 div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
 
 .bar-title { font-size: 20px; font-weight: 800; color: #263238; line-height: 1.1; margin-bottom: 4px; }
-.mini-label { font-size: 12px; font-weight: 600; color: #78909c; margin: 4px 0 -6px 2px; }
 
-/* 검색창 : 제목 아래로 여백 + 안쪽 오른쪽에 돋보기 아이콘 */
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="column"]:nth-of-type(1) div[data-testid="stTextInput"] {
-    margin-top: 18px !important;
-    position: relative !important;
-}
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"]::after {
-    content: "🔍";
-    position: absolute;
-    right: 16px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 20px;
-    opacity: 0.6;
-    pointer-events: none;
+/* 검색창 : 제목 아래 여백 + 버튼과 높이 맞춤 */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] {
+    margin-top: 30px !important;
 }
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] input {
     height: 52px !important;
     font-size: 16px !important;
-    padding-right: 46px !important;   /* 돋보기 자리 확보 */
+}
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
+    height: 52px !important;
+    margin-top: 30px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
 }
 
 /* 복사용 키워드 헤더 */
@@ -234,6 +229,7 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"]
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
     padding: 11px 15px !important;
     min-height: 52px !important;
+    margin-top: 0 !important;
     border-radius: 16px !important;
     border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important;
@@ -272,27 +268,22 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important;
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 화면 정중앙 팝업 표시 (1회성) ----------
+# ---------- 화면 정중앙 팝업 표시 ----------
 if st.session_state.get("popup"):
     kind, msg = st.session_state.popup
     cls = {"ok": "pop-ok", "info": "pop-info", "warn": "pop-warn"}[kind]
     st.markdown(f"<div class='center-popup {cls}'>{msg}</div>", unsafe_allow_html=True)
-    st.session_state.popup = None      # 한 번 보여주고 초기화
+    st.session_state.popup = None
 
 # ---------- 상단 고정바 ----------
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
 
-    left, right = st.columns([2.3, 1.7])
-
-    with left:
-        st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
-        st.text_input("상품명 (여러 개는 띄어쓰기 · Enter로 검색)", "샤인머스캣",
-                      key="raw_input", on_change=run_extract)
-
-    with right:
-        st.markdown('<div class="mini-label">키워드 개수</div>', unsafe_allow_html=True)
-        st.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
+    ta, tb = st.columns([3, 1.2])
+    ta.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+                  key="raw_input", on_change=run_extract)
+    tb.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
     n = len(st.session_state.selected)
     st.markdown(
