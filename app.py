@@ -162,16 +162,17 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; }
 
-/* 상단 고정바 */
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor):not(:has(div[data-testid="stVerticalBlock"] div.topbar-anchor)) {
+/* ★ 상단 고정바 : border=True 컨테이너(stVerticalBlockBorderWrapper)를 sticky */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div.topbar-anchor) {
     position: sticky !important;
     top: 0 !important;
     z-index: 999 !important;
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%) !important;
-    padding: 12px 18px 14px 18px !important;
+    padding: 14px 18px !important;
     border: 1px solid #e6e8eb !important;
     border-radius: 16px !important;
     box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
+    margin-bottom: 40px !important;
 }
 div.topbar-anchor { height: 0; margin: 0; padding: 0; }
 
@@ -266,8 +267,8 @@ if st.session_state.get("popup"):
     st.markdown(html, unsafe_allow_html=True)
     st.session_state.popup = None
 
-# ---------- 상단 고정바 ----------
-with st.container():
+# ---------- 상단 고정바 (border=True 컨테이너) ----------
+with st.container(border=True):
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
     ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
@@ -287,13 +288,6 @@ with st.container():
     else:
         kw_text = " "
     st.code(kw_text, language=None)
-
-# ---------- ★ 진단용 초록 띠 (이게 보이면 코드 반영 O) ----------
-st.markdown(
-    "<div style='height:40px;background:#43e97b;color:#fff;"
-    "text-align:center;line-height:40px;font-weight:800;border-radius:8px;'>"
-    "간격 확인 (이 초록띠가 보이면 코드가 반영된 것)</div>",
-    unsafe_allow_html=True)
 
 # ---------- 결과 표시 ----------
 if st.session_state.get("results"):
