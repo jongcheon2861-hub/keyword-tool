@@ -151,7 +151,7 @@ with st.container():
         st.caption("키워드를 누르면 삭제돼요.  복사용 ↓")
         st.code(",".join(st.session_state.selected) + ",", language=None)
     else:
-        st.caption("아직 담은 키워드가 없어요. 아래에서 '➕ 담기'를 눌러보세요.")
+        st.caption("아직 담은 키워드가 없어요. 아래에서 키워드를 눌러 담아보세요.")
 
     if st.session_state.limit_hit:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요! 위에서 일부를 지운 뒤 추가하세요.")
@@ -208,18 +208,19 @@ if st.button("추출하기"):
         st.error("수집된 키워드가 없습니다.")
 
 # ============================================================
-# 추출 결과 + ➕ 담기 버튼
+# 추출 결과 + 키워드 클릭 시 담기
 # ============================================================
 if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
-    st.subheader("추출된 키워드")
-    h1, h2, h3, h4 = st.columns([1.4, 4, 2, 2])
-    h1.markdown("**담기**"); h2.markdown("**키워드**")
-    h3.markdown("**검색량**"); h4.markdown("**점수**")
+    st.subheader("추출된 키워드 (클릭하면 담겨요)")
+    h1, h2, h3 = st.columns([5, 2, 2])
+    h1.markdown("**키워드**"); h2.markdown("**검색량**"); h3.markdown("**점수**")
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, c2, c3, c4 = st.columns([1.4, 4, 2, 2])
+        c1, c2, c3 = st.columns([5, 2, 2])
         already = kw in st.session_state.selected
-        c1.button("담김" if already else "➕ 담기",
-                  key=f"add_{i}", on_click=add_keyword, args=(kw,),
+        label = f"✔ {kw}" if already else kw
+        c1.button(label, key=f"pick_{i}",
+                  on_click=add_keyword, args=(kw,),
                   disabled=already, use_container_width=True)
-        c2.write(kw); c3.write(f"{vol:,}"); c4.write(f"{score}")
+        c2.write(f"{vol:,}")
+        c3.write(f"{score}")
