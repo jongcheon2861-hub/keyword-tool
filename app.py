@@ -107,6 +107,7 @@ def remove_keyword(kw):
 # ---------- CSS ----------
 st.markdown("""
 <style>
+/* 상단바: 고정 + 최대 높이 제한(화면 40%), 넘치면 내부 스크롤 */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
@@ -115,6 +116,8 @@ div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     padding: 8px 6px;
     border-bottom: 2px solid #e0e0e0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    max-height: 40vh;
+    overflow-y: auto;
 }
 /* 상단바 칩 버튼 작게 */
 div:has(div.topbar-anchor) button {
@@ -123,11 +126,11 @@ div:has(div.topbar-anchor) button {
     min-height: 0 !important;
     line-height: 1.2 !important;
 }
-/* 하단 결과 키워드 버튼: 글씨 크고 볼드 */
+/* 하단 결과 키워드 버튼: 글씨 크고 진하게 */
 div:has(div.result-anchor) button {
-    padding: 6px 10px !important;
-    font-size: 24px !important;
-    font-weight: 700 !important;
+    padding: 8px 12px !important;
+    font-size: 30px !important;
+    font-weight: 800 !important;
     min-height: 0 !important;
     line-height: 1.3 !important;
 }
