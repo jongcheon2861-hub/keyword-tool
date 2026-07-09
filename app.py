@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests, time, hmac, hashlib, base64
 
-st.set_page_config(layout="centered")
+st.set_page_config(layout="centered", initial_sidebar_state="expanded")
 
 API_KEY     = st.secrets["API_KEY"]
 SECRET      = st.secrets["SECRET"]
@@ -107,7 +107,7 @@ def remove_keyword(kw):
 # ---------- CSS ----------
 st.markdown("""
 <style>
-/* 상단바: 고정 + 최대 높이 제한(화면 40%), 넘치면 내부 스크롤 */
+/* 상단바: 고정 (복사용 텍스트만 있어 짧음) */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     position: sticky;
     top: 0;
@@ -116,15 +116,6 @@ div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     padding: 8px 6px;
     border-bottom: 2px solid #e0e0e0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    max-height: 40vh;
-    overflow-y: auto;
-}
-/* 상단바 칩 버튼 작게 */
-div:has(div.topbar-anchor) button {
-    padding: 2px 6px !important;
-    font-size: 11px !important;
-    min-height: 0 !important;
-    line-height: 1.2 !important;
 }
 /* 하단 결과 키워드 버튼: 글씨 크고 진하게 */
 div:has(div.result-anchor) button {
@@ -137,35 +128,39 @@ div:has(div.result-anchor) button {
 </style>
 """, unsafe_allow_html=True)
 
-st.title("농축수산물 구매전환 키워드 추출기")
-
 # ============================================================
-# 고정 상단바: 담은 키워드 (칩 형태, 클릭하면 삭제)
+# 사이드바: 담은 키워드 (칩 형태, 클릭하면 삭제)
 # ============================================================
-with st.container():
-    st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    top1, top2 = st.columns([6, 1])
-    top1.markdown(f"**담은 키워드  {len(st.session_state.selected)} / {MAX_KEYWORDS}**")
+with st.sidebar:
+    st.header(f"담은 키워드  {len(st.session_state.selected)} / {MAX_KEYWORDS}")
     if st.session_state.selected:
-        if top2.button("비우기", use_container_width=True):
+        if st.button("전체 비우기", use_container_width=True):
             st.session_state.selected = []
             st.session_state.limit_hit = False
             st.rerun()
-
-    if st.session_state.selected:
-        cols = st.columns(5)   # 한 줄에 5개씩
+        st.caption("키워드를 누르면 삭제돼요.")
         for idx, kw in enumerate(list(st.session_state.selected)):
-            col = cols[idx % 5]
-            col.button(f"{kw} ✕", key=f"chip_{idx}",
-                       on_click=remove_keyword, args=(kw,),
-                       use_container_width=True)
-        st.caption("키워드를 누르면 삭제돼요.  복사용 ↓")
-        st.code(",".join(st.session_state.selected) + ",", language=None)
+            st.button(f"{kw}  ✕", key=f"chip_{idx}",
+                      on_click=remove_keyword, args=(kw,),
+                      use_container_width=True)
     else:
-        st.caption("아직 담은 키워드가 없어요. 아래에서 키워드를 눌러 담아보세요.")
+        st.caption("아직 담은 키워드가 없어요.\n오른쪽에서 키워드를 눌러 담아보세요.")
 
     if st.session_state.limit_hit:
-        st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요! 위에서 일부를 지운 뒤 추가하세요.")
+        st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
+
+st.title("농축수산물 구매전환 키워드 추출기")
+
+# ============================================================
+# 고정 상단바: 복사용 키워드만 표시
+# ============================================================
+with st.container():
+    st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
+    if st.session_state.selected:
+        st.markdown(f"**복사용 키워드 ({len(st.session_state.selected)}개)**")
+        st.code(",".join(st.session_state.selected) + ",", language=None)
+    else:
+        st.caption("담은 키워드가 여기에 복사용으로 표시됩니다. (관리는 왼쪽 사이드바에서)")
 
 st.divider()
 
