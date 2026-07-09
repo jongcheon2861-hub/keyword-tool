@@ -160,20 +160,24 @@ header[data-testid="stHeader"] { display: none !important; }
 }
 .copybar-title { font-size: 15px; font-weight: 700; color: #37474f; }
 
-/* ===== 결과 키워드 버튼 : row-marker 다음 형제 블록의 버튼을 타겟 ===== */
-.stElementContainer:has(> div > .kw-row) + div .stButton button,
+/* ===== 결과 키워드 버튼 박스 ===== */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
     padding: 16px 22px !important;
-    font-size: 34px !important;
-    font-weight: 800 !important;
     min-height: 74px !important;
-    line-height: 1.2 !important;
     border-radius: 16px !important;
     border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important;
     text-align: left !important;
     transition: all .15s ease !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+}
+/* ★ 버튼 '안의 글자'에 폰트 크기 직접 지정 (핵심 수정) */
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
     border-color: #ff7043 !important;
@@ -182,9 +186,12 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:disabled {
     background: #eef6ff !important;
-    color: #4a90d9 !important;
     border-color: #cfe3f7 !important;
 }
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:disabled p {
+    color: #4a90d9 !important;
+}
+
 
 /* 검색량·점수 수치 : 세로 중앙 정렬, 적당한 크기 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !important; }
