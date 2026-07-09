@@ -63,7 +63,6 @@ def get_parent_terms(product):
             terms = list(cats)
     except Exception:
         pass
-    # 내부 카테고리 매핑으로 큰 분류 추정
     npd = normalize(product)
     for cat, members in CATEGORY_MAP.items():
         if any(normalize(m) in npd or npd in normalize(m) for m in members):
@@ -177,22 +176,10 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 
-/* ★ sticky 동작을 위해 상위 컨테이너 overflow 해제 */
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"],
-section.main,
-.block-container,
-[data-testid="stAppViewBlockContainer"] {
-    overflow: visible !important;
-}
-.block-container {
-    padding-top: 0.5rem !important;
-    margin-top: 0 !important;
-}
+.block-container { padding-top: 0.5rem !important; margin-top: 0 !important; }
 
-/* ★ 상단 고정바 : topbar-anchor 를 가진 블록을 sticky */
-div[data-testid="stVerticalBlock"]:has(> div div.topbar-anchor),
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
+/* ★ 상단 고정바 : 앵커의 '가장 안쪽' 블록만 sticky (전체 고정 방지) */
+div[data-testid="stVerticalBlock"]:has(> div.element-container div.topbar-anchor):not(:has(div[data-testid="stVerticalBlock"] div.topbar-anchor)) {
     position: sticky !important;
     top: 0 !important;
     z-index: 999 !important;
@@ -203,20 +190,13 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
     box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
     margin-bottom: 14px !important;
 }
-
-/* 앵커 자체는 공간 차지 안 하게 */
 div.topbar-anchor { height: 0; margin: 0; padding: 0; }
 
 /* 타이틀 */
-.bar-title {
-    font-size: 22px; font-weight: 800; color: #263238;
-    margin-bottom: 8px;
-}
+.bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
 
 /* 입력창 · 버튼 높이 맞춤 */
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] input {
-    height: 52px !important; font-size: 16px !important;
-}
+div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
     height: 52px !important; margin-top: 30px !important;
     font-weight: 700 !important; border-radius: 10px !important;
@@ -224,32 +204,22 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
 
 /* 복사용 키워드 헤더 */
 .copy-head { font-size: 15px; font-weight: 700; color: #37474f; margin: 4px 0 6px 0; }
-.copy-badge {
-    background: #1565c0; color: #fff; font-size: 12px; font-weight: 700;
-    padding: 2px 10px; border-radius: 12px; margin-left: 6px;
-}
+.copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
+    padding:2px 10px; border-radius:12px; margin-left:6px; }
 
-/* 복사용 코드박스 : 얇은 글씨 · 가로 스크롤 */
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] pre,
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) code {
-    background: #f0f7ff !important;
-    border: 1.5px solid #90caf9 !important;
-    color: #1565c0 !important;
-    font-weight: 400 !important;
-    white-space: nowrap !important;
-    overflow-x: auto !important;
+/* 복사용 코드박스 */
+[data-testid="stCode"] pre, code {
+    background:#f0f7ff !important; border:1.5px solid #90caf9 !important;
+    color:#1565c0 !important; font-weight:400 !important;
+    white-space:nowrap !important; overflow-x:auto !important;
 }
 
 /* 결과 키워드 버튼 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
-    padding: 11px 15px !important;
-    min-height: 52px !important;
-    border-radius: 14px !important;
-    border: 1.5px solid #e6e8eb !important;
-    background: #ffffff !important;
-    text-align: left !important;
-    transition: all .15s ease !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+    padding: 11px 15px !important; min-height: 52px !important;
+    border-radius: 14px !important; border: 1.5px solid #e6e8eb !important;
+    background: #ffffff !important; text-align: left !important;
+    transition: all .15s ease !important; box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
@@ -257,38 +227,40 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
     font-size: 20px !important; font-weight: 500 !important; line-height: 1.2 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:hover {
-    border-color: #ff7043 !important;
-    box-shadow: 0 4px 12px rgba(255,112,67,0.18) !important;
+    border-color:#ff7043 !important; box-shadow:0 4px 12px rgba(255,112,67,0.18) !important;
     transform: translateY(-1px);
 }
-/* 담긴 상태 */
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
-    background: #eef6ff !important; border-color: #4a90d9 !important; color: #1565c0 !important;
+    background:#eef6ff !important; border-color:#4a90d9 !important; color:#1565c0 !important;
 }
 
-/* 결과 행 간격 좁힘 */
+/* ★ 결과 행 간격 좁힘 */
 div[data-testid="stVerticalBlock"]:has(.kw-row) { gap: 0.15rem !important; }
+div[data-testid="stVerticalBlock"] > div:has(.kw-row) { margin-bottom: 0 !important; }
+div[data-testid="stHorizontalBlock"]:has(.kw-row) {
+    margin-top: 0 !important; margin-bottom: 0 !important; gap: 0.4rem !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton { margin-bottom: 0 !important; }
 
 /* 지표 텍스트 */
-.metric-val {
-    min-height: 52px; display: flex; align-items: center; justify-content: center;
-    font-size: 17px; font-weight: 600; color: #607d8b;
-}
+.metric-val { min-height:52px; display:flex; align-items:center; justify-content:center;
+    font-size:17px; font-weight:600; color:#607d8b; }
 
-/* ===== 알림(토스트) 예쁜 스타일 ===== */
+/* ===== ★ 알림(토스트) : 60% 축소 + 밝은 색상 ===== */
 div[data-testid="stToast"] {
-    min-width: 130px !important;
-    padding: 16px 26px !important;
-    border-radius: 20px !important;
+    min-width: 52px !important;
+    width: auto !important;
+    padding: 7px 12px !important;
+    border-radius: 12px !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 45%, #f093fb 100%) !important;
-    box-shadow: 0 14px 34px rgba(118, 75, 162, 0.45) !important;
+    box-shadow: 0 6px 16px rgba(118, 75, 162, 0.40) !important;
     border: none !important;
 }
 div[data-testid="stToast"] * {
     color: #ffffff !important;
-    font-size: 26px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.5px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
 }
 </style>
 """, unsafe_allow_html=True)
