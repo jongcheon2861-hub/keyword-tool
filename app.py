@@ -171,7 +171,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
     transition: all .15s ease !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
-/* ★ 버튼 '안의 글자'에 폰트 크기 직접 지정 (핵심 수정) */
+/* ★ 버튼 '안의 글자'에 폰트 크기 직접 지정 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button p,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button div,
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button span {
@@ -192,6 +192,13 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button:disabled p {
     color: #4a90d9 !important;
 }
 
+/* ★ 결과 버튼 행 사이 세로 간격 축소 */
+div[data-testid="stVerticalBlock"]:has(.kw-row) {
+    gap: 0.3rem !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kw-row) {
+    margin-bottom: 0 !important;
+}
 
 /* 검색량·점수 수치 : 세로 중앙 정렬, 적당한 크기 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) { align-items: center !important; }
@@ -252,8 +259,8 @@ if st.session_state.get("results"):
     st.info("자동 인식된 상위어: " + st.session_state.get("related_info",""))
     st.subheader("추출된 키워드 · 클릭하면 담겨요 (관련도 높은 순)")
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, c2, c3 = st.columns([3, 1.4, 1.2])
-        # 이 행을 식별하는 마커. 같은 HorizontalBlock 안에 있으므로 :has()로 버튼 타겟팅
+        # ★ 키워드 폭 3→2.1 축소, 여백 컬럼 0.9 추가 (가로 길이 약 30% ↓)
+        c1, cgap, c2, c3 = st.columns([2.1, 0.9, 1.4, 1.2])
         c1.markdown("<div class='kw-row'></div>", unsafe_allow_html=True)
         already = kw in st.session_state.selected
         label = f"✔ {kw}" if already else kw
