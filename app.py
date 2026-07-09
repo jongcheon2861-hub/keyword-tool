@@ -116,6 +116,13 @@ div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
     border-bottom: 2px solid #e0e0e0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
+/* 상단바 칩 버튼 작게 */
+div:has(div.topbar-anchor) button {
+    padding: 2px 6px !important;
+    font-size: 11px !important;
+    min-height: 0 !important;
+    line-height: 1.2 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -135,10 +142,10 @@ with st.container():
             st.rerun()
 
     if st.session_state.selected:
-        cols = st.columns(5)   # 한 줄에 5개씩
+        cols = st.columns(10)   # 한 줄에 10개씩
         for idx, kw in enumerate(list(st.session_state.selected)):
-            col = cols[idx % 5]
-            col.button(f"{kw}  ✕", key=f"chip_{idx}",
+            col = cols[idx % 10]
+            col.button(f"{kw} ✕", key=f"chip_{idx}",
                        on_click=remove_keyword, args=(kw,),
                        use_container_width=True)
         st.caption("키워드를 누르면 삭제돼요.  복사용 ↓")
