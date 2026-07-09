@@ -81,21 +81,16 @@ def naver_related_keywords(seed):
 # ---------- 상태 ----------
 if "selected" not in st.session_state:
     st.session_state.selected = []
-if "popup" not in st.session_state:
-    st.session_state.popup = None
-if "popup_id" not in st.session_state:
-    st.session_state.popup_id = 0     # 팝업 애니메이션 재실행용 카운터
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
         st.session_state.selected.remove(kw)
-        st.session_state.popup = ("info", f"'{kw}' 삭제됨 · 현재 {len(st.session_state.selected)}개")
+        st.toast("'" + kw + "' 삭제됨 · 현재 " + str(len(st.session_state.selected)) + "개", icon="🗑️")
     elif len(st.session_state.selected) >= MAX_KEYWORDS:
-        st.session_state.popup = ("warn", f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
+        st.toast("최대 " + str(MAX_KEYWORDS) + "개까지만 담을 수 있어요!", icon="⚠️")
     else:
         st.session_state.selected.append(kw)
-        st.session_state.popup = ("ok", f"'{kw}' 담김 · 현재 {len(st.session_state.selected)} / {MAX_KEYWORDS}개")
-    st.session_state.popup_id += 1    # 매번 증가 → 새 요소로 인식
+        st.toast("'" + kw + "' 담김 · 현재 " + str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS) + "개", icon="✅")
 
 def run_extract():
     products = st.session_state.get("raw_input", "").split()
@@ -147,7 +142,7 @@ header[data-testid="stHeader"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; margin-top: 0 !important; }
 [data-testid="stAppViewBlockContainer"] { padding-top: 0.5rem !important; }
 
-/* ===== 상단 고정바 ===== */
+/* 상단 고정바 */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
     position: sticky; top: 0; z-index: 999;
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
@@ -160,21 +155,17 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
 div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
 .bar-title { font-size: 20px; font-weight: 800; color: #263238; line-height: 1.1; margin-bottom: 4px; }
 
-/* 입력창 높이 */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] input {
     height: 52px !important;
     font-size: 16px !important;
 }
-/* 추출 버튼: 입력창과 같은 높이 + 상단 정렬 (버튼 컬럼 위 빈 라벨로 baseline 맞춤) */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
     height: 52px !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
 }
-/* 버튼 컬럼 위 빈 라벨 (입력창 라벨과 같은 높이 확보) */
 .btn-spacer { height: 22px; }
 
-/* 복사용 키워드 */
 .copy-head { font-size: 14px; font-weight: 800; color: #37474f;
     margin: 8px 0 2px 2px; display:flex; align-items:center; gap:6px; }
 .copy-badge { background: #ff5722; color:#fff; font-size:11px; font-weight:700;
@@ -189,46 +180,7 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"]
     white-space: nowrap !important; overflow-x: auto !important; word-break: normal !important;
 }
 
-# ---------- 화면 정중앙 팝업 (매번 재실행 보장) ----------
-if st.session_state.get("popup"):
-    kind, msg = st.session_state.popup
-    color = {"ok": "#2e7d32", "info": "#455a64", "warn": "#e53935"}[kind]
-    pid = str(st.session_state.popup_id)
-    anim = "popfade" + pid
-
-    popup_html = """
-    <style>
-    @keyframes ANIM {
-        0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
-        12%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        82%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-    }
-    #popup-PID {
-        position: fixed; top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 100000;
-        padding: 16px 28px; border-radius: 14px;
-        font-size: 16px; font-weight: 700; color: #fff;
-        background: COLOR;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-        animation: ANIM 2.2s ease forwards;
-        pointer-events: none; white-space: nowrap;
-    }
-    </style>
-    <div id="popup-PID">MSG</div>
-    """
-    popup_html = (popup_html
-                  .replace("ANIM", anim)
-                  .replace("PID", pid)
-                  .replace("COLOR", color)
-                  .replace("MSG", msg))
-    st.markdown(popup_html, unsafe_allow_html=True)
-    st.session_state.popup = None
-
-
-
-/* ===== 결과 키워드 버튼 ===== */
+/* 결과 키워드 버튼 */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
     padding: 11px 15px !important; min-height: 52px !important;
     border-radius: 16px !important; border: 1.5px solid #e6e8eb !important;
@@ -249,7 +201,6 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p { color: #2f6fb3 !important; }
 
-/* ★ 결과 행 간격 좁게 (강하게 지정) */
 div[data-testid="stVerticalBlock"]:has(.kw-row),
 div[data-testid="stVerticalBlock"]:has(.kw-row) > div[data-testid="stVerticalBlock"] {
     gap: 0.15rem !important;
@@ -266,15 +217,6 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) {
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 화면 정중앙 팝업 (매번 재실행) ----------
-if st.session_state.get("popup"):
-    kind, msg = st.session_state.popup
-    cls = {"ok": "pop-ok", "info": "pop-info", "warn": "pop-warn"}[kind]
-    pid = st.session_state.popup_id
-    # data-pid로 매번 다른 요소 → 애니메이션 재실행
-    st.markdown(f"<div class='center-popup {cls}' data-pid='{pid}'>{msg}</div>", unsafe_allow_html=True)
-    st.session_state.popup = None
-
 # ---------- 상단 고정바 ----------
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
@@ -285,13 +227,12 @@ with st.container():
         st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
                       key="raw_input", on_change=run_extract)
     with tb:
-        # 입력창 라벨과 같은 높이의 빈 공간 → 버튼이 입력창과 상단 정렬
         st.markdown('<div class="btn-spacer"></div>', unsafe_allow_html=True)
         st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
     n = len(st.session_state.selected)
     st.markdown(
-        f'<div class="copy-head">📋 복사용 키워드 <span class="copy-badge">{n}개</span></div>',
+        '<div class="copy-head">📋 복사용 키워드 <span class="copy-badge">' + str(n) + '개</span></div>',
         unsafe_allow_html=True,
     )
     if st.session_state.selected:
@@ -307,11 +248,11 @@ if st.session_state.get("results"):
         c1, cgap, c2, c3 = st.columns([2.1, 0.9, 1.4, 1.2])
         already = kw in st.session_state.selected
         marker = "kw-row kw-picked" if already else "kw-row"
-        c1.markdown(f"<div class='{marker}'></div>", unsafe_allow_html=True)
-        label = f"✔ {kw}" if already else kw
-        c1.button(label, key=f"pick_{i}", on_click=toggle_keyword, args=(kw,),
+        c1.markdown("<div class='" + marker + "'></div>", unsafe_allow_html=True)
+        label = ("✔ " + kw) if already else kw
+        c1.button(label, key="pick_" + str(i), on_click=toggle_keyword, args=(kw,),
                   use_container_width=True)
-        c2.markdown(f"<div class='metric-val'>{vol:,}</div>", unsafe_allow_html=True)
-        c3.markdown(f"<div class='metric-val'>{score}</div>", unsafe_allow_html=True)
+        c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>", unsafe_allow_html=True)
+        c3.markdown("<div class='metric-val'>" + str(score) + "</div>", unsafe_allow_html=True)
 elif "results" in st.session_state:
     st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
