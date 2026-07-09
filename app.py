@@ -151,9 +151,11 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
-/* 앱 전체 상단 여백 줄이기 (상단바를 화면 맨 위로) */
+/* Streamlit 기본 상단 헤더 숨김 (상단 여백 원인 제거) */
+header[data-testid="stHeader"] { display: none !important; }
+/* 앱 전체 상단 여백 제거 */
 div[data-testid="stAppViewContainer"] .main .block-container {
-    padding-top: 1rem !important;
+    padding-top: 0.5rem !important;
 }
 /* 상단바: 항상 최상단 고정 */
 div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
@@ -169,6 +171,13 @@ div[data-testid="stVerticalBlock"] > div:has(div.topbar-anchor) {
 div:has(div.topbar-anchor) label p {
     font-size: 20px !important;
     font-weight: 700 !important;
+}
+/* 키워드 개수 라벨(작게) - 커스텀 클래스 */
+.small-label {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    margin-bottom: -8px !important;
+    color: #555 !important;
 }
 /* 하단 결과 키워드 버튼: 글씨 크고 진하게 */
 div:has(div.result-anchor) button {
@@ -203,13 +212,14 @@ with st.sidebar:
         st.error(f"최대 {MAX_KEYWORDS}개까지만 담을 수 있어요!")
 
 # ============================================================
-# 고정 상단바: 상품명 · 키워드 개수 · 추출하기 + 복사용 키워드(항상 표시)
+# 고정 상단바: 상품명 · 키워드개수(옆) · 추출하기 + 복사용 키워드
 # ============================================================
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    ta, tb, tc = st.columns([3, 1.5, 1.2])
+    ta, tb, tc = st.columns([3, 2, 1.2])
     ta.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣", key="raw_input")
-    tb.slider("키워드 개수", 10, 50, 40, key="top_n")
+    tb.markdown('<div class="small-label">키워드 개수</div>', unsafe_allow_html=True)
+    tb.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
     tc.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
     tc.button("추출하기", use_container_width=True, on_click=run_extract)
 
