@@ -156,32 +156,45 @@ div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
 }
 div.topbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
 
-/* 라벨 스타일 */
 .bar-title { font-size: 20px; font-weight: 800; color: #263238; line-height: 1.1; margin-bottom: 4px; }
 .mini-label { font-size: 12px; font-weight: 600; color: #78909c; margin: 4px 0 -6px 2px; }
 
-/* 상단바 추출 버튼 : 게이지와 높이 맞춤 */
+/* 검색창 높이 키워 오른쪽 버튼 하단과 맞춤 */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) div[data-testid="stTextInput"] input {
+    height: 52px !important;
+    font-size: 16px !important;
+}
+/* 추출 버튼 높이 */
 div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) .stButton button {
-    height: 44px !important;
+    height: 52px !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
 }
 
-/* ===== 복사용 키워드 블록 (강조) ===== */
-.copybox {
-    background: linear-gradient(135deg,#fff7f2 0%,#fff1e8 100%);
-    border: 1.5px solid #ffccb0;
-    border-radius: 14px;
-    padding: 10px 14px 4px 14px;
-    margin-top: 10px;
+/* ===== 복사용 키워드 나열 영역(코드박스) 강조 ===== */
+.copy-head {
+    font-size: 14px; font-weight: 800; color: #37474f;
+    margin: 8px 0 2px 2px; display:flex; align-items:center; gap:6px;
 }
-.copybox-title {
-    font-size: 14px; font-weight: 800; color: #e2521c;
-    display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+.copy-badge {
+    background: #ff5722; color:#fff; font-size:11px; font-weight:700;
+    padding:1px 9px; border-radius:10px;
 }
-.copybox-badge {
-    background: #ff5722; color: #fff; font-size: 11px; font-weight: 700;
-    padding: 1px 9px; border-radius: 10px;
+/* st.code 컨테이너 자체를 눈에 띄게 */
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] {
+    background: #f0f7ff !important;
+    border: 1.5px solid #90caf9 !important;
+    border-radius: 12px !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] pre,
+div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) [data-testid="stCode"] code {
+    background: transparent !important;
+    color: #1565c0 !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
 }
 
 /* ===== 결과 키워드 버튼 박스 ===== */
@@ -215,11 +228,9 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p {
     color: #2f6fb3 !important;
 }
 
-/* 결과 버튼 행 간격 축소 */
 div[data-testid="stVerticalBlock"]:has(.kw-row) { gap: 0.3rem !important; }
 div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important; align-items: center !important; }
 
-/* 검색량·점수 수치 */
 .metric-val {
     font-size: 17px !important;
     font-weight: 600 !important;
@@ -234,7 +245,6 @@ div[data-testid="stHorizontalBlock"]:has(.kw-row) { margin-bottom: 0 !important;
 with st.container():
     st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
 
-    # 좌: 제목/상품명/검색창   우: 키워드개수/게이지/추출하기
     left, right = st.columns([2.3, 1.7])
 
     with left:
@@ -247,11 +257,10 @@ with st.container():
         st.slider("키워드 개수", 10, 50, 40, key="top_n", label_visibility="collapsed")
         st.button("🔍 추출하기", use_container_width=True, on_click=run_extract, type="primary")
 
-    # 복사용 키워드 블록 (강조 박스)
+    # 복사용 키워드 나열 영역
     n = len(st.session_state.selected)
     st.markdown(
-        f'<div class="copybox"><div class="copybox-title">📋 복사용 키워드 '
-        f'<span class="copybox-badge">{n}개</span></div></div>',
+        f'<div class="copy-head">📋 복사용 키워드 <span class="copy-badge">{n}개</span></div>',
         unsafe_allow_html=True,
     )
     if st.session_state.selected:
