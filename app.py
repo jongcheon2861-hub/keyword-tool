@@ -162,8 +162,8 @@ header[data-testid="stHeader"] { display: none !important; }
 
 /* ===== 결과 키워드 버튼 박스 ===== */
 div[data-testid="stHorizontalBlock"]:has(.kw-row) .stButton button {
-    padding: 16px 22px !important;
-    min-height: 74px !important;
+    padding: 11px 15px !important;
+    min-height: 52px !important;
     border-radius: 16px !important;
     border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important;
