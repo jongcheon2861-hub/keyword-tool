@@ -5,6 +5,9 @@ import requests, time, hmac, hashlib, base64
 st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered",
                    initial_sidebar_state="collapsed")
 
+# ★ 버전 확인용 (숫자 알려주시면 이 줄은 지워도 됩니다)
+st.caption("Streamlit " + st.__version__)
+
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
 SECRET = st.secrets["SECRET"]
@@ -165,17 +168,14 @@ header[data-testid="stHeader"] { display: none !important; }
 /* 타이틀 */
 .bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
 
-/* 입력창 높이 (라벨은 collapsed로 숨김 → 공간 유지) */
+/* 입력창 높이 */
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 
-/* ★ 추출하기 버튼 : 입력창과 동일한 52px, 튀어나옴 방지 */
+/* 추출하기 버튼 : 입력창과 동일 52px */
 .stButton button[kind="primary"] {
-    height: 52px !important;
-    min-height: 52px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
+    height: 52px !important; min-height: 52px !important;
+    padding: 0 !important; margin: 0 !important;
+    font-weight: 700 !important; border-radius: 10px !important;
 }
 
 /* 복사용 키워드 헤더 */
@@ -183,13 +183,14 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 
-/* ★ 복사용 코드박스 : 줄바꿈 허용(텍스트 잘림 방지) */
-[data-testid="stCode"] pre, code {
-    background:#f0f7ff !important; border:1.5px solid #90caf9 !important;
-    color:#1565c0 !important; font-weight:400 !important;
+/* ★ 복사용 키워드 박스 : 줄바꿈 확실히 (아래로 늘어남, 넘치면 세로 스크롤) */
+.copy-box {
+    background:#f0f7ff; border:1.5px solid #90caf9; border-radius:10px;
+    color:#1565c0; font-weight:400; font-size:14px; line-height:1.6;
+    padding:12px 16px;
     white-space: pre-wrap !important;
     word-break: break-all !important;
-    overflow-x: visible !important;
+    max-height:160px; overflow-y:auto;
 }
 
 /* 결과 키워드 버튼 (기본 버튼) */
@@ -198,22 +199,16 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     border-radius: 12px !important; border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important; text-align: left !important;
     transition: all .12s ease !important;
+    white-space: nowrap !important;   /* ★ 담김 시 세로 안 늘어남, 가로 유지 */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 .stButton button:not([kind="primary"]) p {
     font-size: 18px !important; font-weight: 500 !important; line-height: 1.1 !important;
+    white-space: nowrap !important;
 }
 .stButton button:not([kind="primary"]):hover {
     border-color:#ff7043 !important; transform: translateY(-1px);
-}
-
-/* ★ 담긴 상태 : kw-picked 마커가 있는 가로블록의 버튼 배경 채움 */
-div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button {
-    background: #eef6ff !important;
-    border-color: #4a90d9 !important;
-    color: #1565c0 !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.kw-picked) .stButton button p {
-    color: #1565c0 !important; font-weight: 700 !important;
 }
 
 /* 키워드 행 간격 좁힘 */
@@ -225,7 +220,7 @@ div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
 .metric-val { min-height:46px; display:flex; align-items:center; justify-content:center;
     font-size:17px; font-weight:600; color:#607d8b; }
 
-/* ===== 화면 상단 30% 중앙 팝업 : 1초 ===== */
+/* 화면 상단 30% 중앙 팝업 : 1초 */
 .center-popup {
     position: fixed; top: 30%; left: 50%;
     transform: translate(-50%, -50%); z-index: 100000;
@@ -275,9 +270,10 @@ st.markdown('<div class="copy-head">📋 복사용 키워드 '
             '<span class="copy-badge">' + str(n) + '개</span></div>',
             unsafe_allow_html=True)
 if st.session_state.selected:
-    st.code(",".join(st.session_state.selected) + ",")
+    kw_text = ",".join(st.session_state.selected) + ","
 else:
-    st.code(" ")
+    kw_text = "아직 담은 키워드가 없어요."
+st.markdown("<div class='copy-box'>" + kw_text + "</div>", unsafe_allow_html=True)
 
 st.divider()
 
@@ -288,10 +284,8 @@ if st.session_state.get("results"):
     for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
         c1, c2, c3 = st.columns([3, 1.4, 1.2])
         already = kw in st.session_state.selected
-        # ★ 담긴 상태 마커 div (배경 채우기용)
-        if already:
-            c1.markdown("<div class='kw-picked'></div>", unsafe_allow_html=True)
-        c1.button(kw, key="pick_" + str(i),
+        label = ("● " + kw) if already else kw
+        c1.button(label, key="pick_" + str(i),
                   on_click=toggle_keyword, args=(kw,), use_container_width=True)
         c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
                     unsafe_allow_html=True)
