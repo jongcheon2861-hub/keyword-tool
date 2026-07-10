@@ -328,6 +328,10 @@ def render_margin_calculator():
         "상품명", value=st.session_state.get("mc_product", ""),
         placeholder="상품명 (가이드의 노출상품명으로 전달)")
 
+    if "mc_fixed_coupon" not in st.session_state:
+        st.session_state.mc_fixed_coupon = None
+    applied = st.session_state.mc_fixed_coupon is not None
+
     ca, cb, cc, cd = st.columns([1, 1, 1.6, 1.6])
     with ca:
         if st.button("＋ 행 추가", use_container_width=True):
@@ -339,29 +343,26 @@ def render_margin_calculator():
             if len(st.session_state.mc_rows) > 1:
                 st.session_state.mc_rows.pop()
     with cc:
-        apply_coupon = st.button("🎟 쿠폰할인 일괄 적용", use_container_width=True)
+        coupon_label = "🎟 쿠폰할인 적용중" if applied else "🎟 쿠폰할인 일괄 적용"
+        apply_coupon = st.button(coupon_label, use_container_width=True,
+                                 type=("primary" if applied else "secondary"))
     with cd:
         reset_coupon = st.button("↩ 일괄 적용 해제", use_container_width=True)
 
-    if "mc_fixed_coupon" not in st.session_state:
-        st.session_state.mc_fixed_coupon = None
-
-    # 1번 옵션의 현재 쿠폰할인 값을 기준으로 일괄 적용
     if apply_coupon:
         first = st.session_state.mc_rows[0]
         base_res = calc_margin(first["supply"], first["ship"], first["disc"],
                                first["fee"], first["margin"])
         if base_res:
             st.session_state.mc_fixed_coupon = int(base_res["discount"])
+            st.rerun()
         else:
             st.warning("1번 행의 공급가를 먼저 입력하세요.")
     if reset_coupon:
         st.session_state.mc_fixed_coupon = None
+        st.rerun()
 
     fixed = st.session_state.mc_fixed_coupon
-    if fixed is not None:
-        st.info(f"🎟 쿠폰할인 {fixed:,}원으로 통일됨 (판매가 유지 · 정상가/할인율 재계산). "
-                f"해제하려면 '↩ 일괄 적용 해제'를 누르세요.")
 
     # 컬럼 비율 (입력 6 + 결과 5)
     COLS = [1.1, 1, 1, 0.9, 0.9, 0.9, 1, 1, 1, 1, 0.9]
@@ -421,7 +422,6 @@ def render_margin_calculator():
     if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
         st.session_state.mc_sent = results
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
-
 
 # ==================================================================
 # 화면: 키워드 추출기
