@@ -17,61 +17,145 @@ MAX_KEYWORDS = 20
 MIN_VOL = 10
 TOP_N = 50
 
+# ---------- 쿠팡식 소분류 카테고리표 (키=상위어, 값=별칭) ----------
 CATEGORY_MAP = {
-    "과일": ["사과", "배", "토마토", "감귤", "딸기", "블루베리", "석류", "감", "매실", "멜론", "복분자", "수박", "키위/참다래", "참외", "천혜향", "한라봉", "포도", "자두", "복숭아", "체리", "레몬", "망고", "바나나", "오렌지", "자몽", "파인애플", "아보카도", "레드향", "무화과", "기타과일"],
-    "채소": ["배추", "마늘", "오이", "도라지", "무", "고구마", "애호박", "단호박/밤호박", "가지", "양파", "대파", "쪽파", "더덕", "우엉", "고추", "버섯", "생강", "양배추", "상추/양상추", "쌈채소", "시금치", "감자", "당근", "연근", "열무", "마", "부추", "피망/파프리카", "새싹채소", "아스파라거스", "알로에", "기타채소류", "브로콜리", "건나물", "산나물", "삶은나물", "콩나물", "숙주나물", "미나리", "두부", "깻잎" ,"옥수수" ,"냉이" ,"비트/레드비트"],
-    "생선": ["갈치", "고등어", "굴비", "장어", "옥돔", "조기", "참치", "동태", "홍어", "생선회", "연어/훈제연어", "삼치", "기타생선", "꽁치", "대구", "우럭", "가자미", "임연수"],
-    "김/해초": ["김", "다시마", "매생이", "미역", "감태"],
-    "해산물/어패류": ["전복", "꽃게", "킹크랩", "해삼", "꼬막", "홍합", "새우", "소라", "골뱅이", "문어", "오징어", "낙지", "쭈꾸미", "조개", "바닷가재", "굴", "멍게", "날치알", "대게/홍게", "가리비", "성게알", "바지락"],
-    "젓갈/장류": ["대하장", "명란젓", "새우젓", "오징어젓", "낙지젓", "조개젓", "창난젓", "토하젓", "게장", "연어장"],
-    "건어물": ["멸치", "쥐포", "오징어", "한치", "문어", "건새우", "과메기", "노가리", "진미채", "황태/코다리"],
-    "돼지고기": ["국내산돼지고기", "수입산돼지고기", "돈육훈제", "돼지양념육"],
-    "쇠고기": ["국내산육우", "한우", "수입산쇠고기", "쇠고기양념육"],
-    "닭고기": ["생닭", "닭양념육", "닭가슴살", "닭다리", "닭날개/봉", "닭발/근위", "기타부위닭고기"],
-    "알류": ["구운계란", "달걀", "메추리알", "기타새알"],
-    "축산가공식품": ["갈비찜", "돈가스", "떡갈비", "베이컨", "족발", "햄", "소시지", "순대", "육포", "삼계탕", "곱창/막창/대창", "닭가공품", "기타육가공"],
-    "오리고기": ["생오리고기", "오리훈제", "오리주물럭/불고기"],
-    "양고기": ["양갈비", "양꼬치", "기타양고기"],
-    
-  
+    # 과일
+    "사과": ["사과", "부사", "홍로", "아오리"],
+    "배": ["배", "신고배"],
+    "감귤": ["감귤", "귤", "한라봉", "천혜향", "레드향", "만감류", "황금향"],
+    "오렌지": ["오렌지", "네이블"],
+    "포도": ["포도", "샤인머스캣", "샤인머스켓", "캠벨포도", "거봉", "청포도", "머스캣", "델라웨어", "머루"],
+    "딸기": ["딸기", "설향"],
+    "블루베리": ["블루베리"],
+    "체리": ["체리"],
+    "복숭아": ["복숭아", "천도복숭아", "백도", "황도"],
+    "자두": ["자두", "후무사", "대석", "플럼"],
+    "매실": ["매실"],
+    "수박": ["수박"],
+    "참외": ["참외"],
+    "멜론": ["멜론", "머스크멜론"],
+    "감": ["감", "단감", "홍시", "곶감", "대봉"],
+    "석류": ["석류"],
+    "무화과": ["무화과"],
+    "키위": ["키위", "참다래"],
+    "레몬": ["레몬", "라임"],
+    "바나나": ["바나나"],
+    "파인애플": ["파인애플"],
+    "망고": ["망고", "애플망고"],
+    "아보카도": ["아보카도"],
+    "자몽": ["자몽"],
+    # 채소
+    "배추": ["배추", "알배기"],
+    "양배추": ["양배추", "적양배추"],
+    "상추": ["상추", "양상추", "쌈채소"],
+    "시금치": ["시금치"],
+    "미나리": ["미나리"],
+    "부추": ["부추"],
+    "깻잎": ["깻잎"],
+    "무": ["무", "총각무", "알타리"],
+    "당근": ["당근"],
+    "우엉": ["우엉"],
+    "연근": ["연근"],
+    "도라지": ["도라지"],
+    "더덕": ["더덕"],
+    "감자": ["감자"],
+    "고구마": ["고구마", "꿀고구마", "밤고구마", "호박고구마"],
+    "호박": ["호박", "단호박", "밤호박", "애호박"],
+    "오이": ["오이"],
+    "고추": ["고추", "청양고추", "풋고추"],
+    "파프리카": ["파프리카", "피망"],
+    "가지": ["가지"],
+    "양파": ["양파", "적양파"],
+    "대파": ["대파", "쪽파", "실파"],
+    "마늘": ["마늘", "깐마늘", "다진마늘"],
+    "생강": ["생강"],
+    "버섯": ["버섯", "표고", "느타리", "새송이", "팽이", "양송이"],
+    "콩나물": ["콩나물", "숙주"],
+    "두부": ["두부"],
+    "브로콜리": ["브로콜리"],
+    "아스파라거스": ["아스파라거스"],
+    "옥수수": ["옥수수", "초당옥수수"],
+    # 쌀/잡곡
+    "쌀": ["쌀", "백미", "현미", "찹쌀"],
+    "잡곡": ["잡곡", "보리", "귀리", "콩", "팥", "녹두", "수수", "기장", "율무", "혼합곡"],
+    # 축산
+    "소고기": ["소고기", "쇠고기", "한우", "육우", "채끝", "안심", "등심", "차돌박이", "양지", "사태", "우삼겹"],
+    "소갈비": ["소갈비", "엘에이갈비", "la갈비"],
+    "삼겹살": ["삼겹살", "생삼겹", "냉동삼겹"],
+    "목살": ["목살"],
+    "돼지고기": ["돼지고기", "돈육", "앞다리", "뒷다리", "항정살", "갈매기살", "돼지불고기"],
+    "닭고기": ["닭고기", "생닭", "닭가슴살", "닭다리", "닭날개", "닭발", "근위", "삼계", "백숙"],
+    "오리고기": ["오리고기", "생오리", "오리훈제", "오리주물럭"],
+    "양고기": ["양고기", "양갈비", "양꼬치"],
+    "계란": ["계란", "달걀", "구운계란", "훈제계란", "무정란", "유정란"],
+    "메추리알": ["메추리알"],
+    # 수산 - 생선
+    "갈치": ["갈치"],
+    "고등어": ["고등어"],
+    "삼치": ["삼치"],
+    "꽁치": ["꽁치"],
+    "임연수": ["임연수"],
+    "가자미": ["가자미"],
+    "우럭": ["우럭"],
+    "대구": ["대구"],
+    "명태": ["명태", "동태", "황태", "코다리", "북어", "노가리"],
+    "조기": ["조기", "굴비"],
+    "옥돔": ["옥돔"],
+    "홍어": ["홍어"],
+    "참치": ["참치"],
+    "연어": ["연어", "훈제연어"],
+    "장어": ["장어", "바다장어", "붕장어", "민물장어", "먹장어", "갯장어", "아나고", "하모"],
+    "생선회": ["생선회", "회"],
+    # 수산 - 연체/갑각/패류
+    "오징어": ["오징어", "건오징어", "물오징어"],
+    "낙지": ["낙지"],
+    "문어": ["문어"],
+    "주꾸미": ["주꾸미", "쭈꾸미"],
+    "한치": ["한치"],
+    "새우": ["새우", "대하", "흰다리새우"],
+    "꽃게": ["꽃게"],
+    "대게": ["대게", "홍게"],
+    "킹크랩": ["킹크랩"],
+    "랍스터": ["랍스터", "바닷가재", "가재"],
+    "조개": ["조개", "바지락", "꼬막", "홍합", "가리비"],
+    "전복": ["전복"],
+    "굴": ["굴"],
+    "소라": ["소라", "골뱅이"],
+    "멍게": ["멍게", "해삼", "성게알"],
+    # 김/해조류
+    "김": ["김", "조미김", "돌김"],
+    "미역": ["미역"],
+    "다시마": ["다시마"],
+    "매생이": ["매생이"],
+    # 건어물
+    "멸치": ["멸치", "다시멸치"],
+    "쥐포": ["쥐포"],
+    "건새우": ["건새우"],
+    "과메기": ["과메기"],
+    "진미채": ["진미채"],
+    # 젓갈/장류
+    "명란젓": ["명란젓", "명란"],
+    "새우젓": ["새우젓"],
+    "게장": ["게장", "간장게장", "양념게장", "대하장"],
+    "젓갈": ["젓갈", "오징어젓", "낙지젓", "조개젓", "창난젓", "토하젓"],
+    # 축산가공
+    "족발": ["족발", "보쌈"],
+    "돈가스": ["돈가스"],
+    "떡갈비": ["떡갈비"],
+    "베이컨": ["베이컨"],
+    "햄": ["햄", "소시지"],
+    "육포": ["육포"],
+    "삼계탕": ["삼계탕"],
+    "곱창": ["곱창", "막창", "대창"],
 }
-BUY_COMMON = ["구매", "주문", "배송", "택배", "가격", "최저가", "특가", "무료배송", "당일배송"]
-BUY_CAT = {
-    "과일": ["kg", "박스", "산지직송", "제철", "당도", "달콤한"],
-    "채소": ["kg", "박스", "국내산", "신선"],
-    "생활": ["대용량", "묶음", "리필"],
-}
+
+BUY_COMMON = ["구매", "주문", "배송", "택배", "가격", "최저가", "특가", "무료배송", "당일배송", "로켓배송", "정품"]
+BUY_CAT = {}  # 상위어별 추가 구매의도어(필요시 채우기)
 INFO_WORDS = ["효능", "칼로리", "방법", "레시피", "뜻", "의미", "부작용", "후기만", "나무위키"]
 
 # ---------- 함수 ----------
 def normalize(s):
     return s.replace(" ", "").replace("머스켓", "머스캣")
-
-def get_parent_terms(product):
-    terms, big = [], ""
-    try:
-        url = "https://openapi.naver.com/v1/search/shop.json"
-        headers = {"X-Naver-Client-Id": N_CLIENT_ID,
-                   "X-Naver-Client-Secret": N_CLIENT_SECRET}
-        params = {"query": product, "display": 10}
-        r = requests.get(url, headers=headers, params=params, timeout=5)
-        if r.status_code == 200:
-            cats = set()
-            for it in r.json().get("items", []):
-                for k in ("category1", "category2", "category3"):
-                    v = it.get(k, "").strip()
-                    if v:
-                        cats.add(v)
-            terms = list(cats)
-    except Exception:
-        pass
-    npd = normalize(product)
-    for cat, members in CATEGORY_MAP.items():
-        if any(normalize(m) in npd or npd in normalize(m) for m in members):
-            big = cat
-            terms.append(cat)
-            break
-    return list(dict.fromkeys(terms)), big
 
 def _naver_sign(ts, method, path):
     msg = ts + "." + method + "." + path
@@ -105,6 +189,42 @@ def naver_related_keywords(seed):
     except Exception:
         return pd.DataFrame(columns=["키워드", "검색량"])
 
+def find_category_in_text(text):
+    """텍스트(상품명 또는 연관어) 안에서 표의 상위어를 찾는다."""
+    nt = normalize(text)
+    for cat, members in CATEGORY_MAP.items():
+        if any(normalize(m) in nt or nt in normalize(m) for m in members):
+            return cat
+    return ""
+
+def get_parent_and_related(product):
+    """
+    1) 상품명으로 연관어 1회 추출
+    2) 표 직접매칭 → 없으면 연관어에서 상위어 판단
+    3) 상위어 반환 + 이미 뽑은 연관어(재활용)도 함께 반환
+    """
+    # 1) 상품 연관어 1회 추출
+    base_df = naver_related_keywords(product)
+
+    # 2) 표에서 직접 찾기
+    big = find_category_in_text(product)
+
+    # 표에 없으면 연관어에서 상위어 판단
+    if not big and not base_df.empty:
+        rel_kws = [normalize(k) for k in base_df["키워드"].tolist()]
+        best_cat, best_hit = "", 0
+        for cat, members in CATEGORY_MAP.items():
+            hit = 0
+            for m in members:
+                nm = normalize(m)
+                hit += sum(1 for rk in rel_kws if nm in rk)
+            hit += sum(2 for rk in rel_kws if normalize(cat) in rk)  # 키 자체 가중치
+            if hit > best_hit:
+                best_hit, best_cat = hit, cat
+        big = best_cat
+
+    return big, base_df
+
 # ---------- 상태 ----------
 if "selected" not in st.session_state:
     st.session_state.selected = []
@@ -129,28 +249,46 @@ def run_extract():
     if not products:
         st.session_state.results = []
         return
+
     norm_products = [normalize(p) for p in products]
-    related_terms, intent_words = set(), set(BUY_COMMON)
+    related_terms = set()
+    intent_words = set(BUY_COMMON)
+    frames = []                 # 이미 뽑은 연관어 재활용
+    seen_seeds = set()
+
+    # 1단계: 상품별로 연관어 1회 추출 + 상위어 판단 (연관어 재활용)
     for p in products:
-        terms, big = get_parent_terms(p)
-        related_terms |= set(terms)
-        intent_words |= set(BUY_CAT.get(big, []))
+        big, base_df = get_parent_and_related(p)
+        if not base_df.empty:
+            frames.append(base_df)
+        seen_seeds.add(normalize(p))
+        if big:
+            related_terms.add(big)
+            intent_words |= set(BUY_CAT.get(big, []))
+
     st.session_state.related_info = ", ".join(sorted(related_terms)) or "없음"
-    seeds = list(dict.fromkeys(list(products) + list(related_terms)))[:12]
-    frames = []
-    for s in seeds:
-        frames.append(naver_related_keywords(s))
+
+    # 2단계: 상위어(포도 등)로 연관어 추가 추출 (중복 seed 제외)
+    for t in related_terms:
+        if normalize(t) in seen_seeds:
+            continue
+        frames.append(naver_related_keywords(t))
+        seen_seeds.add(normalize(t))
         time.sleep(0.2)
+
     if frames and not all(f.empty for f in frames):
         all_kw = pd.concat(frames, ignore_index=True).drop_duplicates("키워드")
         norm_terms = [normalize(t) for t in related_terms]
+
         def is_related(kw):
             nk = normalize(kw)
             return any(t in nk for t in norm_products) or any(t in nk for t in norm_terms)
+
         all_kw = all_kw[all_kw["키워드"].apply(is_related)]
         if INFO_WORDS:
             all_kw = all_kw[~all_kw["키워드"].str.contains("|".join(INFO_WORDS))]
         all_kw = all_kw[all_kw["검색량"] >= MIN_VOL]
+
         iw = list(intent_words)
         all_kw["구매의도"] = all_kw["키워드"].apply(lambda k: sum(1 for w in iw if w in k))
         all_kw["상품직결"] = all_kw["키워드"].apply(
@@ -174,7 +312,6 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 
-/* ★ 페이지 전체 스크롤 막기 → 상단바 영역 고정 효과 */
 html, body { overflow: hidden !important; height: 100vh !important; }
 [data-testid="stAppViewContainer"] { overflow: hidden !important; height: 100vh !important; }
 [data-testid="stMain"] { overflow: hidden !important; }
@@ -184,16 +321,14 @@ html, body { overflow: hidden !important; height: 100vh !important; }
     overflow: hidden !important;
 }
 
-/* 상단 카드 (고정 아님, 그냥 위에 배치) */
 .topcard {
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
     padding: 16px 20px 6px 20px;
     border: 1px solid #e6e8eb;
     border-radius: 16px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    margin-bottom: 22px;
+    margin-bottom: 20px;
 }
-
 .bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 10px; }
 
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
@@ -202,10 +337,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     padding: 0 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
 }
-[data-testid="stBaseButton-primary"] p {
-    font-size: 16px !important;
-    font-weight: 800 !important;
-}
+[data-testid="stBaseButton-primary"] p { font-size: 16px !important; font-weight: 800 !important; }
 
 .copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
@@ -229,14 +361,12 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 [data-testid="stCode"] pre::-webkit-scrollbar-thumb { background: #90caf9; border-radius: 6px; }
 [data-testid="stCode"] pre::-webkit-scrollbar-track { background: #e3f2fd; border-radius: 6px; }
 
-/* 상위어 안내 */
 .parent-box {
     background:#e3f2fd; border-radius:10px; color:#1565c0;
     font-size:14px; padding:12px 16px; margin:6px 0 4px 0;
 }
 .list-head { font-size:20px; font-weight:800; color:#263238; margin:14px 0 14px 0; }
 
-/* 키워드 버튼 */
 [data-testid="stBaseButton-secondary"] {
     min-height: 44px !important; height: 44px !important;
     padding: 0 14px !important;
@@ -256,14 +386,12 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-
     color: #1565c0 !important; font-weight: 700 !important;
 }
 
-/* 선택 마커: 높이 0 → 눌러도 간격 안 벌어짐 */
 .kw-picked { display:block !important; height:0 !important; margin:0 !important;
     padding:0 !important; overflow:hidden !important; line-height:0 !important; }
 [data-testid="stElementContainer"]:has(.kw-picked) {
     height:0 !important; min-height:0 !important; margin:0 !important; padding:0 !important;
 }
 
-/* 세로/가로 간격 좁게 */
 div[data-testid="stVerticalBlock"] { gap: 0.15rem !important; }
 div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
 [data-testid="stElementContainer"] { margin: 0 !important; }
@@ -271,7 +399,6 @@ div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
 .metric-val { min-height:44px; display:flex; align-items:center; justify-content:center;
     font-size:16px; font-weight:600; color:#607d8b; }
 
-/* 목록 스크롤 컨테이너 테두리 제거 */
 div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 
 .center-popup {
@@ -308,7 +435,7 @@ if st.session_state.get("popup"):
     st.session_state.popup = None
 
 # ==================================================================
-# 1) 상단 박스 영역 (제목 + 검색 + 복사용 키워드)  ← 스크롤 안 됨
+# 1) 상단 박스 영역
 # ==================================================================
 st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
             unsafe_allow_html=True)
@@ -330,7 +457,7 @@ kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected
 st.code(kw_text, language=None)
 
 # ==================================================================
-# 2) 추출된 키워드 영역 (분리 + 컨테이너 안에서만 스크롤)
+# 2) 추출된 키워드 영역
 # ==================================================================
 if st.session_state.get("results"):
     st.markdown('<div class="parent-box">자동 인식된 상위어: '
@@ -339,7 +466,6 @@ if st.session_state.get("results"):
     st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
                 unsafe_allow_html=True)
 
-    # ★ 목록만 고정 높이 컨테이너 안에서 스크롤 (숫자로 하단까지 조절)
     with st.container(height=620):
         for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
             c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
