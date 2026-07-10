@@ -194,7 +194,7 @@ html, body { overflow: hidden !important; height: 100vh !important; }
     margin-bottom: 6px;
 }
 .topcard + div {
-    margin-top: 18px !important;
+    margin-top: 30px !important;
 }
 .bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 10px; }
 
