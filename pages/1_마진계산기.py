@@ -3,6 +3,9 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="쿠팡 마진 계산기", layout="wide")
 
+# 메인으로 돌아가기 링크
+st.page_link("app.py", label="⬅ 키워드 추출기로 돌아가기")
+
 MARGIN_CALC_HTML = """
 <!DOCTYPE html>
 <html lang="ko">
