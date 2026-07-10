@@ -409,6 +409,7 @@ def render_keyword_tool():
                 unsafe_allow_html=True)
     kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
     st.code(kw_text, language=None)
+    st.caption("💡 선택한 키워드는 '상품등록가이드'의 태그 항목에 자동으로 채워집니다.")
 
     if st.session_state.get("results"):
         st.markdown('<div class="parent-box">자동 인식된 상위어: '
@@ -439,6 +440,9 @@ def render_product_guide():
     st.markdown('<div class="topcard"><div class="bar-title">📋 상품등록 가이드</div></div>',
                 unsafe_allow_html=True)
 
+    # 키워드 추출기에서 선택한 키워드를 태그 기본값으로 사용
+    selected_kw = ", ".join(st.session_state.get("selected", []))
+
     GUIDE_HTML = r"""
 <!doctype html>
 <html lang="ko">
@@ -458,10 +462,10 @@ def render_product_guide():
                border:1px solid #d5dae1; border-radius:6px; outline:none; }
   .cbtn { flex:0 0 auto; height:36px; padding:0 12px; border:none; border-radius:6px;
           background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff;
-          font-size:12px; font-weight:700; cursor:pointer; }
-  .cbtn.done { background:#2e7d32; }
+          font-size:12px; font-weight:700; cursor:pointer; transition:background .15s; }
+  .cbtn.done { background:#2e7d32 !important; }
 
-  /* 옵션/가격 4열 표 */
+  /* 옵션/가격 표 */
   .opt-table { width:100%; border-collapse:collapse; margin-top:4px; }
   .opt-table th, .opt-table td { border:1px solid #d5dae1; padding:4px; text-align:center; }
   .opt-table th { background:#f1f6ff; font-size:12.5px; font-weight:800; color:#0d47a1; }
@@ -470,8 +474,8 @@ def render_product_guide():
   .opt-table td.copycell { width:56px; }
   .opt-copy { height:30px; padding:0 8px; border:none; border-radius:5px;
               background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff;
-              font-size:11px; font-weight:700; cursor:pointer; }
-  .opt-copy.done { background:#2e7d32; }
+              font-size:11px; font-weight:700; cursor:pointer; transition:background .15s; }
+  .opt-copy.done { background:#2e7d32 !important; }
 
   .btns { margin:8px 0 4px; display:flex; gap:6px; flex-wrap:wrap; }
   .addbtn { height:34px; padding:0 14px; border:none; border-radius:6px;
@@ -480,6 +484,13 @@ def render_product_guide():
   .kgbtn { height:34px; padding:0 14px; border:1px solid #1a73e8; border-radius:6px;
            background:#fff; color:#1a73e8; font-size:12.5px; font-weight:700; cursor:pointer; }
   .kgbtn:hover { background:#f1f6ff; }
+  .wbtn { height:34px; padding:0 14px; border:1px solid #2e7d32; border-radius:6px;
+          background:#fff; color:#2e7d32; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .wbtn:hover { background:#eefaf0; }
+  .mini-title { margin-top:8px; font-size:12px; font-weight:700; color:#555; }
+  .wrap-inp { display:flex; gap:6px; margin:4px 0; }
+  .wrap-inp input { flex:1; height:34px; padding:2px 8px; font-size:12.5px;
+                    border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:center; }
 </style>
 </head>
 <body>
@@ -493,8 +504,8 @@ def render_product_guide():
 <table class="opt-table">
   <thead>
     <tr>
-      <th style="width:26%">중량</th>
-      <th style="width:20%">수량</th>
+      <th style="width:26%">옵션</th>
+      <th style="width:20%">중량</th>
       <th style="width:24%">정상가</th>
       <th style="width:24%">판매가</th>
       <th style="width:56px">복사</th>
@@ -503,12 +514,26 @@ def render_product_guide():
   <tbody id="optBody"></tbody>
 </table>
 
+<div class="mini-title">옵션 추가</div>
+<div class="wrap-inp">
+  <input type="text" id="optInput" placeholder="옵션값 입력 (예: 1kg)">
+  <button class="addbtn" onclick="addFromInput()">+ 추가</button>
+</div>
 <div class="btns">
-  <button class="addbtn" onclick="addOptRow()">+ 옵션 추가</button>
-  <button class="kgbtn" onclick="addOptRow('1kg')">1kg</button>
-  <button class="kgbtn" onclick="addOptRow('2kg')">2kg</button>
-  <button class="kgbtn" onclick="addOptRow('3kg')">3kg</button>
-  <button class="kgbtn" onclick="addOptRow('4kg')">4kg</button>
+  <button class="kgbtn" onclick="addOptRow('1kg')">1kg 추가</button>
+  <button class="kgbtn" onclick="addOptRow('2kg')">2kg 추가</button>
+  <button class="kgbtn" onclick="addOptRow('3kg')">3kg 추가</button>
+  <button class="kgbtn" onclick="addOptRow('4kg')">4kg 추가</button>
+</div>
+
+<div class="mini-title">중량 일괄 적용 (모든 옵션의 중량 칸에 적용)</div>
+<div class="wrap-inp">
+  <input type="text" id="weightInput" placeholder="중량값 입력">
+  <button class="wbtn" onclick="applyWeightFromInput()">중량 적용</button>
+</div>
+<div class="btns">
+  <button class="wbtn" onclick="applyWeightAll('1개')">1개 추가</button>
+  <button class="wbtn" onclick="applyWeightAll('1박스')">1박스 추가</button>
 </div>
 
 <!-- 나머지 항목 -->
@@ -522,6 +547,8 @@ def render_product_guide():
 <div id="shipArea"></div>
 
 <script>
+  const KEYWORD_TAGS = "__SELECTED_KW__";
+
   // [라벨, 기본값]
   const TOP = [
     ["브랜드", "브랜드없음(자체제작)"],
@@ -534,7 +561,7 @@ def render_product_guide():
     ["부가세", "면세"],
   ];
   const SEARCH = [
-    ["태그", ""],
+    ["태그", KEYWORD_TAGS],
     ["검색필터", ""],
     ["상품정보제공고시", "농수축산물 / 전체상품 상세페이지 참조"],
     ["품목 또는 명칭", ""],
@@ -553,9 +580,9 @@ def render_product_guide():
   function copyText(txt, btn){
     navigator.clipboard.writeText(txt).then(()=>{
       const old = btn.textContent;
-      btn.textContent = "완료";
+      btn.textContent = "완료 ✓";
       btn.classList.add("done");
-      setTimeout(()=>{ btn.textContent = old; btn.classList.remove("done"); }, 900);
+      setTimeout(()=>{ btn.textContent = old; btn.classList.remove("done"); }, 1200);
     });
   }
 
@@ -566,7 +593,7 @@ def render_product_guide():
       row.className = "row";
       row.innerHTML =
         '<div class="label">'+label+'</div>' +
-        '<input type="text" value="'+val.replace(/"/g,'&quot;')+'">' +
+        '<input type="text" value="'+String(val).replace(/"/g,'&quot;')+'">' +
         '<button class="cbtn">복사</button>';
       const inp = row.querySelector("input");
       const btn = row.querySelector(".cbtn");
@@ -580,22 +607,22 @@ def render_product_guide():
   buildRows(SEARCH, "searchArea");
   buildRows(SHIP, "shipArea");
 
-  // 옵션 행 추가
-  function addOptRow(weight){
+  // 옵션 행 추가 (옵션값만 채우고 중량은 빈칸)
+  function addOptRow(optVal){
     const tb = document.getElementById("optBody");
     const tr = document.createElement("tr");
-    const w = weight ? weight : "";
+    const v = optVal ? optVal : "";
     tr.innerHTML =
-      '<td><input type="text" class="c-w" value="'+w+'" placeholder="중량"></td>' +
-      '<td><input type="text" class="c-q" placeholder="수량"></td>' +
+      '<td><input type="text" class="c-opt" value="'+v+'" placeholder="옵션"></td>' +
+      '<td><input type="text" class="c-w" placeholder="중량"></td>' +
       '<td><input type="text" class="c-n" placeholder="정상가"></td>' +
       '<td><input type="text" class="c-s" placeholder="판매가"></td>' +
       '<td class="copycell"><button class="opt-copy">복사</button></td>';
     const btn = tr.querySelector(".opt-copy");
     btn.onclick = ()=>{
       const vals = [
+        tr.querySelector(".c-opt").value,
         tr.querySelector(".c-w").value,
-        tr.querySelector(".c-q").value,
         tr.querySelector(".c-n").value,
         tr.querySelector(".c-s").value
       ];
@@ -604,14 +631,33 @@ def render_product_guide():
     tb.appendChild(tr);
   }
 
-  // 처음에 빈 옵션 행 1개 표시
+  function addFromInput(){
+    const el = document.getElementById("optInput");
+    addOptRow(el.value.trim());
+    el.value = "";
+  }
+
+  // 모든 옵션 행의 중량 칸에 일괄 적용
+  function applyWeightAll(val){
+    document.querySelectorAll("#optBody .c-w").forEach(inp=>{ inp.value = val; });
+  }
+  function applyWeightFromInput(){
+    const el = document.getElementById("weightInput");
+    applyWeightAll(el.value.trim());
+  }
+
+  // 시작 시 빈 옵션 행 1개 표시
   addOptRow();
 </script>
 
 </body>
 </html>
 """
-    components.html(GUIDE_HTML, height=1500, scrolling=True)
+    # 선택 키워드를 태그 칸에 안전하게 주입
+    safe_kw = selected_kw.replace("\\", "\\\\").replace('"', '\\"')
+    GUIDE_HTML = GUIDE_HTML.replace("__SELECTED_KW__", safe_kw)
+
+    components.html(GUIDE_HTML, height=1550, scrolling=True)
 
 # ==================================================================
 # 공통 CSS
