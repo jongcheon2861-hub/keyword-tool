@@ -481,6 +481,9 @@ def render_product_guide():
                           color:#00794c !important; font-weight:700 !important; }
   .mini-copy { flex:0 0 auto; width:26px; height:30px; border:none; border-radius:5px;
                background:#eef3fb; color:#0d47a1; font-size:12px; font-weight:800; cursor:pointer; }
+  .del-btn { width:28px; height:30px; border:none; border-radius:5px;
+             background:#fdecec; color:#d63031; font-size:14px; font-weight:800; cursor:pointer; }
+  .del-btn:hover { background:#f8d7da; }
   .empty-msg { font-size:12px; color:#999; text-align:center; padding:8px 0; }
 
   .addbtn { height:34px; padding:0 16px; border:none; border-radius:6px;
@@ -524,10 +527,11 @@ def render_product_guide():
 <table class="opt-table">
   <thead>
     <tr>
-      <th style="width:25%">옵션</th>
-      <th style="width:25%">중량</th>
-      <th style="width:25%">정상가</th>
-      <th style="width:25%">판매가</th>
+      <th style="width:24%">옵션</th>
+      <th style="width:24%">중량</th>
+      <th style="width:24%">정상가</th>
+      <th style="width:24%">판매가</th>
+      <th style="width:32px">삭제</th>
     </tr>
   </thead>
   <tbody id="optBody"></tbody>
@@ -636,7 +640,7 @@ def render_product_guide():
       tb.children.length === 0 ? "block" : "none";
   }
 
-  // 옵션 행 추가 (옵션값만 채우고 나머지는 빈칸)
+  // 옵션 행 추가 (옵션값만 채우고 나머지는 빈칸 + 삭제 버튼)
   function addOptRow(optVal){
     const tb = document.getElementById("optBody");
     const tr = document.createElement("tr");
@@ -644,7 +648,8 @@ def render_product_guide():
       makeCell("c-opt", optVal, "옵션") +
       makeCell("c-w", "", "중량") +
       makeCell("c-n", "", "정상가") +
-      makeCell("c-s", "", "판매가");
+      makeCell("c-s", "", "판매가") +
+      '<td><button class="del-btn" title="이 옵션 삭제">✕</button></td>';
     tr.querySelectorAll(".cellbox").forEach(box=>{
       const inp = box.querySelector("input");
       const btn = box.querySelector(".mini-copy");
@@ -652,6 +657,10 @@ def render_product_guide():
       inp.addEventListener("input", ()=>{ inp.classList.remove("copied"); refreshFilled(inp); });
       btn.onclick = ()=> copyCell(inp);
     });
+    tr.querySelector(".del-btn").onclick = ()=>{
+      tr.remove();
+      refreshEmptyMsg();
+    };
     tb.appendChild(tr);
     refreshEmptyMsg();
   }
@@ -687,6 +696,7 @@ def render_product_guide():
     GUIDE_HTML = GUIDE_HTML.replace("__SELECTED_KW__", safe_kw)
 
     components.html(GUIDE_HTML, height=1550, scrolling=True)
+
 
 # ==================================================================
 # 공통 CSS
