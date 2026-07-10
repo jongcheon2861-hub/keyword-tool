@@ -436,7 +436,7 @@ def render_keyword_tool():
 # ==================================================================
 # 화면: 상품등록가이드
 # ==================================================================
-Copydef render_product_guide():
+def render_product_guide():
     st.markdown('<div class="topcard"><div class="bar-title">📋 상품등록 가이드</div></div>',
                 unsafe_allow_html=True)
 
