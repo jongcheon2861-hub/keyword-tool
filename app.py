@@ -332,7 +332,7 @@ def render_margin_calculator():
         st.session_state.mc_fixed_coupon = None
     applied = st.session_state.mc_fixed_coupon is not None
 
-    ca, cb, cc, cd = st.columns([1, 1, 1.6, 1.6])
+    ca, cb, cc = st.columns([1, 1, 2])
     with ca:
         if st.button("＋ 행 추가", use_container_width=True):
             if len(st.session_state.mc_rows) < 10:
@@ -343,31 +343,31 @@ def render_margin_calculator():
             if len(st.session_state.mc_rows) > 1:
                 st.session_state.mc_rows.pop()
     with cc:
-        coupon_label = "🎟 쿠폰할인 적용중" if applied else "🎟 쿠폰할인 일괄 적용"
-        apply_coupon = st.button(coupon_label, use_container_width=True,
-                                 type=("primary" if applied else "secondary"))
-    with cd:
-        reset_coupon = st.button("↩ 일괄 적용 해제", use_container_width=True)
+        coupon_label = "🎟 쿠폰할인 적용중 (누르면 해제)" if applied else "🎟 쿠폰할인 일괄 적용"
+        toggle_coupon = st.button(coupon_label, use_container_width=True,
+                                  type=("primary" if applied else "secondary"))
 
-    if apply_coupon:
-        first = st.session_state.mc_rows[0]
-        base_res = calc_margin(first["supply"], first["ship"], first["disc"],
-                               first["fee"], first["margin"])
-        if base_res:
-            st.session_state.mc_fixed_coupon = int(base_res["discount"])
+    # 버튼 토글: 적용중이면 해제, 아니면 1번 옵션 기준으로 적용
+    if toggle_coupon:
+        if applied:
+            st.session_state.mc_fixed_coupon = None
             st.rerun()
         else:
-            st.warning("1번 행의 공급가를 먼저 입력하세요.")
-    if reset_coupon:
-        st.session_state.mc_fixed_coupon = None
-        st.rerun()
+            first = st.session_state.mc_rows[0]
+            base_res = calc_margin(first["supply"], first["ship"], first["disc"],
+                                   first["fee"], first["margin"])
+            if base_res:
+                st.session_state.mc_fixed_coupon = int(base_res["discount"])
+                st.rerun()
+            else:
+                st.warning("1번 행의 공급가를 먼저 입력하세요.")
 
     fixed = st.session_state.mc_fixed_coupon
 
-    # 컬럼 비율 (입력 6 + 결과 5)
-    COLS = [1.1, 1, 1, 0.9, 0.9, 0.9, 1, 1, 1, 1, 0.9]
+    # 컬럼 비율 (입력 6 + 결과 5) — 숫자 칸을 넓혀 글씨 잘림 방지
+    COLS = [1.2, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
 
-    h = st.columns(COLS)
+    h = st.columns(COLS, gap="small")
     heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
              "판매가", "마진액", "쿠폰할인", "정가", "적용할인%"]
     for col, name in zip(h, heads):
@@ -376,7 +376,7 @@ def render_margin_calculator():
 
     results = []
     for i, row in enumerate(st.session_state.mc_rows):
-        c = st.columns(COLS)
+        c = st.columns(COLS, gap="small")
         row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
                                      max_chars=6, label_visibility="collapsed",
                                      placeholder="옵션")
@@ -833,14 +833,19 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-
     font-size:16px; font-weight:600; color:#607d8b; }
 div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 
+/* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
+div[data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
+div[data-testid="column"] { padding: 0 2px !important; }
 .mc-out { min-height:38px; display:flex; align-items:center; justify-content:center;
-    font-size:13px; font-weight:700; border-radius:6px; margin-top:2px; }
+    font-size:13px; font-weight:700; border-radius:6px; margin-top:2px;
+    white-space:nowrap; padding:0 4px; }
 .mc-final { background:#f0f5ff; color:#1a73e8; }
 .mc-margin { background:#eafaf3; color:#00a86b; }
 .mc-disc { background:#fdeef0; color:#d63384; }
 .mc-orig { background:#f0f5ff; color:#1a73e8; }
 .mc-rate { background:#fff3e0; color:#e65100; }
 .mc-empty { color:#bbb; }
+
 
 .center-popup {
     position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
