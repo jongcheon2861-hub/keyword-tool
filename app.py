@@ -459,11 +459,14 @@ def render_product_guide():
   .row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
   .label { flex:0 0 150px; font-size:12.5px; font-weight:700; color:#333; }
   .row input { flex:1; height:36px; padding:4px 8px; font-size:12.5px;
-               border:1px solid #d5dae1; border-radius:6px; outline:none; }
+               border:1px solid #d5dae1; border-radius:6px; outline:none;
+               transition:background .15s,border-color .15s; }
+  .row input.filled { background:#fff8e1; border-color:#f0c000; }
+  .row input.copied { background:#eafaf3 !important; border-color:#2e7d32 !important;
+                      color:#00794c !important; font-weight:700 !important; }
   .cbtn { flex:0 0 auto; height:36px; padding:0 12px; border:none; border-radius:6px;
           background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff;
-          font-size:12px; font-weight:700; cursor:pointer; transition:background .15s; }
-  .cbtn.done { background:#2e7d32 !important; }
+          font-size:12px; font-weight:700; cursor:pointer; }
 
   /* 옵션/가격 표 */
   .opt-table { width:100%; border-collapse:collapse; margin-top:4px; }
@@ -473,13 +476,13 @@ def render_product_guide():
   .cellbox input { flex:1; height:34px; padding:2px 5px; font-size:12px;
                    border:1px solid #e1e6ec; border-radius:5px; outline:none; text-align:center;
                    transition:background .15s,border-color .15s; }
+  .cellbox input.filled { background:#fff8e1; border-color:#f0c000; }
   .cellbox input.copied { background:#eafaf3 !important; border-color:#2e7d32 !important;
                           color:#00794c !important; font-weight:700 !important; }
   .mini-copy { flex:0 0 auto; width:26px; height:30px; border:none; border-radius:5px;
                background:#eef3fb; color:#0d47a1; font-size:12px; font-weight:800; cursor:pointer; }
   .empty-msg { font-size:12px; color:#999; text-align:center; padding:8px 0; }
 
-  .btns { margin:6px 0 4px; display:flex; gap:6px; flex-wrap:wrap; }
   .addbtn { height:34px; padding:0 16px; border:none; border-radius:6px;
             background:#eef3fb; color:#0d47a1; font-size:12.5px; font-weight:700; cursor:pointer; }
   .addbtn:hover { background:#dbe7fb; }
@@ -490,12 +493,17 @@ def render_product_guide():
   .wrap-inp { display:flex; gap:6px; margin:4px 0; }
   .wrap-inp input { flex:1; height:34px; padding:2px 8px; font-size:12.5px;
                     border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:center; }
+  .legend { font-size:11.5px; color:#777; margin:4px 0 2px; }
+  .legend b { padding:1px 6px; border-radius:4px; }
+  .legend .lg-fill { background:#fff8e1; color:#8a6d00; }
+  .legend .lg-copy { background:#eafaf3; color:#00794c; }
 </style>
 </head>
 <body>
 
 <!-- 상품명/카테고리 -->
 <div class="sec">상품명 / 카테고리</div>
+<div class="legend">색상 안내: <b class="lg-fill">노랑=입력됨</b> · <b class="lg-copy">초록=복사완료</b></div>
 <div id="topArea"></div>
 
 <!-- 옵션/가격 -->
@@ -567,18 +575,25 @@ def render_product_guide():
     ["반품/교환지", ""],
   ];
 
-  function copyText(txt, btn){
-    navigator.clipboard.writeText(txt).then(()=>{
-      const old = btn.textContent;
-      btn.textContent = "완료 ✓";
-      btn.classList.add("done");
-      setTimeout(()=>{ btn.textContent = old; btn.classList.remove("done"); }, 1200);
+  // 입력값 여부에 따라 filled 클래스 토글 (copied 상태는 건드리지 않음)
+  function refreshFilled(inp){
+    if(inp.classList.contains("copied")) return;
+    if(inp.value.trim() !== "") inp.classList.add("filled");
+    else inp.classList.remove("filled");
+  }
+
+  // 일반 항목 복사 → 왼쪽 입력칸 초록색 유지
+  function copyRowInput(inp){
+    navigator.clipboard.writeText(inp.value).then(()=>{
+      inp.classList.remove("filled");
+      inp.classList.add("copied");
     });
   }
 
-  // 옵션 셀 복사 → 왼쪽 입력칸 색상 계속 유지
+  // 옵션 셀 복사 → 왼쪽 입력칸 초록색 유지
   function copyCell(inp){
     navigator.clipboard.writeText(inp.value).then(()=>{
+      inp.classList.remove("filled");
       inp.classList.add("copied");
     });
   }
@@ -594,7 +609,9 @@ def render_product_guide():
         '<button class="cbtn">복사</button>';
       const inp = row.querySelector("input");
       const btn = row.querySelector(".cbtn");
-      btn.onclick = ()=> copyText(inp.value, btn);
+      refreshFilled(inp);
+      inp.addEventListener("input", ()=>{ inp.classList.remove("copied"); refreshFilled(inp); });
+      btn.onclick = ()=> copyRowInput(inp);
       box.appendChild(row);
     });
   }
@@ -631,9 +648,9 @@ def render_product_guide():
     tr.querySelectorAll(".cellbox").forEach(box=>{
       const inp = box.querySelector("input");
       const btn = box.querySelector(".mini-copy");
+      refreshFilled(inp);
+      inp.addEventListener("input", ()=>{ inp.classList.remove("copied"); refreshFilled(inp); });
       btn.onclick = ()=> copyCell(inp);
-      // 값을 수정하면 완료 색상 해제
-      inp.addEventListener("input", ()=> inp.classList.remove("copied"));
     });
     tb.appendChild(tr);
     refreshEmptyMsg();
@@ -650,6 +667,7 @@ def render_product_guide():
     document.querySelectorAll("#optBody .c-w").forEach(inp=>{
       inp.value = val;
       inp.classList.remove("copied");
+      refreshFilled(inp);
     });
   }
   function applyWeightFromInput(){
