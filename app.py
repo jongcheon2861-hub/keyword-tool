@@ -505,7 +505,7 @@ with tb:
               on_click=run_extract, type="primary")
 
 # 마진 계산기 페이지로 이동
-st.page_link("pages/1_마진계산기.py", label="🧮 마진 계산기 열기")
+st.page_link("pages/1_margin_calculator.py", label="🧮 마진 계산기 열기")
 
 n = len(st.session_state.selected)
 st.markdown('<div class="copy-head">📋 복사용 키워드 '
