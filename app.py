@@ -436,7 +436,7 @@ def render_keyword_tool():
 # ==================================================================
 # 화면: 상품등록가이드
 # ==================================================================
-def render_product_guide():
+Copydef render_product_guide():
     st.markdown('<div class="topcard"><div class="bar-title">📋 상품등록 가이드</div></div>',
                 unsafe_allow_html=True)
 
@@ -467,27 +467,26 @@ def render_product_guide():
 
   /* 옵션/가격 표 */
   .opt-table { width:100%; border-collapse:collapse; margin-top:4px; }
-  .opt-table th, .opt-table td { border:1px solid #d5dae1; padding:4px; text-align:center; }
-  .opt-table th { background:#f1f6ff; font-size:12.5px; font-weight:800; color:#0d47a1; }
-  .opt-table td input { width:100%; height:34px; padding:2px 6px; font-size:12.5px;
-                        border:none; outline:none; text-align:center; }
-  .opt-table td.copycell { width:56px; }
-  .opt-copy { height:30px; padding:0 8px; border:none; border-radius:5px;
-              background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff;
-              font-size:11px; font-weight:700; cursor:pointer; transition:background .15s; }
-  .opt-copy.done { background:#2e7d32 !important; }
+  .opt-table th, .opt-table td { border:1px solid #d5dae1; padding:3px; text-align:center; }
+  .opt-table th { background:#f1f6ff; font-size:12px; font-weight:800; color:#0d47a1; }
+  .cellbox { display:flex; align-items:center; gap:3px; }
+  .cellbox input { flex:1; height:34px; padding:2px 5px; font-size:12px;
+                   border:1px solid #e1e6ec; border-radius:5px; outline:none; text-align:center;
+                   transition:background .15s,border-color .15s; }
+  .cellbox input.copied { background:#eafaf3; border-color:#2e7d32; color:#00794c; font-weight:700; }
+  .mini-copy { flex:0 0 auto; width:26px; height:30px; border:none; border-radius:5px;
+               background:#eef3fb; color:#0d47a1; font-size:12px; font-weight:800; cursor:pointer;
+               transition:background .15s,color .15s; }
+  .mini-copy.done { background:#2e7d32; color:#fff; }
 
-  .btns { margin:8px 0 4px; display:flex; gap:6px; flex-wrap:wrap; }
-  .addbtn { height:34px; padding:0 14px; border:none; border-radius:6px;
+  .btns { margin:6px 0 4px; display:flex; gap:6px; flex-wrap:wrap; }
+  .addbtn { height:34px; padding:0 16px; border:none; border-radius:6px;
             background:#eef3fb; color:#0d47a1; font-size:12.5px; font-weight:700; cursor:pointer; }
   .addbtn:hover { background:#dbe7fb; }
-  .kgbtn { height:34px; padding:0 14px; border:1px solid #1a73e8; border-radius:6px;
-           background:#fff; color:#1a73e8; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .kgbtn:hover { background:#f1f6ff; }
-  .wbtn { height:34px; padding:0 14px; border:1px solid #2e7d32; border-radius:6px;
+  .wbtn { height:34px; padding:0 16px; border:1px solid #2e7d32; border-radius:6px;
           background:#fff; color:#2e7d32; font-size:12.5px; font-weight:700; cursor:pointer; }
   .wbtn:hover { background:#eefaf0; }
-  .mini-title { margin-top:8px; font-size:12px; font-weight:700; color:#555; }
+  .mini-title { margin-top:6px; font-size:12px; font-weight:700; color:#555; }
   .wrap-inp { display:flex; gap:6px; margin:4px 0; }
   .wrap-inp input { flex:1; height:34px; padding:2px 8px; font-size:12.5px;
                     border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:center; }
@@ -501,40 +500,30 @@ def render_product_guide():
 
 <!-- 옵션/가격 -->
 <div class="sec">옵션 / 가격</div>
-<table class="opt-table">
-  <thead>
-    <tr>
-      <th style="width:26%">옵션</th>
-      <th style="width:20%">중량</th>
-      <th style="width:24%">정상가</th>
-      <th style="width:24%">판매가</th>
-      <th style="width:56px">복사</th>
-    </tr>
-  </thead>
-  <tbody id="optBody"></tbody>
-</table>
 
 <div class="mini-title">옵션 추가</div>
 <div class="wrap-inp">
   <input type="text" id="optInput" placeholder="옵션값 입력 (예: 1kg)">
-  <button class="addbtn" onclick="addFromInput()">+ 추가</button>
-</div>
-<div class="btns">
-  <button class="kgbtn" onclick="addOptRow('1kg')">1kg 추가</button>
-  <button class="kgbtn" onclick="addOptRow('2kg')">2kg 추가</button>
-  <button class="kgbtn" onclick="addOptRow('3kg')">3kg 추가</button>
-  <button class="kgbtn" onclick="addOptRow('4kg')">4kg 추가</button>
+  <button class="addbtn" onclick="addFromInput()">+ 옵션 추가</button>
 </div>
 
-<div class="mini-title">중량 일괄 적용 (모든 옵션의 중량 칸에 적용)</div>
+<div class="mini-title">중량 일괄 추가 (모든 옵션의 중량 칸에 적용)</div>
 <div class="wrap-inp">
   <input type="text" id="weightInput" placeholder="중량값 입력">
-  <button class="wbtn" onclick="applyWeightFromInput()">중량 적용</button>
+  <button class="wbtn" onclick="applyWeightFromInput()">중량 추가</button>
 </div>
-<div class="btns">
-  <button class="wbtn" onclick="applyWeightAll('1개')">1개 추가</button>
-  <button class="wbtn" onclick="applyWeightAll('1박스')">1박스 추가</button>
-</div>
+
+<table class="opt-table">
+  <thead>
+    <tr>
+      <th style="width:25%">옵션</th>
+      <th style="width:25%">중량</th>
+      <th style="width:25%">정상가</th>
+      <th style="width:25%">판매가</th>
+    </tr>
+  </thead>
+  <tbody id="optBody"></tbody>
+</table>
 
 <!-- 나머지 항목 -->
 <div class="sec">상품 주요정보</div>
@@ -586,6 +575,17 @@ def render_product_guide():
     });
   }
 
+  // 옵션 셀 복사 (입력칸 색상 유지로 진행상황 표시)
+  function copyCell(inp, btn){
+    navigator.clipboard.writeText(inp.value).then(()=>{
+      inp.classList.add("copied");
+      const old = btn.textContent;
+      btn.textContent = "✓";
+      btn.classList.add("done");
+      setTimeout(()=>{ btn.textContent = old; btn.classList.remove("done"); }, 900);
+    });
+  }
+
   function buildRows(arr, containerId){
     const box = document.getElementById(containerId);
     arr.forEach(([label, val])=>{
@@ -607,27 +607,32 @@ def render_product_guide():
   buildRows(SEARCH, "searchArea");
   buildRows(SHIP, "shipArea");
 
+  // 옵션 셀 한 개(입력칸 + 미니 복사버튼) 생성
+  function makeCell(cls, val, ph){
+    const v = val ? val : "";
+    return '<td><div class="cellbox">' +
+             '<input type="text" class="'+cls+'" value="'+v+'" placeholder="'+ph+'">' +
+             '<button class="mini-copy">복사</button>' +
+           '</div></td>';
+  }
+
   // 옵션 행 추가 (옵션값만 채우고 중량은 빈칸)
   function addOptRow(optVal){
     const tb = document.getElementById("optBody");
     const tr = document.createElement("tr");
-    const v = optVal ? optVal : "";
     tr.innerHTML =
-      '<td><input type="text" class="c-opt" value="'+v+'" placeholder="옵션"></td>' +
-      '<td><input type="text" class="c-w" placeholder="중량"></td>' +
-      '<td><input type="text" class="c-n" placeholder="정상가"></td>' +
-      '<td><input type="text" class="c-s" placeholder="판매가"></td>' +
-      '<td class="copycell"><button class="opt-copy">복사</button></td>';
-    const btn = tr.querySelector(".opt-copy");
-    btn.onclick = ()=>{
-      const vals = [
-        tr.querySelector(".c-opt").value,
-        tr.querySelector(".c-w").value,
-        tr.querySelector(".c-n").value,
-        tr.querySelector(".c-s").value
-      ];
-      copyText(vals.join("\t"), btn);
-    };
+      makeCell("c-opt", optVal, "옵션") +
+      makeCell("c-w", "", "중량") +
+      makeCell("c-n", "", "정상가") +
+      makeCell("c-s", "", "판매가");
+    // 각 셀 복사 버튼 연결
+    tr.querySelectorAll(".cellbox").forEach(box=>{
+      const inp = box.querySelector("input");
+      const btn = box.querySelector(".mini-copy");
+      btn.onclick = ()=> copyCell(inp, btn);
+      // 값을 수정하면 완료 색상 해제
+      inp.addEventListener("input", ()=> inp.classList.remove("copied"));
+    });
     tb.appendChild(tr);
   }
 
@@ -639,7 +644,10 @@ def render_product_guide():
 
   // 모든 옵션 행의 중량 칸에 일괄 적용
   function applyWeightAll(val){
-    document.querySelectorAll("#optBody .c-w").forEach(inp=>{ inp.value = val; });
+    document.querySelectorAll("#optBody .c-w").forEach(inp=>{
+      inp.value = val;
+      inp.classList.remove("copied");
+    });
   }
   function applyWeightFromInput(){
     const el = document.getElementById("weightInput");
