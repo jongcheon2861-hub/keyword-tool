@@ -221,6 +221,10 @@ if "mc_rows" not in st.session_state:
     ]
 if "mc_sent" not in st.session_state:
     st.session_state.mc_sent = []  # 가이드로 넘긴 계산 결과
+if "mc_mgmt_name" not in st.session_state:
+    st.session_state.mc_mgmt_name = ""
+if "mc_mgmt_sent" not in st.session_state:
+    st.session_state.mc_mgmt_sent = ""
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
@@ -331,9 +335,17 @@ def render_margin_calculator():
     st.markdown('<div class="topcard"><div class="bar-title">🧮 마진계산기</div></div>',
                 unsafe_allow_html=True)
 
+    # 상품명 (가이드의 노출상품명으로 전달)
     st.session_state.mc_product = st.text_input(
-        "상품명", value=st.session_state.get("mc_product", ""),
-        placeholder="상품명 (가이드의 노출상품명으로 전달)")
+        "노출상품명",
+        value=st.session_state.get("mc_product", ""),
+        placeholder="노출상품명 (가이드의 노출상품명으로 전달)")
+
+    # 등록상품명(관리용) - 가이드의 등록상품명(관리용)으로 전달
+    st.session_state.mc_mgmt_name = st.text_input(
+        "등록상품명(관리용)",
+        value=st.session_state.get("mc_mgmt_name", ""),
+        placeholder="등록상품명(관리용) (가이드로 전달)")
 
     if "mc_fixed_coupon" not in st.session_state:
         st.session_state.mc_fixed_coupon = None
@@ -428,6 +440,7 @@ def render_margin_calculator():
     st.markdown("")
     if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
         st.session_state.mc_sent = results
+        st.session_state.mc_mgmt_sent = st.session_state.get("mc_mgmt_name", "")
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
 
 # ==================================================================
@@ -504,6 +517,7 @@ def render_product_guide():
 
     selected_kw = ", ".join(st.session_state.get("selected", []))
     mc_product = st.session_state.get("mc_product", "")
+    mc_mgmt = st.session_state.get("mc_mgmt_sent", "")   # ← 추가
     mc_sent = st.session_state.get("mc_sent", [])
     mc_options = [r["opt"] for r in mc_sent if r["opt"]]
     pkg_text = " ".join('"' + o + '",' for o in mc_options).rstrip(",")
@@ -612,13 +626,14 @@ def render_product_guide():
 <script>
   const KEYWORD_TAGS = "__SELECTED_KW__";
   const MC_PRODUCT = "__MC_PRODUCT__";
+  const MC_MGMT = "__MC_MGMT__";
   const OPT_ROWS = __OPT_ROWS__;
   const PKG_TEXT = "__PKG_TEXT__";
 
   const TOP = [
     ["브랜드", "브랜드없음(자체제작)"],
     ["노출상품명", MC_PRODUCT],
-    ["등록상품명(관리용)", ""],
+    ["등록상품명(관리용)", MC_MGMT],
     ["카테고리", ""],
   ];
   const INFO = [
@@ -747,9 +762,11 @@ def render_product_guide():
 """
     safe_kw = selected_kw.replace("\\", "\\\\").replace('"', '\\"')
     safe_prod = mc_product.replace("\\", "\\\\").replace('"', '\\"')
+    safe_mgmt = mc_mgmt.replace("\\", "\\\\").replace('"', '\\"')   # ← 추가
     safe_pkg = pkg_text.replace("\\", "\\\\").replace('"', '\\"')
     GUIDE_HTML = GUIDE_HTML.replace("__SELECTED_KW__", safe_kw)
     GUIDE_HTML = GUIDE_HTML.replace("__MC_PRODUCT__", safe_prod)
+    GUIDE_HTML = GUIDE_HTML.replace("__MC_MGMT__", safe_mgmt)       # ← 추가
     GUIDE_HTML = GUIDE_HTML.replace("__OPT_ROWS__", json.dumps(opt_rows, ensure_ascii=False))
     GUIDE_HTML = GUIDE_HTML.replace("__PKG_TEXT__", safe_pkg)
 
