@@ -216,6 +216,8 @@ if "mc_product" not in st.session_state:
     st.session_state.mc_product = ""
 if "mc_options" not in st.session_state:
     st.session_state.mc_options = []
+if "mc_opt_count" not in st.session_state:
+    st.session_state.mc_opt_count = 3
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
@@ -280,28 +282,22 @@ def run_extract():
         st.session_state.results = []
 
 # ==================================================================
-# 화면: 마진 계산기
+# 화면: 마진 계산기 (계산 표)
 # ==================================================================
 MARGIN_CALC_HTML = """
 <!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><style>
   * { box-sizing: border-box; }
   body { font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif; background:#f4f6f9; margin:0; padding:16px; color:#333; }
-  h1 { font-size:20px; text-align:center; color:#1a73e8; margin:0 0 6px; }
+  h1 { font-size:18px; text-align:center; color:#1a73e8; margin:0 0 6px; }
   .desc { text-align:center; font-size:12px; color:#777; margin-bottom:14px; }
-  .prod-wrap { background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.06); padding:12px 14px; margin-bottom:12px; }
-  .prod-wrap label { font-size:13px; font-weight:700; color:#1a73e8; display:block; margin-bottom:6px; }
-  .prod-wrap input { width:100%; height:40px; padding:6px 10px; font-size:14px; border:1px solid #d5dae1; border-radius:8px; outline:none; }
-  .prod-wrap input:focus { border-color:#1a73e8; }
   .table-wrap { overflow-x:auto; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); padding:12px; }
   table { border-collapse:collapse; width:100%; font-size:12px; }
   th,td { border:1px solid #e3e8ef; padding:5px; text-align:center; white-space:nowrap; }
-  thead th { background:#1a73e8; color:#fff; font-weight:600; position:sticky; top:0; }
+  thead th { background:#1a73e8; color:#fff; font-weight:600; }
   tbody tr:nth-child(even) { background:#f9fbff; }
-  input,select { width:100%; padding:6px 5px; font-size:12px; border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:right; }
+  input { width:100%; padding:6px 5px; font-size:12px; border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:right; }
   input[type="text"] { text-align:left; }
-  select { -webkit-appearance:none; -moz-appearance:none; appearance:none; text-align:center; text-align-last:center; background-image:none; }
-  select::-ms-expand { display:none; }
-  input:focus,select:focus { border-color:#1a73e8; }
+  input:focus { border-color:#1a73e8; }
   .col-opt { width:72px; }
   .col-num { min-width:88px; }
   td.result { font-weight:700; background:#f0f5ff; color:#1a73e8; }
@@ -312,96 +308,98 @@ MARGIN_CALC_HTML = """
   .buttons { margin:12px auto 0; text-align:center; }
   .btn { background:#1a73e8; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-size:13px; cursor:pointer; margin:0 4px; }
   .btn.gray { background:#888; }
-  .btn.green { background:#2e7d32; }
-  tfoot td { background:#fff7e6; font-weight:700; color:#d35400; }
-  .send-msg { text-align:center; font-size:12.5px; color:#2e7d32; font-weight:700; margin-top:8px; min-height:16px; }
 </style></head><body>
-<h1>🧮 쿠팡 마진 계산기</h1>
-<div class="desc">판매가 100원 단위 내림 · 마진율 자동 보정 · 최대 10개</div>
-
-<div class="prod-wrap">
-  <label>상품명</label>
-  <input type="text" id="prodName" placeholder="상품명을 입력하세요">
-</div>
-
+<h1>🧮 마진 계산 표</h1>
+<div class="desc">판매가 100원 단위 내림 · 마진율 직접 입력 · 최대 10개</div>
 <div class="table-wrap"><table>
 <thead><tr>
 <th>No</th><th>옵션명</th><th class="col-num">공급가</th><th class="col-num">택배비</th>
 <th class="col-num">할인율(%)</th><th class="col-num">수수료(%)</th>
-<th class="col-num">마진율</th><th class="col-num">판매가</th>
+<th class="col-num">마진율(%)</th><th class="col-num">판매가</th>
 <th class="col-num">마진액</th><th class="col-num">쿠폰할인</th><th class="col-num">정가</th><th>삭제</th>
 </tr></thead>
 <tbody id="tbody"></tbody>
-<tfoot><tr><td colspan="7">합계</td>
-<td id="sumFinal">-</td><td id="sumMargin">-</td><td id="sumDiscount">-</td><td id="sumOrig">-</td><td></td>
-</tr></tfoot></table></div>
+</table></div>
 <div class="buttons">
 <button class="btn" onclick="addRow()">+ 행 추가</button>
 <button class="btn gray" onclick="clearAll()">전체 초기화</button>
-<button class="btn green" onclick="sendToGuide()">📤 가이드로 넘기기</button>
 </div>
-<div class="send-msg" id="sendMsg"></div>
 <script>
 const ROWS=10, DEFAULT_TARGET=20.0, tbody=document.getElementById('tbody');
-function marginOptions(){let h='';for(let r=40.0;r>=9.99;r-=0.1){const v=r.toFixed(1);h+=`<option value="${v}"${v==='20.0'?' selected':''}>${v}%</option>`;}return h;}
 function createRow(i){const tr=document.createElement('tr');tr.innerHTML=`
 <td class="no-col">${i+1}</td>
-<td><input type="text" class="col-opt optName" maxlength="6" placeholder="옵션명"></td>
+<td><input type="text" class="col-opt" maxlength="6" placeholder="옵션명"></td>
 <td><input type="number" class="supply" placeholder="0" oninput="calc()"></td>
 <td><input type="number" class="ship" value="0" oninput="calc()"></td>
 <td><input type="number" class="disc" value="60" oninput="calc()"></td>
 <td><input type="number" class="fee" value="12" step="0.1" oninput="calc()"></td>
-<td><select class="margin" onchange="onMarginChange(this)">${marginOptions()}</select></td>
+<td><input type="number" class="margin" value="20" step="0.1" oninput="calc()"></td>
 <td class="result finalOut">-</td><td class="margin-cell marginOut">-</td>
 <td class="discount-cell discountOut">-</td><td class="result origOut">-</td>
-<td class="del-col"><button onclick="delRow(this)" title="삭제">✕</button></td>`;
-tr.querySelector('.margin').dataset.userTarget=DEFAULT_TARGET.toFixed(1);return tr;}
+<td class="del-col"><button onclick="delRow(this)" title="삭제">✕</button></td>`;return tr;}
 function renumber(){[...tbody.children].forEach((tr,i)=>{tr.querySelector('.no-col').textContent=i+1;});}
 function buildTable(){tbody.innerHTML='';tbody.appendChild(createRow(0));}
 function addRow(){if(tbody.children.length>=ROWS){alert('최대 '+ROWS+'개까지');return;}tbody.appendChild(createRow(tbody.children.length));}
 function delRow(btn){if(tbody.children.length<=1){alert('최소 1개는 있어야 합니다');return;}btn.closest('tr').remove();renumber();calc();}
 function clearAll(){if(confirm('모두 지울까요?')){buildTable();calc();}}
 function won(n){return Math.round(n).toLocaleString('ko-KR');}
-function onMarginChange(sel){sel.dataset.userTarget=parseFloat(sel.value).toFixed(1);calc();}
-function setSelectToRate(sel,p){let r=Math.round(p*10)/10;if(r>40)r=40;if(r<10)r=10;sel.value=r.toFixed(1);}
-function calc(){let sO=0,sD=0,sF=0,sM=0;
+function calc(){
 tbody.querySelectorAll('tr').forEach(tr=>{
 const supply=parseFloat(tr.querySelector('.supply').value)||0;
 const ship=parseFloat(tr.querySelector('.ship').value)||0;
 const feeRate=(parseFloat(tr.querySelector('.fee').value)||0)/100;
 const discRate=(parseFloat(tr.querySelector('.disc').value)||0)/100;
-const ms=tr.querySelector('.margin');
+const targetRate=(parseFloat(tr.querySelector('.margin').value)||DEFAULT_TARGET)/100;
 const fo=tr.querySelector('.finalOut'),mo=tr.querySelector('.marginOut'),
 dco=tr.querySelector('.discountOut'),oo=tr.querySelector('.origOut');
-const targetRate=(parseFloat(ms.dataset.userTarget)||DEFAULT_TARGET)/100;
-if(supply<=0){setSelectToRate(ms,targetRate*100);fo.textContent=mo.textContent=dco.textContent=oo.textContent='-';return;}
+if(supply<=0){fo.textContent=mo.textContent=dco.textContent=oo.textContent='-';return;}
 const denom=1-feeRate-targetRate;
 if(denom<=0){fo.textContent=mo.textContent=dco.textContent=oo.textContent='오류';return;}
 let fp=(supply+ship)/denom;fp=Math.floor(fp/100)*100;
 const fee=fp*feeRate,margin=fp-supply-ship-fee;
-setSelectToRate(ms,margin/fp*100);
 const orig=fp*(1+discRate),disc=orig-fp;
-fo.textContent=won(fp);mo.textContent=won(margin);dco.textContent=won(disc);oo.textContent=won(orig);
-sF+=fp;sM+=margin;sD+=disc;sO+=orig;});
-document.getElementById('sumFinal').textContent=won(sF);
-document.getElementById('sumMargin').textContent=won(sM);
-document.getElementById('sumDiscount').textContent=won(sD);
-document.getElementById('sumOrig').textContent=won(sO);}
-function sendToGuide(){
-  const prod=document.getElementById('prodName').value.trim();
-  const opts=[...tbody.querySelectorAll('.optName')].map(i=>i.value.trim()).filter(v=>v!=='');
-  const payload={product:prod,options:opts};
-  const url=new URL(window.parent.location.href);
-  url.searchParams.set('mc_data',encodeURIComponent(JSON.stringify(payload)));
-  window.parent.location.href=url.toString();
+fo.textContent=won(fp);mo.textContent=won(margin);dco.textContent=won(disc);oo.textContent=won(orig);});
 }
 buildTable();calc();
 </script></body></html>
 """
 
 def render_margin_calculator():
-    components.html(MARGIN_CALC_HTML, height=560, scrolling=True)
-    st.caption("💡 상품명과 옵션명을 입력하고 '📤 가이드로 넘기기'를 누른 뒤 상품등록가이드 탭으로 이동하세요.")
+    st.markdown('<div class="topcard"><div class="bar-title">🧮 마진계산기</div></div>',
+                unsafe_allow_html=True)
+
+    # ---- 가이드로 넘길 값 입력 영역 (Streamlit 위젯) ----
+    st.markdown("##### 📤 상품등록가이드로 넘길 정보")
+    st.session_state.mc_product = st.text_input(
+        "상품명", value=st.session_state.get("mc_product", ""),
+        placeholder="상품명을 입력하세요 (가이드의 노출상품명으로 전달)")
+
+    c_add, c_del, c_cnt = st.columns([1, 1, 2])
+    with c_add:
+        if st.button("＋ 옵션 추가", use_container_width=True):
+            st.session_state.mc_opt_count += 1
+    with c_del:
+        if st.button("－ 옵션 삭제", use_container_width=True):
+            if st.session_state.mc_opt_count > 1:
+                st.session_state.mc_opt_count -= 1
+    with c_cnt:
+        st.markdown(f"<div style='padding-top:8px;color:#607d8b;font-weight:600;'>"
+                    f"옵션 {st.session_state.mc_opt_count}개</div>", unsafe_allow_html=True)
+
+    opt_values = []
+    for i in range(st.session_state.mc_opt_count):
+        val = st.text_input(f"옵션명 {i+1}", key=f"mc_opt_{i}",
+                            placeholder=f"예: {i+1}kg", label_visibility="collapsed")
+        opt_values.append(val.strip())
+
+    if st.button("📤 가이드로 넘기기", type="primary", use_container_width=True):
+        st.session_state.mc_options = [v for v in opt_values if v != ""]
+        st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
+
+    st.divider()
+
+    # ---- 마진 계산 표 (HTML) ----
+    components.html(MARGIN_CALC_HTML, height=520, scrolling=True)
 
 # ==================================================================
 # 화면: 키워드 추출기
@@ -478,7 +476,6 @@ def render_product_guide():
     selected_kw = ", ".join(st.session_state.get("selected", []))
     mc_product = st.session_state.get("mc_product", "")
     mc_options = st.session_state.get("mc_options", [])
-    # 포장단위: "옵션1," "옵션2," ...
     pkg_text = " ".join('"' + o + '",' for o in mc_options).rstrip(",")
 
     GUIDE_HTML = r"""
@@ -817,21 +814,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 }
 </style>
 """, unsafe_allow_html=True)
-
-# ==================================================================
-# 마진계산기 → 가이드 전달 데이터 수신 (URL 파라미터)
-# ==================================================================
-try:
-    qp = st.query_params
-    if "mc_data" in qp:
-        import urllib.parse
-        raw = urllib.parse.unquote(qp["mc_data"])
-        data = json.loads(raw)
-        st.session_state.mc_product = data.get("product", "")
-        st.session_state.mc_options = data.get("options", [])
-        del st.query_params["mc_data"]
-except Exception:
-    pass
 
 # ==================================================================
 # 상단 메뉴 + 화면 전환
