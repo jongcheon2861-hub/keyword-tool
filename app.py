@@ -186,7 +186,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 [data-testid="stBaseButton-primary"] {
     height: 40px !important; min-height: 40px !important;
     padding: 0 !important; margin: 0 !important;
-    font-weight: 800 !important; border-radius: 10px !important;
+    font-weight: 1600 !important; border-radius: 10px !important;
 }
 
 .copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
