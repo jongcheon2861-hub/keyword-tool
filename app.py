@@ -285,8 +285,12 @@ def run_extract():
         st.session_state.results = []
 
 # ---------- 마진 계산 ----------
-def calc_margin(supply, ship, disc, fee, margin):
-    """공급가/택배비/할인율/수수료/마진율 -> 판매가, 마진액, 쿠폰할인, 정가"""
+def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
+    """
+    기본: 마진율 기준으로 판매가/마진/쿠폰할인/정가 계산.
+    fixed_coupon 지정 시: 판매가는 그대로 두고 쿠폰할인 금액을 고정 →
+                          정상가/할인율만 다시 계산 (마진은 유지).
+    """
     if supply <= 0:
         return None
     fee_rate = fee / 100.0
@@ -296,12 +300,22 @@ def calc_margin(supply, ship, disc, fee, margin):
     if denom <= 0:
         return None
     fp = (supply + ship) / denom
-    fp = math.floor(fp / 100) * 100          # 판매가 (100원 내림)
+    fp = math.floor(fp / 100) * 100            # 판매가 (100원 내림)
     fee_amt = fp * fee_rate
-    margin_amt = fp - supply - ship - fee_amt  # 마진액
-    orig = fp * (1 + disc_rate)                 # 정가
-    disc_amt = orig - fp                        # 쿠폰할인
-    return {"final": fp, "margin": margin_amt, "discount": disc_amt, "orig": orig}
+    margin_amt = fp - supply - ship - fee_amt  # 마진액 (판매가 기준, 유지됨)
+
+    if fixed_coupon is not None:
+        # 판매가 유지 + 쿠폰할인 고정 → 정상가/할인율 재계산
+        disc_amt = fixed_coupon
+        orig = fp + disc_amt
+        disc_rate_out = (disc_amt / orig) if orig > 0 else 0.0
+        return {"final": fp, "margin": margin_amt, "discount": disc_amt,
+                "orig": orig, "disc_rate": disc_rate_out * 100}
+    else:
+        orig = fp * (1 + disc_rate)             # 정가
+        disc_amt = orig - fp                    # 쿠폰할인
+        return {"final": fp, "margin": margin_amt, "discount": disc_amt,
+                "orig": orig, "disc_rate": disc_rate * 100}
 
 # ==================================================================
 # 화면: 마진 계산기 (전체 Streamlit 위젯)
@@ -314,7 +328,7 @@ def render_margin_calculator():
         "상품명", value=st.session_state.get("mc_product", ""),
         placeholder="상품명 (가이드의 노출상품명으로 전달)")
 
-    ca, cb, cc = st.columns([1, 1, 3])
+    ca, cb, cc, cd = st.columns([1, 1, 1.6, 1.6])
     with ca:
         if st.button("＋ 행 추가", use_container_width=True):
             if len(st.session_state.mc_rows) < 10:
@@ -325,16 +339,36 @@ def render_margin_calculator():
             if len(st.session_state.mc_rows) > 1:
                 st.session_state.mc_rows.pop()
     with cc:
-        st.markdown(f"<div style='padding-top:8px;color:#607d8b;font-weight:600;'>"
-                    f"행 {len(st.session_state.mc_rows)}개</div>", unsafe_allow_html=True)
+        apply_coupon = st.button("🎟 쿠폰할인 일괄 적용", use_container_width=True)
+    with cd:
+        reset_coupon = st.button("↩ 일괄 적용 해제", use_container_width=True)
 
-    # 컬럼 비율 (입력 6 + 결과 4)
-    COLS = [1.1, 1, 1, 0.9, 0.9, 0.9, 1, 1, 1, 1]
+    if "mc_fixed_coupon" not in st.session_state:
+        st.session_state.mc_fixed_coupon = None
 
-    # 헤더 라벨 (한 번만)
+    # 1번 옵션의 현재 쿠폰할인 값을 기준으로 일괄 적용
+    if apply_coupon:
+        first = st.session_state.mc_rows[0]
+        base_res = calc_margin(first["supply"], first["ship"], first["disc"],
+                               first["fee"], first["margin"])
+        if base_res:
+            st.session_state.mc_fixed_coupon = int(base_res["discount"])
+        else:
+            st.warning("1번 행의 공급가를 먼저 입력하세요.")
+    if reset_coupon:
+        st.session_state.mc_fixed_coupon = None
+
+    fixed = st.session_state.mc_fixed_coupon
+    if fixed is not None:
+        st.info(f"🎟 쿠폰할인 {fixed:,}원으로 통일됨 (판매가 유지 · 정상가/할인율 재계산). "
+                f"해제하려면 '↩ 일괄 적용 해제'를 누르세요.")
+
+    # 컬럼 비율 (입력 6 + 결과 5)
+    COLS = [1.1, 1, 1, 0.9, 0.9, 0.9, 1, 1, 1, 1, 0.9]
+
     h = st.columns(COLS)
     heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
-             "판매가", "마진액", "쿠폰할인", "정가"]
+             "판매가", "마진액", "쿠폰할인", "정가", "적용할인%"]
     for col, name in zip(h, heads):
         col.markdown(f"<div style='font-size:12px;font-weight:700;color:#0d47a1;"
                      f"text-align:center;'>{name}</div>", unsafe_allow_html=True)
@@ -361,7 +395,8 @@ def render_margin_calculator():
                                           step=0.1, min_value=0.0, key=f"mc_mrg_{i}",
                                           label_visibility="collapsed")
 
-        res = calc_margin(row["supply"], row["ship"], row["disc"], row["fee"], row["margin"])
+        res = calc_margin(row["supply"], row["ship"], row["disc"], row["fee"],
+                          row["margin"], fixed_coupon=fixed)
         if res:
             c[6].markdown(f"<div class='mc-out mc-final'>{int(res['final']):,}</div>",
                           unsafe_allow_html=True)
@@ -371,13 +406,15 @@ def render_margin_calculator():
                           unsafe_allow_html=True)
             c[9].markdown(f"<div class='mc-out mc-orig'>{int(res['orig']):,}</div>",
                           unsafe_allow_html=True)
+            c[10].markdown(f"<div class='mc-out mc-rate'>{res['disc_rate']:.1f}%</div>",
+                           unsafe_allow_html=True)
             results.append({
                 "opt": row["opt"], "final": int(res["final"]),
                 "margin": int(res["margin"]), "discount": int(res["discount"]),
                 "orig": int(res["orig"])
             })
         else:
-            for k in range(6, 10):
+            for k in range(6, 11):
                 c[k].markdown("<div class='mc-out mc-empty'>-</div>", unsafe_allow_html=True)
 
     st.markdown("")
@@ -802,6 +839,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 .mc-margin { background:#eafaf3; color:#00a86b; }
 .mc-disc { background:#fdeef0; color:#d63384; }
 .mc-orig { background:#f0f5ff; color:#1a73e8; }
+.mc-rate { background:#fff3e0; color:#e65100; }
 .mc-empty { color:#bbb; }
 
 .center-popup {
