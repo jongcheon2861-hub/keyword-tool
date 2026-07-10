@@ -590,16 +590,10 @@ def render_product_guide():
 
 <div class="sec">옵션 / 가격</div>
 
-<div class="mini-title">옵션 추가</div>
-<div class="wrap-inp">
-  <input type="text" id="optInput" placeholder="옵션값 입력 (예: 1kg)">
-  <button class="addbtn" onclick="addFromInput()">+ 옵션 추가</button>
-</div>
-
-<div class="mini-title">중량 일괄 추가 (모든 옵션의 중량 칸에 적용)</div>
-<div class="wrap-inp">
-  <input type="text" id="weightInput" placeholder="중량값 입력">
-  <button class="wbtn" onclick="applyWeightFromInput()">중량 추가</button>
+<div class="row">
+  <div class="label">중량 일괄 입력</div>
+  <input type="text" id="weightInput" placeholder="모든 옵션의 중량 칸에 적용 (예: 1kg)">
+  <button class="cbtn" onclick="applyWeightFromInput()">적용</button>
 </div>
 
 <table class="opt-table">
@@ -731,12 +725,6 @@ def render_product_guide():
     tr.querySelector(".del-btn").onclick = ()=>{ tr.remove(); refreshEmptyMsg(); };
     tb.appendChild(tr);
     refreshEmptyMsg();
-  }
-
-  function addFromInput(){
-    const el = document.getElementById("optInput");
-    addOptRow([el.value.trim(),"","",""]);
-    el.value = "";
   }
 
   function applyWeightAll(val){
