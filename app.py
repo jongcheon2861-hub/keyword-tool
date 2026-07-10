@@ -436,98 +436,182 @@ def render_keyword_tool():
 # 화면: 상품등록가이드
 # ==================================================================
 def render_product_guide():
-    guide_html = r"""
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><style>
-  * { box-sizing:border-box; }
-  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; background:#f7f9fc; margin:0; padding:16px; color:#263238; }
-  h1 { font-size:20px; color:#5b34c0; margin:0 0 4px; }
-  .desc { font-size:12px; color:#888; margin-bottom:14px; }
-  .sec { font-size:14px; font-weight:800; color:#fff; background:linear-gradient(135deg,#667eea,#764ba2);
-         padding:7px 12px; border-radius:8px; margin:16px 0 8px; }
-  .row { display:flex; align-items:stretch; gap:8px; margin-bottom:7px; }
-  .label { flex:0 0 150px; display:flex; align-items:center; font-size:13px; font-weight:700;
-           color:#37474f; background:#eef1f6; border-radius:8px; padding:0 12px; }
-  .val { flex:1; }
-  .val input { width:100%; height:38px; font-size:13px; padding:0 12px; border:1.5px solid #dfe4ea;
-               border-radius:8px; outline:none; }
-  .val input:focus { border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,0.15); }
-  .copy { flex:0 0 52px; border:none; border-radius:8px; background:#1a73e8; color:#fff;
+    st.markdown('<div class="topcard"><div class="bar-title">📋 상품등록 가이드</div></div>',
+                unsafe_allow_html=True)
+
+    GUIDE_HTML = r"""
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing:border-box; font-family:'Malgun Gothic',sans-serif; }
+  body { margin:0; padding:6px 4px; background:#fff; }
+
+  .sec { font-size:14px; font-weight:800; color:#0d47a1;
+         margin:14px 0 6px; padding-bottom:4px; border-bottom:2px solid #e3ecfb; }
+
+  /* 일반 항목 (라벨 + 입력 + 복사) */
+  .row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .label { flex:0 0 150px; font-size:12.5px; font-weight:700; color:#333; }
+  .row input { flex:1; height:36px; padding:4px 8px; font-size:12.5px;
+               border:1px solid #d5dae1; border-radius:6px; outline:none; }
+  .cbtn { flex:0 0 auto; height:36px; padding:0 12px; border:none; border-radius:6px;
+          background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff;
           font-size:12px; font-weight:700; cursor:pointer; }
-  .copy:hover { background:#0d47a1; }
-  .copy.done { background:#00a86b; }
-  .hint { font-size:11px; color:#9aa4b2; margin:2px 0 6px 158px; }
-</style></head><body>
-<h1>📋 상품등록가이드</h1>
-<div class="desc">항목별로 확인하며 복사 → 쿠팡 등록화면에 붙여넣기 (고정값은 미리 입력됨)</div>
-<div id="wrap"></div>
+  .cbtn.done { background:#2e7d32; }
+
+  /* 옵션/가격 4열 표 */
+  .opt-table { width:100%; border-collapse:collapse; margin-top:4px; }
+  .opt-table th, .opt-table td { border:1px solid #d5dae1; padding:4px; text-align:center; }
+  .opt-table th { background:#f1f6ff; font-size:12.5px; font-weight:800; color:#0d47a1; }
+  .opt-table td input { width:100%; height:34px; padding:2px 6px; font-size:12.5px;
+                        border:none; outline:none; text-align:center; }
+  .opt-table td.copycell { width:56px; }
+  .opt-copy { height:30px; padding:0 8px; border:none; border-radius:5px;
+              background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff;
+              font-size:11px; font-weight:700; cursor:pointer; }
+  .opt-copy.done { background:#2e7d32; }
+
+  .btns { margin:8px 0 4px; display:flex; gap:6px; flex-wrap:wrap; }
+  .addbtn { height:34px; padding:0 14px; border:none; border-radius:6px;
+            background:#eef3fb; color:#0d47a1; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .addbtn:hover { background:#dbe7fb; }
+  .kgbtn { height:34px; padding:0 14px; border:1px solid #1a73e8; border-radius:6px;
+           background:#fff; color:#1a73e8; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .kgbtn:hover { background:#f1f6ff; }
+</style>
+</head>
+<body>
+
+<!-- 상품명/카테고리 -->
+<div class="sec">상품명 / 카테고리</div>
+<div id="topArea"></div>
+
+<!-- 옵션/가격 -->
+<div class="sec">옵션 / 가격</div>
+<table class="opt-table">
+  <thead>
+    <tr>
+      <th style="width:26%">중량</th>
+      <th style="width:20%">수량</th>
+      <th style="width:24%">정상가</th>
+      <th style="width:24%">판매가</th>
+      <th style="width:56px">복사</th>
+    </tr>
+  </thead>
+  <tbody id="optBody"></tbody>
+</table>
+
+<div class="btns">
+  <button class="addbtn" onclick="addOptRow()">+ 옵션 추가</button>
+  <button class="kgbtn" onclick="addOptRow('1kg')">1kg</button>
+  <button class="kgbtn" onclick="addOptRow('2kg')">2kg</button>
+  <button class="kgbtn" onclick="addOptRow('3kg')">3kg</button>
+  <button class="kgbtn" onclick="addOptRow('4kg')">4kg</button>
+</div>
+
+<!-- 나머지 항목 -->
+<div class="sec">상품 주요정보</div>
+<div id="infoArea"></div>
+
+<div class="sec">검색 노출</div>
+<div id="searchArea"></div>
+
+<div class="sec">배송 / 반품</div>
+<div id="shipArea"></div>
+
 <script>
-  const ITEMS = [
-    ["S","상품명 / 카테고리"],
-    ["브랜드","브랜드없음(자체제작)",""],
-    ["노출상품명","","후킹+신뢰+핵심 키워드 5개"],
-    ["등록상품명","","판매자관리용"],
-    ["카테고리","",""],
-    ["S","옵션 / 가격"],
-    ["중량","",""],
-    ["수량","",""],
-    ["정상가","",""],
-    ["판매가","",""],
-    ["S","상품 주요정보"],
-    ["제조사","(브랜드)협력사",""],
-    ["부가세","면세",""],
-    ["S","검색 노출"],
-    ["태그","",""],
-    ["검색필터","",""],
-    ["상품정보제공고시","농수축산물 / 전체상품 상세페이지 참조",""],
-    ["품목/명칭","",""],
-    ["포장단위 용량·수량·크기","",""],
-    ["생산자(수입자)","(브랜드)협력사",""],
-    ["원산지","국내산",""],
-    ["S","배송 / 반품정보"],
-    ["출고지","",""],
-    ["택배사","CJ대한통운",""],
-    ["배송방법","신선냉동",""],
-    ["출고소요일","3일",""],
-    ["반품/교환지","",""],
+  // [라벨, 기본값]
+  const TOP = [
+    ["브랜드", "브랜드없음(자체제작)"],
+    ["노출상품명", ""],
+    ["등록상품명(관리용)", ""],
+    ["카테고리", ""],
   ];
-  const wrap = document.getElementById('wrap');
-  let idx = 0;
-  ITEMS.forEach(it => {
-    if (it[0] === "S") {
-      const s = document.createElement('div');
-      s.className = 'sec'; s.textContent = it[1];
-      wrap.appendChild(s); return;
-    }
-    const [label, def, hint] = it;
-    const id = 'inp' + (idx++);
-    const row = document.createElement('div');
-    row.className = 'row';
-    row.innerHTML = `
-      <div class="label">${label}</div>
-      <div class="val"><input id="${id}" type="text" value="${def}"></div>
-      <button class="copy" onclick="doCopy('${id}', this)">복사</button>`;
-    wrap.appendChild(row);
-    if (hint) {
-      const h = document.createElement('div');
-      h.className = 'hint'; h.textContent = '💡 ' + hint;
-      wrap.appendChild(h);
-    }
-  });
-  function doCopy(id, btn) {
-    const el = document.getElementById(id);
-    el.select();
-    navigator.clipboard.writeText(el.value).then(() => {
-      btn.textContent = '완료'; btn.classList.add('done');
-      setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('done'); }, 1000);
-    }).catch(() => {
-      document.execCommand('copy');
-      btn.textContent = '완료'; btn.classList.add('done');
-      setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('done'); }, 1000);
+  const INFO = [
+    ["제조사", "(브랜드)협력사"],
+    ["부가세", "면세"],
+  ];
+  const SEARCH = [
+    ["태그", ""],
+    ["검색필터", ""],
+    ["상품정보제공고시", "농수축산물 / 전체상품 상세페이지 참조"],
+    ["품목 또는 명칭", ""],
+    ["포장단위 용량/수량/크기", ""],
+    ["생산자(수입자)", "(브랜드)협력사"],
+    ["원산지", "국내산"],
+  ];
+  const SHIP = [
+    ["출고지", ""],
+    ["택배사", "CJ대한통운"],
+    ["배송방법", "신선냉동"],
+    ["출고소요일", "3일"],
+    ["반품/교환지", ""],
+  ];
+
+  function copyText(txt, btn){
+    navigator.clipboard.writeText(txt).then(()=>{
+      const old = btn.textContent;
+      btn.textContent = "완료";
+      btn.classList.add("done");
+      setTimeout(()=>{ btn.textContent = old; btn.classList.remove("done"); }, 900);
     });
   }
-</script></body></html>
+
+  function buildRows(arr, containerId){
+    const box = document.getElementById(containerId);
+    arr.forEach(([label, val])=>{
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML =
+        '<div class="label">'+label+'</div>' +
+        '<input type="text" value="'+val.replace(/"/g,'&quot;')+'">' +
+        '<button class="cbtn">복사</button>';
+      const inp = row.querySelector("input");
+      const btn = row.querySelector(".cbtn");
+      btn.onclick = ()=> copyText(inp.value, btn);
+      box.appendChild(row);
+    });
+  }
+
+  buildRows(TOP, "topArea");
+  buildRows(INFO, "infoArea");
+  buildRows(SEARCH, "searchArea");
+  buildRows(SHIP, "shipArea");
+
+  // 옵션 행 추가
+  function addOptRow(weight){
+    const tb = document.getElementById("optBody");
+    const tr = document.createElement("tr");
+    const w = weight ? weight : "";
+    tr.innerHTML =
+      '<td><input type="text" class="c-w" value="'+w+'" placeholder="중량"></td>' +
+      '<td><input type="text" class="c-q" placeholder="수량"></td>' +
+      '<td><input type="text" class="c-n" placeholder="정상가"></td>' +
+      '<td><input type="text" class="c-s" placeholder="판매가"></td>' +
+      '<td class="copycell"><button class="opt-copy">복사</button></td>';
+    const btn = tr.querySelector(".opt-copy");
+    btn.onclick = ()=>{
+      const vals = [
+        tr.querySelector(".c-w").value,
+        tr.querySelector(".c-q").value,
+        tr.querySelector(".c-n").value,
+        tr.querySelector(".c-s").value
+      ];
+      copyText(vals.join("\t"), btn);
+    };
+    tb.appendChild(tr);
+  }
+
+  // 처음에 빈 옵션 행 1개 표시
+  addOptRow();
+</script>
+
+</body>
+</html>
 """
-    components.html(guide_html, height=1400, scrolling=True)
+    components.html(GUIDE_HTML, height=1500, scrolling=True)
 
 # ==================================================================
 # 공통 CSS
