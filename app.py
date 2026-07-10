@@ -285,38 +285,45 @@ def run_extract():
         st.session_state.results = []
 
 # ---------- 마진 계산 ----------
+import math
+
 def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
-    """
-    기본: 마진율 기준으로 판매가/마진/쿠폰할인/정가 계산.
-    fixed_coupon 지정 시: 판매가는 그대로 두고 쿠폰할인 금액을 고정 →
-                          정상가/할인율만 다시 계산 (마진은 유지).
-    """
-    if supply <= 0:
+    if not supply or supply <= 0:
         return None
-    fee_rate = fee / 100.0
+
     disc_rate = disc / 100.0
-    target = margin / 100.0
+    fee_rate  = fee / 100.0
+    target    = margin / 100.0
+
+    # 판매가(내가 받는 금액) 산출
     denom = 1 - fee_rate - target
     if denom <= 0:
         return None
-    fp = (supply + ship) / denom
-    fp = math.floor(fp / 100) * 100            # 판매가 (100원 내림)
-    fee_amt = fp * fee_rate
-    margin_amt = fp - supply - ship - fee_amt  # 마진액 (판매가 기준, 유지됨)
+    fp = math.floor(((supply + ship) / denom) / 100) * 100  # 판매가
+
+    fee_amt    = fp * fee_rate
+    margin_amt = fp - supply - ship - fee_amt
 
     if fixed_coupon is not None:
-        # 판매가 유지 + 쿠폰할인 고정 → 정상가/할인율 재계산
+        # 판매가 고정, 쿠폰할인 금액 고정 → 정상가/할인율만 재계산
         disc_amt = fixed_coupon
-        orig = fp + disc_amt
+        orig     = fp + disc_amt
         disc_rate_out = (disc_amt / orig) if orig > 0 else 0.0
-        return {"final": fp, "margin": margin_amt, "discount": disc_amt,
-                "orig": orig, "disc_rate": disc_rate_out * 100}
     else:
-        orig = fp * (1 + disc_rate)             # 정가
-        disc_amt = orig - fp                    # 쿠폰할인
-        return {"final": fp, "margin": margin_amt, "discount": disc_amt,
-                "orig": orig, "disc_rate": disc_rate * 100}
+        # 정가 대비 할인율 → 정상가 = 판매가 ÷ (1 - 할인율)
+        if disc_rate >= 1:
+            return None
+        orig     = fp / (1 - disc_rate)   # ★ 나눗셈으로 수정
+        disc_amt = orig - fp
+        disc_rate_out = disc_rate
 
+    return {
+        "final":     fp,
+        "margin":    margin_amt,
+        "discount":  disc_amt,
+        "orig":      orig,
+        "disc_rate": disc_rate_out * 100,
+    }
 # ==================================================================
 # 화면: 마진 계산기 (전체 Streamlit 위젯)
 # ==================================================================
@@ -369,7 +376,7 @@ def render_margin_calculator():
 
     h = st.columns(COLS, gap="small")
     heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
-             "판매가", "마진액", "쿠폰할인", "정가", "적용할인%"]
+             "판매가", "마진액", "쿠폰할인", "정상가", "적용할인%"]
     for col, name in zip(h, heads):
         col.markdown(f"<div style='font-size:12px;font-weight:700;color:#0d47a1;"
                      f"text-align:center;'>{name}</div>", unsafe_allow_html=True)
