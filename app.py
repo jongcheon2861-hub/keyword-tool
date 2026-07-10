@@ -3,7 +3,7 @@ import pandas as pd
 import requests, time, hmac, hashlib, base64
 
 st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered",
-                   initial_sidebar_state="collapsed")
+                   initial_sidebar_state="expanded")
 
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
