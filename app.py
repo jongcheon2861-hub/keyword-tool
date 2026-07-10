@@ -473,11 +473,11 @@ def render_product_guide():
   .cellbox input { flex:1; height:34px; padding:2px 5px; font-size:12px;
                    border:1px solid #e1e6ec; border-radius:5px; outline:none; text-align:center;
                    transition:background .15s,border-color .15s; }
-  .cellbox input.copied { background:#eafaf3; border-color:#2e7d32; color:#00794c; font-weight:700; }
+  .cellbox input.copied { background:#eafaf3 !important; border-color:#2e7d32 !important;
+                          color:#00794c !important; font-weight:700 !important; }
   .mini-copy { flex:0 0 auto; width:26px; height:30px; border:none; border-radius:5px;
-               background:#eef3fb; color:#0d47a1; font-size:12px; font-weight:800; cursor:pointer;
-               transition:background .15s,color .15s; }
-  .mini-copy.done { background:#2e7d32; color:#fff; }
+               background:#eef3fb; color:#0d47a1; font-size:12px; font-weight:800; cursor:pointer; }
+  .empty-msg { font-size:12px; color:#999; text-align:center; padding:8px 0; }
 
   .btns { margin:6px 0 4px; display:flex; gap:6px; flex-wrap:wrap; }
   .addbtn { height:34px; padding:0 16px; border:none; border-radius:6px;
@@ -524,6 +524,7 @@ def render_product_guide():
   </thead>
   <tbody id="optBody"></tbody>
 </table>
+<div id="emptyMsg" class="empty-msg">옵션을 추가하면 여기에 표시됩니다.</div>
 
 <!-- 나머지 항목 -->
 <div class="sec">상품 주요정보</div>
@@ -575,14 +576,10 @@ def render_product_guide():
     });
   }
 
-  // 옵션 셀 복사 (입력칸 색상 유지로 진행상황 표시)
-  function copyCell(inp, btn){
+  // 옵션 셀 복사 → 왼쪽 입력칸 색상 계속 유지
+  function copyCell(inp){
     navigator.clipboard.writeText(inp.value).then(()=>{
       inp.classList.add("copied");
-      const old = btn.textContent;
-      btn.textContent = "✓";
-      btn.classList.add("done");
-      setTimeout(()=>{ btn.textContent = old; btn.classList.remove("done"); }, 900);
     });
   }
 
@@ -616,7 +613,13 @@ def render_product_guide():
            '</div></td>';
   }
 
-  // 옵션 행 추가 (옵션값만 채우고 중량은 빈칸)
+  function refreshEmptyMsg(){
+    const tb = document.getElementById("optBody");
+    document.getElementById("emptyMsg").style.display =
+      tb.children.length === 0 ? "block" : "none";
+  }
+
+  // 옵션 행 추가 (옵션값만 채우고 나머지는 빈칸)
   function addOptRow(optVal){
     const tb = document.getElementById("optBody");
     const tr = document.createElement("tr");
@@ -625,15 +628,15 @@ def render_product_guide():
       makeCell("c-w", "", "중량") +
       makeCell("c-n", "", "정상가") +
       makeCell("c-s", "", "판매가");
-    // 각 셀 복사 버튼 연결
     tr.querySelectorAll(".cellbox").forEach(box=>{
       const inp = box.querySelector("input");
       const btn = box.querySelector(".mini-copy");
-      btn.onclick = ()=> copyCell(inp, btn);
+      btn.onclick = ()=> copyCell(inp);
       // 값을 수정하면 완료 색상 해제
       inp.addEventListener("input", ()=> inp.classList.remove("copied"));
     });
     tb.appendChild(tr);
+    refreshEmptyMsg();
   }
 
   function addFromInput(){
@@ -654,8 +657,8 @@ def render_product_guide():
     applyWeightAll(el.value.trim());
   }
 
-  // 시작 시 빈 옵션 행 1개 표시
-  addOptRow();
+  // 시작 시에는 옵션 행 없음 (사용자가 추가할 때만 생성)
+  refreshEmptyMsg();
 </script>
 
 </body>
