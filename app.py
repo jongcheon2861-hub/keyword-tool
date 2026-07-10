@@ -162,27 +162,24 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.5rem !important; }
 
-/* ★ 초반에 되던 방식 : 앵커를 가진 수직블록에 sticky */
-div[data-testid="stVerticalBlock"]:has(div.topbar-anchor) {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 999 !important;
-    background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%) !important;
-    padding: 14px 18px !important;
-    border: 1px solid #e6e8eb !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
-    margin-bottom: 34px !important;
+/* 상단 카드 (고정 아님, 그냥 위에 배치) */
+.topcard {
+    background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
+    padding: 16px 20px 6px 20px;
+    border: 1px solid #e6e8eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    margin-bottom: 6px;
 }
-div.topbar-anchor { height: 0; margin: 0; padding: 0; }
+.bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 10px; }
 
-.bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 8px; }
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 [data-testid="stBaseButton-primary"] {
     height: 52px !important; min-height: 52px !important;
     padding: 0 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
 }
+
 .copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 6px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
@@ -198,26 +195,52 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     color: #1565c0 !important; font-weight: 400 !important;
     font-size: 14px !important; white-space: nowrap !important;
 }
+
+/* 상위어 안내 */
+.parent-box {
+    background:#e3f2fd; border-radius:10px; color:#1565c0;
+    font-size:14px; padding:12px 16px; margin:20px 0 4px 0;
+}
+.list-head { font-size:22px; font-weight:800; color:#263238; margin:8px 0 8px 0; }
+
+/* 키워드 버튼 */
 [data-testid="stBaseButton-secondary"] {
-    min-height: 46px !important; padding: 8px 14px !important;
+    min-height: 44px !important; height: 44px !important;
+    padding: 0 14px !important;
     border-radius: 12px !important; border: 1.5px solid #e6e8eb !important;
     background: #ffffff !important; transition: all .12s ease !important;
     justify-content: flex-start !important;
 }
 [data-testid="stBaseButton-secondary"] p {
-    font-size: 18px !important; font-weight: 500 !important; line-height: 1.1 !important;
+    font-size: 17px !important; font-weight: 500 !important; line-height: 1.1 !important;
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
-[data-testid="stBaseButton-secondary"]:hover { border-color:#ff7043 !important; transform: translateY(-1px); }
+[data-testid="stBaseButton-secondary"]:hover { border-color:#ff7043 !important; }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] {
     background: #eef6ff !important; border-color: #4a90d9 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] p {
     color: #1565c0 !important; font-weight: 700 !important;
 }
+
+/* 선택 마커: 높이 0 → 눌러도 간격 안 벌어짐 */
+.kw-picked { display:block !important; height:0 !important; margin:0 !important;
+    padding:0 !important; overflow:hidden !important; line-height:0 !important; }
+[data-testid="stElementContainer"]:has(.kw-picked) {
+    height:0 !important; min-height:0 !important; margin:0 !important; padding:0 !important;
+}
+
+/* 세로/가로 간격 좁게 */
+div[data-testid="stVerticalBlock"] { gap: 0.15rem !important; }
 div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
-.metric-val { min-height:46px; display:flex; align-items:center; justify-content:center;
-    font-size:17px; font-weight:600; color:#607d8b; }
+[data-testid="stElementContainer"] { margin: 0 !important; }
+
+.metric-val { min-height:44px; display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:600; color:#607d8b; }
+
+/* 목록 스크롤 컨테이너 테두리 제거 */
+div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
+
 .center-popup {
     position: fixed; top: 30%; left: 50%;
     transform: translate(-50%, -50%); z-index: 100000;
@@ -251,43 +274,51 @@ if st.session_state.get("popup"):
     st.markdown(ph, unsafe_allow_html=True)
     st.session_state.popup = None
 
-# ---------- 상단 고정바 (초반 방식 : container + anchor) ----------
-with st.container():
-    st.markdown('<div class="topbar-anchor"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="bar-title">🛒 쿠팡키워드 추출기</div>', unsafe_allow_html=True)
-    ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
-    with ta:
-        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
-                      key="raw_input", on_change=run_extract,
-                      label_visibility="collapsed")
-    with tb:
-        st.button("🔍 추출하기", use_container_width=True,
-                  on_click=run_extract, type="primary")
-    n = len(st.session_state.selected)
-    st.markdown('<div class="copy-head">📋 복사용 키워드 '
-                '<span class="copy-badge">' + str(n) + '개</span></div>',
-                unsafe_allow_html=True)
-    if st.session_state.selected:
-        kw_text = ",".join(st.session_state.selected) + ","
-    else:
-        kw_text = " "
-    st.code(kw_text, language=None)
+# ==================================================================
+# 1) 상단 박스 영역 (제목 + 검색 + 복사용 키워드)
+# ==================================================================
+st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
+            unsafe_allow_html=True)
 
-# ---------- 결과 표시 ----------
+ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
+with ta:
+    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+                  key="raw_input", on_change=run_extract,
+                  label_visibility="collapsed")
+with tb:
+    st.button("🔍 추출하기", use_container_width=True,
+              on_click=run_extract, type="primary")
+
+n = len(st.session_state.selected)
+st.markdown('<div class="copy-head">📋 복사용 키워드 '
+            '<span class="copy-badge">' + str(n) + '개</span></div>',
+            unsafe_allow_html=True)
+kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
+st.code(kw_text, language=None)
+
+# ==================================================================
+# 2) 추출된 키워드 영역 (분리 + 최하단까지 스크롤 컨테이너)
+# ==================================================================
 if st.session_state.get("results"):
-    st.info("자동 인식된 상위어: " + st.session_state.get("related_info", ""))
-    st.subheader("추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)")
-    for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
-        c1, c2, c3 = st.columns([3, 1.4, 1.2])
-        already = kw in st.session_state.selected
-        if already:
-            c1.markdown("<div class='kw-picked' style='display:none'></div>",
+    st.markdown('<div class="parent-box">자동 인식된 상위어: '
+                + st.session_state.get("related_info", "") + '</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
+                unsafe_allow_html=True)
+
+    # ★ 목록만 고정 높이 컨테이너 안에서 스크롤 (숫자로 하단까지 조절)
+    with st.container(height=620):
+        for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
+            c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
+            already = kw in st.session_state.selected
+            with c1:
+                if already:
+                    st.markdown("<span class='kw-picked'></span>", unsafe_allow_html=True)
+                st.button(kw, key="pick_" + str(i),
+                          on_click=toggle_keyword, args=(kw,), use_container_width=True)
+            c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
                         unsafe_allow_html=True)
-        c1.button(kw, key="pick_" + str(i),
-                  on_click=toggle_keyword, args=(kw,), use_container_width=True)
-        c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
-                    unsafe_allow_html=True)
-        c3.markdown("<div class='metric-val'>" + str(score) + "</div>",
-                    unsafe_allow_html=True)
+            c3.markdown("<div class='metric-val'>" + str(score) + "</div>",
+                        unsafe_allow_html=True)
 elif "results" in st.session_state:
     st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
