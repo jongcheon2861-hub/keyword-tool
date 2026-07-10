@@ -505,7 +505,12 @@ with tb:
               on_click=run_extract, type="primary")
 
 # 마진 계산기 페이지로 이동
-st.page_link("pages/1_margin_calculator.py", label="🧮 마진 계산기 열기")
+st.markdown(
+    '<a href="margin_calculator" target="_self" '
+    'style="display:inline-block;background:linear-gradient(135deg,#1a73e8,#0d47a1);'
+    'color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;'
+    'text-decoration:none;margin:8px 0 12px 0;">🧮 마진 계산기 열기</a>',
+    unsafe_allow_html=True)
 
 n = len(st.session_state.selected)
 st.markdown('<div class="copy-head">📋 복사용 키워드 '
