@@ -331,13 +331,66 @@ html, body { overflow: hidden !important; height: 100vh !important; }
 }
 .bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 10px; }
 
-div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
-[data-testid="stBaseButton-primary"] {
-    height: 40px !important; min-height: 40px !important;
-    padding: 0 !important; margin: 0 !important;
-    font-weight: 700 !important; border-radius: 10px !important;
+/* ===== 고급스러운 검색창 ===== */
+div[data-testid="stTextInput"] input {
+    height: 52px !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #263238 !important;
+    padding: 0 18px !important;
+    border-radius: 14px !important;
+    border: 1.5px solid #dfe4ea !important;
+    background: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 2px rgba(0,0,0,0.02) !important;
+    transition: all 0.25s ease !important;
 }
-[data-testid="stBaseButton-primary"] p { font-size: 16px !important; font-weight: 800 !important; }
+div[data-testid="stTextInput"] input::placeholder {
+    color: #b0bec5 !important;
+    font-weight: 400 !important;
+}
+/* 포커스 시 파란빛 글로우 */
+div[data-testid="stTextInput"] input:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15),
+                0 4px 14px rgba(102,126,234,0.18) !important;
+    background: #fdfdff !important;
+}
+/* 기본 빨간 포커스 테두리 제거 */
+div[data-testid="stTextInput"] div[data-baseweb="input"] {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* ===== 고급스러운 추출하기 버튼 ===== */
+[data-testid="stBaseButton-primary"] {
+    height: 52px !important;
+    min-height: 52px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 14px !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow: 0 4px 14px rgba(102,126,234,0.35) !important;
+    transition: all 0.25s ease !important;
+}
+[data-testid="stBaseButton-primary"] p {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.3px !important;
+    color: #ffffff !important;
+}
+[data-testid="stBaseButton-primary"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 22px rgba(102,126,234,0.45) !important;
+    filter: brightness(1.05) !important;
+}
+[data-testid="stBaseButton-primary"]:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 3px 10px rgba(102,126,234,0.35) !important;
+}
+
 
 .copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
