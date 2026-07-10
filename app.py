@@ -215,7 +215,6 @@ if "popup_id" not in st.session_state:
 if "mc_product" not in st.session_state:
     st.session_state.mc_product = ""
 if "mc_rows" not in st.session_state:
-    # 각 행: 옵션명, 공급가, 택배비, 할인율, 수수료, 마진율
     st.session_state.mc_rows = [
         {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0}
     ]
@@ -225,6 +224,8 @@ if "mc_mgmt_name" not in st.session_state:
     st.session_state.mc_mgmt_name = ""
 if "mc_mgmt_sent" not in st.session_state:
     st.session_state.mc_mgmt_sent = ""
+if "mc_fixed_coupon" not in st.session_state:
+    st.session_state.mc_fixed_coupon = None
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
@@ -289,8 +290,6 @@ def run_extract():
         st.session_state.results = []
 
 # ---------- 마진 계산 ----------
-import math
-
 def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
     if not supply or supply <= 0:
         return None
@@ -299,7 +298,6 @@ def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
     fee_rate  = fee / 100.0
     target    = margin / 100.0
 
-    # 판매가(내가 받는 금액) 산출
     denom = 1 - fee_rate - target
     if denom <= 0:
         return None
@@ -317,7 +315,7 @@ def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
         # 정가 대비 할인율 → 정상가 = 판매가 ÷ (1 - 할인율)
         if disc_rate >= 1:
             return None
-        orig     = fp / (1 - disc_rate)   # ★ 나눗셈으로 수정
+        orig     = fp / (1 - disc_rate)
         disc_amt = orig - fp
         disc_rate_out = disc_rate
 
@@ -328,27 +326,24 @@ def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
         "orig":      orig,
         "disc_rate": disc_rate_out * 100,
     }
+
 # ==================================================================
-# 화면: 마진 계산기 (전체 Streamlit 위젯)
+# 화면: 마진 계산기
 # ==================================================================
 def render_margin_calculator():
     st.markdown('<div class="topcard"><div class="bar-title">🧮 마진계산기</div></div>',
                 unsafe_allow_html=True)
 
-    # 상품명 (가이드의 노출상품명으로 전달)
     st.session_state.mc_product = st.text_input(
         "노출상품명",
         value=st.session_state.get("mc_product", ""),
         placeholder="노출상품명 (가이드의 노출상품명으로 전달)")
 
-    # 등록상품명(관리용) - 가이드의 등록상품명(관리용)으로 전달
     st.session_state.mc_mgmt_name = st.text_input(
         "등록상품명(관리용)",
         value=st.session_state.get("mc_mgmt_name", ""),
         placeholder="등록상품명(관리용) (가이드로 전달)")
 
-    if "mc_fixed_coupon" not in st.session_state:
-        st.session_state.mc_fixed_coupon = None
     applied = st.session_state.mc_fixed_coupon is not None
 
     ca, cb, cc = st.columns([1, 1, 2])
@@ -366,7 +361,6 @@ def render_margin_calculator():
         toggle_coupon = st.button(coupon_label, use_container_width=True,
                                   type=("primary" if applied else "secondary"))
 
-    # 버튼 토글: 적용중이면 해제, 아니면 1번 옵션 기준으로 적용
     if toggle_coupon:
         if applied:
             st.session_state.mc_fixed_coupon = None
@@ -383,7 +377,6 @@ def render_margin_calculator():
 
     fixed = st.session_state.mc_fixed_coupon
 
-    # 컬럼 비율 (입력 6 + 결과 5) — 숫자 칸을 넓혀 글씨 잘림 방지
     COLS = [1.2, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
 
     h = st.columns(COLS, gap="small")
@@ -429,9 +422,17 @@ def render_margin_calculator():
             c[10].markdown(f"<div class='mc-out mc-rate'>{res['disc_rate']:.1f}%</div>",
                            unsafe_allow_html=True)
             results.append({
-                "opt": row["opt"], "final": int(res["final"]),
-                "margin": int(res["margin"]), "discount": int(res["discount"]),
-                "orig": int(res["orig"])
+                "opt": row["opt"],
+                "supply": int(row["supply"]),
+                "ship": int(row["ship"]),
+                "disc": float(row["disc"]),
+                "fee": float(row["fee"]),
+                "margin_rate": float(row["margin"]),
+                "final": int(res["final"]),
+                "margin": int(res["margin"]),
+                "discount": int(res["discount"]),
+                "orig": int(res["orig"]),
+                "disc_rate": round(res["disc_rate"], 1),
             })
         else:
             for k in range(6, 11):
@@ -517,13 +518,28 @@ def render_product_guide():
 
     selected_kw = ", ".join(st.session_state.get("selected", []))
     mc_product = st.session_state.get("mc_product", "")
-    mc_mgmt = st.session_state.get("mc_mgmt_sent", "")   # ← 추가
+    mc_mgmt = st.session_state.get("mc_mgmt_sent", "")
     mc_sent = st.session_state.get("mc_sent", [])
     mc_options = [r["opt"] for r in mc_sent if r["opt"]]
     pkg_text = " ".join('"' + o + '",' for o in mc_options).rstrip(",")
 
-    # 넘어온 마진 결과: 옵션별 (옵션명, 중량빈칸, 정가, 판매가)
+    # 넘어온 마진 결과: 옵션별 (옵션명, 중량빈칸, 정상가, 판매가)
     opt_rows = [[r["opt"], "", str(r["orig"]), str(r["final"])] for r in mc_sent]
+
+    # 쿠폰할인 목록 (옵션명 + 쿠폰할인금액)
+    coupon_rows = [[(r.get("opt") or f"옵션{i+1}"), int(r.get("discount", 0))]
+                   for i, r in enumerate(mc_sent)]
+
+    # 구글시트 표 (한 행 = 옵션 하나)
+    sheet_rows = []
+    for r in mc_sent:
+        sheet_rows.append([
+            mc_product, mc_mgmt, r.get("opt", ""),
+            r.get("supply", 0), r.get("ship", 0), r.get("disc", 0),
+            r.get("fee", 0), r.get("margin_rate", 0),
+            r.get("final", 0), r.get("margin", 0),
+            r.get("discount", 0), r.get("orig", 0),
+        ])
 
     GUIDE_HTML = r"""
 <!doctype html>
@@ -566,16 +582,9 @@ def render_product_guide():
   .del-btn:hover { background:#f8d7da; }
   .empty-msg { font-size:12px; color:#999; text-align:center; padding:8px 0; }
 
-  .addbtn { height:34px; padding:0 16px; border:none; border-radius:6px;
-            background:#eef3fb; color:#0d47a1; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .addbtn:hover { background:#dbe7fb; }
   .wbtn { height:34px; padding:0 16px; border:1px solid #2e7d32; border-radius:6px;
           background:#fff; color:#2e7d32; font-size:12.5px; font-weight:700; cursor:pointer; }
   .wbtn:hover { background:#eefaf0; }
-  .mini-title { margin-top:6px; font-size:12px; font-weight:700; color:#555; }
-  .wrap-inp { display:flex; gap:6px; margin:4px 0; }
-  .wrap-inp input { flex:1; height:34px; padding:2px 8px; font-size:12.5px;
-                    border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:center; }
   .legend { font-size:11.5px; color:#777; margin:4px 0 2px; }
   .legend b { padding:1px 6px; border-radius:4px; }
   .legend .lg-fill { background:#fff8e1; color:#8a6d00; }
@@ -606,7 +615,7 @@ def render_product_guide():
   </thead>
   <tbody id="optBody"></tbody>
 </table>
-<div id="emptyMsg" class="empty-msg">옵션을 추가하면 여기에 표시됩니다.</div>
+<div id="emptyMsg" class="empty-msg">마진계산기에서 넘기면 여기에 표시됩니다.</div>
 
 <div class="sec">상품 주요정보</div>
 <div id="infoArea"></div>
@@ -617,12 +626,30 @@ def render_product_guide():
 <div class="sec">배송 / 반품</div>
 <div id="shipArea"></div>
 
+<div class="sec">쿠폰할인</div>
+<div id="couponArea"></div>
+
+<div class="sec">구글시트 표 (보관용)</div>
+<div style="margin-bottom:6px;">
+  <button class="wbtn" onclick="copySheet()">📋 전체 복사 (구글시트 붙여넣기용)</button>
+  <span id="copyMsg" style="font-size:12px;color:#2e7d32;font-weight:700;margin-left:8px;"></span>
+</div>
+<div style="overflow-x:auto;">
+  <table class="opt-table" id="sheetTable" style="table-layout:auto;"><thead><tr>
+    <th>노출상품명</th><th>등록상품명</th><th>옵션명</th><th>공급가</th><th>택배비</th>
+    <th>할인율</th><th>수수료</th><th>마진율</th><th>판매가</th><th>마진액</th>
+    <th>쿠폰할인</th><th>정상가</th>
+  </tr></thead><tbody id="sheetBody"></tbody></table>
+</div>
+
 <script>
   const KEYWORD_TAGS = "__SELECTED_KW__";
   const MC_PRODUCT = "__MC_PRODUCT__";
   const MC_MGMT = "__MC_MGMT__";
   const OPT_ROWS = __OPT_ROWS__;
   const PKG_TEXT = "__PKG_TEXT__";
+  const COUPON_ROWS = __COUPON_ROWS__;
+  const SHEET_ROWS  = __SHEET_ROWS__;
 
   const TOP = [
     ["브랜드", "브랜드없음(자체제작)"],
@@ -636,9 +663,9 @@ def render_product_guide():
   ];
   const SEARCH = [
     ["태그", KEYWORD_TAGS],
-    ["검색필터", "✅ 해당필터 등록"],
+    ["검색필터", ""],
     ["상품정보제공고시", "농수축산물 / 전체상품 상세페이지 참조"],
-    ["품목 또는 명칭", ""],
+    ["품목 또는 명칭", "✅ 해당필터 등록"],
     ["포장단위 용량/수량/크기", PKG_TEXT],
     ["생산자(수입자)", "(브랜드)협력사"],
     ["원산지", "국내산"],
@@ -704,7 +731,6 @@ def render_product_guide():
       tb.children.length === 0 ? "block" : "none";
   }
 
-  // r = [옵션, 중량, 정상가, 판매가]
   function addOptRow(r){
     r = r || ["","","",""];
     const tb = document.getElementById("optBody");
@@ -743,6 +769,58 @@ def render_product_guide():
   } else {
     refreshEmptyMsg();
   }
+
+  // 쿠폰할인 목록 렌더
+  (function(){
+    const box = document.getElementById("couponArea");
+    if(!COUPON_ROWS || !COUPON_ROWS.length){
+      box.innerHTML = '<div class="empty-msg">마진계산기에서 넘기면 표시됩니다.</div>';
+      return;
+    }
+    COUPON_ROWS.forEach(([name, amt])=>{
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML =
+        '<div class="label">'+name+'</div>' +
+        '<input type="text" value="'+String(amt)+'">' +
+        '<button class="cbtn">복사</button>';
+      const inp = row.querySelector("input");
+      const btn = row.querySelector(".cbtn");
+      refreshFilled(inp);
+      inp.addEventListener("input", ()=>{ inp.classList.remove("copied"); refreshFilled(inp); });
+      btn.onclick = ()=> copyRowInput(inp);
+      box.appendChild(row);
+    });
+  })();
+
+  // 구글시트 표 렌더
+  (function(){
+    const tb = document.getElementById("sheetBody");
+    if(!SHEET_ROWS || !SHEET_ROWS.length){
+      tb.innerHTML = '<tr><td colspan="12" class="empty-msg">마진계산기에서 넘기면 표시됩니다.</td></tr>';
+      return;
+    }
+    SHEET_ROWS.forEach(r=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = r.map(v=>'<td style="font-size:11px;padding:4px;white-space:nowrap;">'+String(v)+'</td>').join("");
+      tb.appendChild(tr);
+    });
+  })();
+
+  // 구글시트 붙여넣기용 전체 복사
+  function copySheet(){
+    if(!SHEET_ROWS || !SHEET_ROWS.length) return;
+    const head = ["노출상품명","등록상품명","옵션명","공급가","택배비","할인율",
+                  "수수료","마진율","판매가","마진액","쿠폰할인","정상가"];
+    const lines = [head.join("\t")];
+    SHEET_ROWS.forEach(r=> lines.push(r.join("\t")));
+    const text = lines.join("\n");
+    navigator.clipboard.writeText(text).then(()=>{
+      const m = document.getElementById("copyMsg");
+      m.textContent = "복사됨 ✓ 구글시트에 붙여넣기 하세요";
+      setTimeout(()=>{ m.textContent=""; }, 2500);
+    });
+  }
 </script>
 
 </body>
@@ -750,15 +828,17 @@ def render_product_guide():
 """
     safe_kw = selected_kw.replace("\\", "\\\\").replace('"', '\\"')
     safe_prod = mc_product.replace("\\", "\\\\").replace('"', '\\"')
-    safe_mgmt = mc_mgmt.replace("\\", "\\\\").replace('"', '\\"')   # ← 추가
+    safe_mgmt = mc_mgmt.replace("\\", "\\\\").replace('"', '\\"')
     safe_pkg = pkg_text.replace("\\", "\\\\").replace('"', '\\"')
     GUIDE_HTML = GUIDE_HTML.replace("__SELECTED_KW__", safe_kw)
     GUIDE_HTML = GUIDE_HTML.replace("__MC_PRODUCT__", safe_prod)
-    GUIDE_HTML = GUIDE_HTML.replace("__MC_MGMT__", safe_mgmt)       # ← 추가
+    GUIDE_HTML = GUIDE_HTML.replace("__MC_MGMT__", safe_mgmt)
     GUIDE_HTML = GUIDE_HTML.replace("__OPT_ROWS__", json.dumps(opt_rows, ensure_ascii=False))
     GUIDE_HTML = GUIDE_HTML.replace("__PKG_TEXT__", safe_pkg)
+    GUIDE_HTML = GUIDE_HTML.replace("__COUPON_ROWS__", json.dumps(coupon_rows, ensure_ascii=False))
+    GUIDE_HTML = GUIDE_HTML.replace("__SHEET_ROWS__", json.dumps(sheet_rows, ensure_ascii=False))
 
-    components.html(GUIDE_HTML, height=1550, scrolling=True)
+    components.html(GUIDE_HTML, height=2000, scrolling=True)
 
 # ==================================================================
 # 공통 CSS
@@ -821,12 +901,13 @@ div[data-testid="stTextInput"] div[data-baseweb="input"] {
 .list-head { font-size:18px; font-weight:800; color:#263238; margin:14px 0 12px 0; }
 
 [data-testid="stBaseButton-secondary"] {
-    min-height: 44px !important; height: 44px !important; padding: 0 14px !important;
+    min-height: 40px !important; height: 40px !important; padding: 0 14px !important;
     border-radius: 12px !important; border: 1.5px solid #e6e8eb !important;
     background: #fff !important; justify-content: flex-start !important;
+    margin: 0 !important;
 }
 [data-testid="stBaseButton-secondary"] p {
-    font-size: 17px !important; font-weight: 500 !important;
+    font-size: 16px !important; font-weight: 500 !important;
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
 [data-testid="stBaseButton-secondary"]:hover { border-color:#ff7043 !important; }
@@ -841,9 +922,17 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-
 [data-testid="stElementContainer"]:has(.kw-picked) {
     height:0 !important; min-height:0 !important; margin:0 !important; padding:0 !important;
 }
-.metric-val { min-height:44px; display:flex; align-items:center; justify-content:center;
+.metric-val { min-height:40px; display:flex; align-items:center; justify-content:center;
     font-size:16px; font-weight:600; color:#607d8b; }
 div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
+
+/* 키워드 목록 행 간격 최소화 (선택돼도 높이 고정) */
+div[data-testid="stHorizontalBlock"]:has([data-testid="stBaseButton-secondary"]) {
+    margin-bottom: 2px !important; row-gap: 2px !important;
+}
+div[data-testid="stElementContainer"]:has([data-testid="stBaseButton-secondary"]) {
+    margin: 0 !important; padding: 0 !important;
+}
 
 /* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
 div[data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
@@ -857,7 +946,6 @@ div[data-testid="column"] { padding: 0 2px !important; }
 .mc-orig { background:#f0f5ff; color:#1a73e8; }
 .mc-rate { background:#fff3e0; color:#e65100; }
 .mc-empty { color:#bbb; }
-
 
 .center-popup {
     position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
