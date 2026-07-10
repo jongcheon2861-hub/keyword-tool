@@ -275,71 +275,7 @@ def run_extract():
         st.session_state.results = []
 
 # ==================================================================
-# 화면 1: 키워드 추출기
-# ==================================================================
-def render_keyword_tool():
-    if st.session_state.get("popup"):
-        pid = str(st.session_state.popup_id)
-        msg = st.session_state.popup
-        anim = "popfade" + pid
-        ph = """
-        <style>
-        @keyframes ANIM {
-            0%{opacity:0;transform:translate(-50%,-50%) scale(0.8);}
-            15%{opacity:1;transform:translate(-50%,-50%) scale(1);}
-            80%{opacity:1;transform:translate(-50%,-50%) scale(1);}
-            100%{opacity:0;transform:translate(-50%,-50%) scale(0.9);}
-        }
-        #popup-PID { animation: ANIM 1s ease forwards; }
-        </style>
-        <div class="center-popup" id="popup-PID">✅ MSG</div>
-        """
-        ph = ph.replace("ANIM", anim).replace("PID", pid).replace("MSG", msg)
-        st.markdown(ph, unsafe_allow_html=True)
-        st.session_state.popup = None
-
-    st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
-                unsafe_allow_html=True)
-    ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
-    with ta:
-        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스켓",
-                      key="raw_input", on_change=run_extract,
-                      label_visibility="collapsed")
-    with tb:
-        st.button("🔍 추출하기", use_container_width=True,
-                  on_click=run_extract, type="primary")
-
-    n = len(st.session_state.selected)
-    st.markdown('<div class="copy-head">📋 복사용 키워드 '
-                '<span class="copy-badge">' + str(n) + '개</span></div>',
-                unsafe_allow_html=True)
-    kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
-    st.code(kw_text, language=None)
-
-    if st.session_state.get("results"):
-        st.markdown('<div class="parent-box">자동 인식된 상위어: '
-                    + st.session_state.get("related_info", "") + '</div>',
-                    unsafe_allow_html=True)
-        st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
-                    unsafe_allow_html=True)
-        with st.container(height=520):
-            for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
-                c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
-                already = kw in st.session_state.selected
-                with c1:
-                    if already:
-                        st.markdown("<span class='kw-picked'></span>", unsafe_allow_html=True)
-                    st.button(kw, key="pick_" + str(i),
-                              on_click=toggle_keyword, args=(kw,), use_container_width=True)
-                c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
-                            unsafe_allow_html=True)
-                c3.markdown("<div class='metric-val'>" + str(comp) + "</div>",
-                            unsafe_allow_html=True)
-    elif "results" in st.session_state:
-        st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
-
-# ==================================================================
-# 화면 2: 마진 계산기
+# 화면: 마진 계산기
 # ==================================================================
 MARGIN_CALC_HTML = """
 <!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><style>
@@ -354,6 +290,8 @@ MARGIN_CALC_HTML = """
   tbody tr:nth-child(even) { background:#f9fbff; }
   input,select { width:100%; padding:6px 5px; font-size:12px; border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:right; }
   input[type="text"] { text-align:left; }
+  select { -webkit-appearance:none; -moz-appearance:none; appearance:none; text-align:center; text-align-last:center; background-image:none; }
+  select::-ms-expand { display:none; }
   input:focus,select:focus { border-color:#1a73e8; }
   .col-name { width:240px; }
   td.result { font-weight:700; background:#f0f5ff; color:#1a73e8; }
@@ -431,85 +369,165 @@ def render_margin_calculator():
     components.html(MARGIN_CALC_HTML, height=760, scrolling=True)
 
 # ==================================================================
-# 화면 3: 상품등록가이드
+# 화면: 키워드 추출기
+# ==================================================================
+def render_keyword_tool():
+    if st.session_state.get("popup"):
+        pid = str(st.session_state.popup_id)
+        msg = st.session_state.popup
+        anim = "popfade" + pid
+        ph = """
+        <style>
+        @keyframes ANIM {
+            0%{opacity:0;transform:translate(-50%,-50%) scale(0.8);}
+            15%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+            80%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+            100%{opacity:0;transform:translate(-50%,-50%) scale(0.9);}
+        }
+        #popup-PID { animation: ANIM 1s ease forwards; }
+        </style>
+        <div class="center-popup" id="popup-PID">✅ MSG</div>
+        """
+        ph = ph.replace("ANIM", anim).replace("PID", pid).replace("MSG", msg)
+        st.markdown(ph, unsafe_allow_html=True)
+        st.session_state.popup = None
+
+    st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
+                unsafe_allow_html=True)
+    ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
+    with ta:
+        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스켓",
+                      key="raw_input", on_change=run_extract,
+                      label_visibility="collapsed")
+    with tb:
+        st.button("🔍 추출하기", use_container_width=True,
+                  on_click=run_extract, type="primary")
+
+    n = len(st.session_state.selected)
+    st.markdown('<div class="copy-head">📋 복사용 키워드 '
+                '<span class="copy-badge">' + str(n) + '개</span></div>',
+                unsafe_allow_html=True)
+    kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
+    st.code(kw_text, language=None)
+
+    if st.session_state.get("results"):
+        st.markdown('<div class="parent-box">자동 인식된 상위어: '
+                    + st.session_state.get("related_info", "") + '</div>',
+                    unsafe_allow_html=True)
+        st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
+                    unsafe_allow_html=True)
+        with st.container(height=520):
+            for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
+                c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
+                already = kw in st.session_state.selected
+                with c1:
+                    if already:
+                        st.markdown("<span class='kw-picked'></span>", unsafe_allow_html=True)
+                    st.button(kw, key="pick_" + str(i),
+                              on_click=toggle_keyword, args=(kw,), use_container_width=True)
+                c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
+                            unsafe_allow_html=True)
+                c3.markdown("<div class='metric-val'>" + str(comp) + "</div>",
+                            unsafe_allow_html=True)
+    elif "results" in st.session_state:
+        st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
+
+# ==================================================================
+# 화면: 상품등록가이드
 # ==================================================================
 def render_product_guide():
-    st.markdown('<div class="topcard"><div class="bar-title">📋 상품등록가이드</div></div>',
-                unsafe_allow_html=True)
-    st.caption("고정값은 미리 채워져 있고, 매번 바뀌는 값만 입력하면 됩니다. 맨 아래에서 전체 복사하세요.")
-
-    st.markdown("#### 1. 상품명 / 카테고리")
-    brand = st.text_input("브랜드", "브랜드없음(자체제작)")
-    show_name = st.text_input("노출상품명 (후킹+신뢰+핵심 키워드 5개)", "")
-    mng_name = st.text_input("등록상품명(판매자관리용)", "")
-    category = st.text_input("카테고리 (검색·선택)", "")
-
-    st.markdown("#### 2. 옵션 / 가격")
-    g1, g2 = st.columns(2)
-    weight = g1.text_input("중량", "")
-    qty = g2.text_input("수량", "")
-    p1, p2 = st.columns(2)
-    normal_price = p1.text_input("정상가", "")
-    sale_price = p2.text_input("판매가", "")
-
-    st.markdown("#### 3. 상품 상세 페이지")
-    st.info("대표이미지: 상품 대표 이미지 업로드 · 상세설명: 상세페이지 이미지/설명 등록")
-
-    st.markdown("#### 4. 상품 주요정보")
-    maker = st.text_input("제조사", brand.replace("브랜드없음(자체제작)", "") + "협력사"
-                          if brand and "협력사" not in brand else "(브랜드)협력사")
-    vat = st.text_input("부가세", "면세")
-
-    st.markdown("#### 5. 검색 노출")
-    tags = st.text_input("태그", "")
-    search_filter = st.text_input("검색필터", "")
-    notice = st.text_input("상품정보제공고시", "농수축산물 / 전체상품 상세페이지 참조")
-    item_name = st.text_input("품목 또는 명칭", "")
-    pack_unit = st.text_input("포장단위별 용량(중량)·수량·크기", "")
-    producer = st.text_input("생산자(수입자)", "(브랜드)협력사")
-    origin = st.text_input("원산지", "국내산")
-
-    st.markdown("#### 6. 판매자 배송 / 반품정보")
-    ship_from = st.text_input("출고지", "")
-    courier = st.text_input("택배사", "CJ대한통운")
-    ship_method = st.text_input("배송방법", "신선냉동")
-    ship_days = st.text_input("출고소요일", "3일")
-    return_addr = st.text_input("반품/교환지", "")
-
-    # 전체 요약 복사
-    st.markdown("#### 📋 전체 정리 (복사용)")
-    summary = f"""[상품명/카테고리]
-브랜드: {brand}
-노출상품명: {show_name}
-등록상품명: {mng_name}
-카테고리: {category}
-
-[옵션/가격]
-중량: {weight}
-수량: {qty}
-정상가: {normal_price}
-판매가: {sale_price}
-
-[상품 주요정보]
-제조사: {maker}
-부가세: {vat}
-
-[검색 노출]
-태그: {tags}
-검색필터: {search_filter}
-상품정보제공고시: {notice}
-품목/명칭: {item_name}
-포장단위 용량·수량·크기: {pack_unit}
-생산자(수입자): {producer}
-원산지: {origin}
-
-[배송/반품]
-출고지: {ship_from}
-택배사: {courier}
-배송방법: {ship_method}
-출고소요일: {ship_days}
-반품/교환지: {return_addr}"""
-    st.code(summary, language=None)
+    guide_html = r"""
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><style>
+  * { box-sizing:border-box; }
+  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; background:#f7f9fc; margin:0; padding:16px; color:#263238; }
+  h1 { font-size:20px; color:#5b34c0; margin:0 0 4px; }
+  .desc { font-size:12px; color:#888; margin-bottom:14px; }
+  .sec { font-size:14px; font-weight:800; color:#fff; background:linear-gradient(135deg,#667eea,#764ba2);
+         padding:7px 12px; border-radius:8px; margin:16px 0 8px; }
+  .row { display:flex; align-items:stretch; gap:8px; margin-bottom:7px; }
+  .label { flex:0 0 150px; display:flex; align-items:center; font-size:13px; font-weight:700;
+           color:#37474f; background:#eef1f6; border-radius:8px; padding:0 12px; }
+  .val { flex:1; }
+  .val input { width:100%; height:38px; font-size:13px; padding:0 12px; border:1.5px solid #dfe4ea;
+               border-radius:8px; outline:none; }
+  .val input:focus { border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,0.15); }
+  .copy { flex:0 0 52px; border:none; border-radius:8px; background:#1a73e8; color:#fff;
+          font-size:12px; font-weight:700; cursor:pointer; }
+  .copy:hover { background:#0d47a1; }
+  .copy.done { background:#00a86b; }
+  .hint { font-size:11px; color:#9aa4b2; margin:2px 0 6px 158px; }
+</style></head><body>
+<h1>📋 상품등록가이드</h1>
+<div class="desc">항목별로 확인하며 복사 → 쿠팡 등록화면에 붙여넣기 (고정값은 미리 입력됨)</div>
+<div id="wrap"></div>
+<script>
+  const ITEMS = [
+    ["S","상품명 / 카테고리"],
+    ["브랜드","브랜드없음(자체제작)",""],
+    ["노출상품명","","후킹+신뢰+핵심 키워드 5개"],
+    ["등록상품명","","판매자관리용"],
+    ["카테고리","",""],
+    ["S","옵션 / 가격"],
+    ["중량","",""],
+    ["수량","",""],
+    ["정상가","",""],
+    ["판매가","",""],
+    ["S","상품 주요정보"],
+    ["제조사","(브랜드)협력사",""],
+    ["부가세","면세",""],
+    ["S","검색 노출"],
+    ["태그","",""],
+    ["검색필터","",""],
+    ["상품정보제공고시","농수축산물 / 전체상품 상세페이지 참조",""],
+    ["품목/명칭","",""],
+    ["포장단위 용량·수량·크기","",""],
+    ["생산자(수입자)","(브랜드)협력사",""],
+    ["원산지","국내산",""],
+    ["S","배송 / 반품정보"],
+    ["출고지","",""],
+    ["택배사","CJ대한통운",""],
+    ["배송방법","신선냉동",""],
+    ["출고소요일","3일",""],
+    ["반품/교환지","",""],
+  ];
+  const wrap = document.getElementById('wrap');
+  let idx = 0;
+  ITEMS.forEach(it => {
+    if (it[0] === "S") {
+      const s = document.createElement('div');
+      s.className = 'sec'; s.textContent = it[1];
+      wrap.appendChild(s); return;
+    }
+    const [label, def, hint] = it;
+    const id = 'inp' + (idx++);
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <div class="label">${label}</div>
+      <div class="val"><input id="${id}" type="text" value="${def}"></div>
+      <button class="copy" onclick="doCopy('${id}', this)">복사</button>`;
+    wrap.appendChild(row);
+    if (hint) {
+      const h = document.createElement('div');
+      h.className = 'hint'; h.textContent = '💡 ' + hint;
+      wrap.appendChild(h);
+    }
+  });
+  function doCopy(id, btn) {
+    const el = document.getElementById(id);
+    el.select();
+    navigator.clipboard.writeText(el.value).then(() => {
+      btn.textContent = '완료'; btn.classList.add('done');
+      setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('done'); }, 1000);
+    }).catch(() => {
+      document.execCommand('copy');
+      btn.textContent = '완료'; btn.classList.add('done');
+      setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('done'); }, 1000);
+    });
+  }
+</script></body></html>
+"""
+    components.html(guide_html, height=1400, scrolling=True)
 
 # ==================================================================
 # 공통 CSS
@@ -528,14 +546,13 @@ header[data-testid="stHeader"] { display: none !important; }
 }
 .bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 8px; }
 
-/* 상단 메뉴(라디오) 탭 스타일 */
-div[role="radiogroup"] { gap: 8px !important; margin-bottom: 8px !important; }
+div[role="radiogroup"] { gap: 8px !important; margin-bottom: 10px !important; }
 div[role="radiogroup"] label {
     background:#f1f3f5 !important; border:1.5px solid #e6e8eb !important;
     border-radius:12px !important; padding:8px 16px !important; font-weight:700 !important;
 }
 div[role="radiogroup"] label:has(input:checked) {
-    background:linear-gradient(135deg,#667eea,#764ba2) !important; color:#fff !important;
+    background:linear-gradient(135deg,#667eea,#764ba2) !important;
     border-color:transparent !important;
 }
 div[role="radiogroup"] label:has(input:checked) div { color:#fff !important; }
@@ -547,8 +564,7 @@ div[data-testid="stTextInput"] input {
     transition: all 0.2s ease !important;
 }
 div[data-testid="stTextInput"] input:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102,126,234,0.15) !important;
+    border-color: #667eea !important; box-shadow: 0 0 0 3px rgba(102,126,234,0.15) !important;
 }
 div[data-testid="stTextInput"] div[data-baseweb="input"] {
     border: none !important; box-shadow: none !important; background: transparent !important;
@@ -609,18 +625,18 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 """, unsafe_allow_html=True)
 
 # ==================================================================
-# 상단 메뉴 + 화면 전환
+# 상단 메뉴 + 화면 전환 (탭 순서: 마진계산기 / 키워드추출기 / 상품등록가이드)
 # ==================================================================
 menu = st.radio(
     "메뉴",
-    ["🛒 쿠팡키워드 추출기", "🧮 마진계산기", "📋 상품등록가이드"],
+    ["🧮 마진계산기", "🛒 쿠팡키워드 추출기", "📋 상품등록가이드"],
     horizontal=True,
     label_visibility="collapsed",
 )
 
-if menu == "🛒 쿠팡키워드 추출기":
-    render_keyword_tool()
-elif menu == "🧮 마진계산기":
+if menu == "🧮 마진계산기":
     render_margin_calculator()
+elif menu == "🛒 쿠팡키워드 추출기":
+    render_keyword_tool()
 else:
     render_product_guide()
