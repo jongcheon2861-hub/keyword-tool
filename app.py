@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests, time, hmac, hashlib, base64
-import json
+import json, math
 import streamlit.components.v1 as components
 
 st.set_page_config(page_title="쿠팡 셀러 도구", layout="centered",
@@ -214,10 +214,13 @@ if "popup_id" not in st.session_state:
     st.session_state.popup_id = 0
 if "mc_product" not in st.session_state:
     st.session_state.mc_product = ""
-if "mc_options" not in st.session_state:
-    st.session_state.mc_options = []
-if "mc_opt_count" not in st.session_state:
-    st.session_state.mc_opt_count = 3
+if "mc_rows" not in st.session_state:
+    # 각 행: 옵션명, 공급가, 택배비, 할인율, 수수료, 마진율
+    st.session_state.mc_rows = [
+        {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0}
+    ]
+if "mc_sent" not in st.session_state:
+    st.session_state.mc_sent = []  # 가이드로 넘긴 계산 결과
 
 def toggle_keyword(kw):
     if kw in st.session_state.selected:
@@ -281,125 +284,90 @@ def run_extract():
     else:
         st.session_state.results = []
 
-# ==================================================================
-# 화면: 마진 계산기 (계산 표)
-# ==================================================================
-MARGIN_CALC_HTML = """
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><style>
-  * { box-sizing: border-box; }
-  body { font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif; background:#f4f6f9; margin:0; padding:16px; color:#333; }
-  h1 { font-size:18px; text-align:center; color:#1a73e8; margin:0 0 6px; }
-  .desc { text-align:center; font-size:12px; color:#777; margin-bottom:14px; }
-  .table-wrap { overflow-x:auto; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); padding:12px; }
-  table { border-collapse:collapse; width:100%; font-size:12px; }
-  th,td { border:1px solid #e3e8ef; padding:5px; text-align:center; white-space:nowrap; }
-  thead th { background:#1a73e8; color:#fff; font-weight:600; }
-  tbody tr:nth-child(even) { background:#f9fbff; }
-  input { width:100%; padding:6px 5px; font-size:12px; border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:right; }
-  input[type="text"] { text-align:left; }
-  input:focus { border-color:#1a73e8; }
-  .col-opt { width:72px; }
-  .col-num { min-width:88px; }
-  td.result { font-weight:700; background:#f0f5ff; color:#1a73e8; }
-  td.discount-cell { font-weight:700; background:#fdeef0; color:#d63384; }
-  td.margin-cell { font-weight:700; background:#eafaf3; color:#00a86b; }
-  .no-col { background:#f4f6f9; font-weight:600; color:#555; }
-  .del-col button { width:24px; height:26px; border:none; border-radius:5px; background:#fdecec; color:#d63031; font-weight:800; cursor:pointer; }
-  .buttons { margin:12px auto 0; text-align:center; }
-  .btn { background:#1a73e8; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-size:13px; cursor:pointer; margin:0 4px; }
-  .btn.gray { background:#888; }
-</style></head><body>
-<h1>🧮 마진 계산 표</h1>
-<div class="desc">판매가 100원 단위 내림 · 마진율 직접 입력 · 최대 10개</div>
-<div class="table-wrap"><table>
-<thead><tr>
-<th>No</th><th>옵션명</th><th class="col-num">공급가</th><th class="col-num">택배비</th>
-<th class="col-num">할인율(%)</th><th class="col-num">수수료(%)</th>
-<th class="col-num">마진율(%)</th><th class="col-num">판매가</th>
-<th class="col-num">마진액</th><th class="col-num">쿠폰할인</th><th class="col-num">정가</th><th>삭제</th>
-</tr></thead>
-<tbody id="tbody"></tbody>
-</table></div>
-<div class="buttons">
-<button class="btn" onclick="addRow()">+ 행 추가</button>
-<button class="btn gray" onclick="clearAll()">전체 초기화</button>
-</div>
-<script>
-const ROWS=10, DEFAULT_TARGET=20.0, tbody=document.getElementById('tbody');
-function createRow(i){const tr=document.createElement('tr');tr.innerHTML=`
-<td class="no-col">${i+1}</td>
-<td><input type="text" class="col-opt" maxlength="6" placeholder="옵션명"></td>
-<td><input type="number" class="supply" placeholder="0" oninput="calc()"></td>
-<td><input type="number" class="ship" value="0" oninput="calc()"></td>
-<td><input type="number" class="disc" value="60" oninput="calc()"></td>
-<td><input type="number" class="fee" value="12" step="0.1" oninput="calc()"></td>
-<td><input type="number" class="margin" value="20" step="0.1" oninput="calc()"></td>
-<td class="result finalOut">-</td><td class="margin-cell marginOut">-</td>
-<td class="discount-cell discountOut">-</td><td class="result origOut">-</td>
-<td class="del-col"><button onclick="delRow(this)" title="삭제">✕</button></td>`;return tr;}
-function renumber(){[...tbody.children].forEach((tr,i)=>{tr.querySelector('.no-col').textContent=i+1;});}
-function buildTable(){tbody.innerHTML='';tbody.appendChild(createRow(0));}
-function addRow(){if(tbody.children.length>=ROWS){alert('최대 '+ROWS+'개까지');return;}tbody.appendChild(createRow(tbody.children.length));}
-function delRow(btn){if(tbody.children.length<=1){alert('최소 1개는 있어야 합니다');return;}btn.closest('tr').remove();renumber();calc();}
-function clearAll(){if(confirm('모두 지울까요?')){buildTable();calc();}}
-function won(n){return Math.round(n).toLocaleString('ko-KR');}
-function calc(){
-tbody.querySelectorAll('tr').forEach(tr=>{
-const supply=parseFloat(tr.querySelector('.supply').value)||0;
-const ship=parseFloat(tr.querySelector('.ship').value)||0;
-const feeRate=(parseFloat(tr.querySelector('.fee').value)||0)/100;
-const discRate=(parseFloat(tr.querySelector('.disc').value)||0)/100;
-const targetRate=(parseFloat(tr.querySelector('.margin').value)||DEFAULT_TARGET)/100;
-const fo=tr.querySelector('.finalOut'),mo=tr.querySelector('.marginOut'),
-dco=tr.querySelector('.discountOut'),oo=tr.querySelector('.origOut');
-if(supply<=0){fo.textContent=mo.textContent=dco.textContent=oo.textContent='-';return;}
-const denom=1-feeRate-targetRate;
-if(denom<=0){fo.textContent=mo.textContent=dco.textContent=oo.textContent='오류';return;}
-let fp=(supply+ship)/denom;fp=Math.floor(fp/100)*100;
-const fee=fp*feeRate,margin=fp-supply-ship-fee;
-const orig=fp*(1+discRate),disc=orig-fp;
-fo.textContent=won(fp);mo.textContent=won(margin);dco.textContent=won(disc);oo.textContent=won(orig);});
-}
-buildTable();calc();
-</script></body></html>
-"""
+# ---------- 마진 계산 ----------
+def calc_margin(supply, ship, disc, fee, margin):
+    """공급가/택배비/할인율/수수료/마진율 -> 판매가, 마진액, 쿠폰할인, 정가"""
+    if supply <= 0:
+        return None
+    fee_rate = fee / 100.0
+    disc_rate = disc / 100.0
+    target = margin / 100.0
+    denom = 1 - fee_rate - target
+    if denom <= 0:
+        return None
+    fp = (supply + ship) / denom
+    fp = math.floor(fp / 100) * 100          # 판매가 (100원 내림)
+    fee_amt = fp * fee_rate
+    margin_amt = fp - supply - ship - fee_amt  # 마진액
+    orig = fp * (1 + disc_rate)                 # 정가
+    disc_amt = orig - fp                        # 쿠폰할인
+    return {"final": fp, "margin": margin_amt, "discount": disc_amt, "orig": orig}
 
+# ==================================================================
+# 화면: 마진 계산기 (전체 Streamlit 위젯)
+# ==================================================================
 def render_margin_calculator():
     st.markdown('<div class="topcard"><div class="bar-title">🧮 마진계산기</div></div>',
                 unsafe_allow_html=True)
 
-    # ---- 가이드로 넘길 값 입력 영역 (Streamlit 위젯) ----
-    st.markdown("##### 📤 상품등록가이드로 넘길 정보")
     st.session_state.mc_product = st.text_input(
         "상품명", value=st.session_state.get("mc_product", ""),
-        placeholder="상품명을 입력하세요 (가이드의 노출상품명으로 전달)")
+        placeholder="상품명 (가이드의 노출상품명으로 전달)")
 
-    c_add, c_del, c_cnt = st.columns([1, 1, 2])
-    with c_add:
-        if st.button("＋ 옵션 추가", use_container_width=True):
-            st.session_state.mc_opt_count += 1
-    with c_del:
-        if st.button("－ 옵션 삭제", use_container_width=True):
-            if st.session_state.mc_opt_count > 1:
-                st.session_state.mc_opt_count -= 1
-    with c_cnt:
+    # 행 추가/삭제
+    ca, cb, cc = st.columns([1, 1, 2])
+    with ca:
+        if st.button("＋ 행 추가", use_container_width=True):
+            if len(st.session_state.mc_rows) < 10:
+                st.session_state.mc_rows.append(
+                    {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0})
+    with cb:
+        if st.button("－ 행 삭제", use_container_width=True):
+            if len(st.session_state.mc_rows) > 1:
+                st.session_state.mc_rows.pop()
+    with cc:
         st.markdown(f"<div style='padding-top:8px;color:#607d8b;font-weight:600;'>"
-                    f"옵션 {st.session_state.mc_opt_count}개</div>", unsafe_allow_html=True)
+                    f"행 {len(st.session_state.mc_rows)}개</div>", unsafe_allow_html=True)
 
-    opt_values = []
-    for i in range(st.session_state.mc_opt_count):
-        val = st.text_input(f"옵션명 {i+1}", key=f"mc_opt_{i}",
-                            placeholder=f"예: {i+1}kg", label_visibility="collapsed")
-        opt_values.append(val.strip())
+    st.markdown("---")
 
-    if st.button("📤 가이드로 넘기기", type="primary", use_container_width=True):
-        st.session_state.mc_options = [v for v in opt_values if v != ""]
+    results = []
+    for i, row in enumerate(st.session_state.mc_rows):
+        st.markdown(f"**행 {i+1}**")
+        c1, c2, c3 = st.columns(3)
+        row["opt"] = c1.text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
+                                   max_chars=6, placeholder="예: 1kg")
+        row["supply"] = c2.number_input("공급가", value=int(row["supply"]),
+                                        step=100, min_value=0, key=f"mc_sup_{i}")
+        row["ship"] = c3.number_input("택배비", value=int(row["ship"]),
+                                      step=100, min_value=0, key=f"mc_ship_{i}")
+        c4, c5, c6 = st.columns(3)
+        row["disc"] = c4.number_input("할인율(%)", value=float(row["disc"]),
+                                      step=1.0, min_value=0.0, key=f"mc_disc_{i}")
+        row["fee"] = c5.number_input("수수료(%)", value=float(row["fee"]),
+                                     step=0.1, min_value=0.0, key=f"mc_fee_{i}")
+        row["margin"] = c6.number_input("마진율(%)", value=float(row["margin"]),
+                                        step=0.1, min_value=0.0, key=f"mc_mrg_{i}")
+
+        res = calc_margin(row["supply"], row["ship"], row["disc"], row["fee"], row["margin"])
+        if res:
+            r1, r2, r3, r4 = st.columns(4)
+            r1.metric("판매가", f"{int(res['final']):,}")
+            r2.metric("마진액", f"{int(res['margin']):,}")
+            r3.metric("쿠폰할인", f"{int(res['discount']):,}")
+            r4.metric("정가", f"{int(res['orig']):,}")
+            results.append({
+                "opt": row["opt"], "final": int(res["final"]),
+                "margin": int(res["margin"]), "discount": int(res["discount"]),
+                "orig": int(res["orig"])
+            })
+        else:
+            st.caption("공급가를 입력하면 계산 결과가 표시됩니다.")
+        st.markdown("---")
+
+    if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
+        st.session_state.mc_sent = results
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
-
-    st.divider()
-
-    # ---- 마진 계산 표 (HTML) ----
-    components.html(MARGIN_CALC_HTML, height=520, scrolling=True)
 
 # ==================================================================
 # 화면: 키워드 추출기
@@ -475,8 +443,12 @@ def render_product_guide():
 
     selected_kw = ", ".join(st.session_state.get("selected", []))
     mc_product = st.session_state.get("mc_product", "")
-    mc_options = st.session_state.get("mc_options", [])
+    mc_sent = st.session_state.get("mc_sent", [])
+    mc_options = [r["opt"] for r in mc_sent if r["opt"]]
     pkg_text = " ".join('"' + o + '",' for o in mc_options).rstrip(",")
+
+    # 넘어온 마진 결과: 옵션별 (옵션명, 중량빈칸, 정가, 판매가)
+    opt_rows = [[r["opt"], "", str(r["orig"]), str(r["final"])] for r in mc_sent]
 
     GUIDE_HTML = r"""
 <!doctype html>
@@ -579,7 +551,7 @@ def render_product_guide():
 <script>
   const KEYWORD_TAGS = "__SELECTED_KW__";
   const MC_PRODUCT = "__MC_PRODUCT__";
-  const MC_OPTIONS = __MC_OPTIONS__;
+  const OPT_ROWS = __OPT_ROWS__;
   const PKG_TEXT = "__PKG_TEXT__";
 
   const TOP = [
@@ -649,7 +621,7 @@ def render_product_guide():
   buildRows(SHIP, "shipArea");
 
   function makeCell(cls, val, ph){
-    const v = val ? String(val).replace(/"/g,'&quot;') : "";
+    const v = (val!==undefined && val!==null && val!=="") ? String(val).replace(/"/g,'&quot;') : "";
     return '<td><div class="cellbox">' +
              '<input type="text" class="'+cls+'" value="'+v+'" placeholder="'+ph+'">' +
              '<button class="mini-copy">복사</button>' +
@@ -662,14 +634,16 @@ def render_product_guide():
       tb.children.length === 0 ? "block" : "none";
   }
 
-  function addOptRow(optVal){
+  // r = [옵션, 중량, 정상가, 판매가]
+  function addOptRow(r){
+    r = r || ["","","",""];
     const tb = document.getElementById("optBody");
     const tr = document.createElement("tr");
     tr.innerHTML =
-      makeCell("c-opt", optVal, "옵션") +
-      makeCell("c-w", "", "중량") +
-      makeCell("c-n", "", "정상가") +
-      makeCell("c-s", "", "판매가") +
+      makeCell("c-opt", r[0], "옵션") +
+      makeCell("c-w",   r[1], "중량") +
+      makeCell("c-n",   r[2], "정상가") +
+      makeCell("c-s",   r[3], "판매가") +
       '<td><button class="del-btn" title="삭제">✕</button></td>';
     tr.querySelectorAll(".cellbox").forEach(box=>{
       const inp = box.querySelector("input");
@@ -685,7 +659,7 @@ def render_product_guide():
 
   function addFromInput(){
     const el = document.getElementById("optInput");
-    addOptRow(el.value.trim());
+    addOptRow([el.value.trim(),"","",""]);
     el.value = "";
   }
 
@@ -699,9 +673,9 @@ def render_product_guide():
     applyWeightAll(el.value.trim());
   }
 
-  // 마진계산기에서 넘어온 옵션명으로 옵션 행 자동 생성
-  if(MC_OPTIONS && MC_OPTIONS.length){
-    MC_OPTIONS.forEach(o=> addOptRow(o));
+  // 마진계산기에서 넘어온 옵션 행 자동 생성
+  if(OPT_ROWS && OPT_ROWS.length){
+    OPT_ROWS.forEach(r=> addOptRow(r));
   } else {
     refreshEmptyMsg();
   }
@@ -715,7 +689,7 @@ def render_product_guide():
     safe_pkg = pkg_text.replace("\\", "\\\\").replace('"', '\\"')
     GUIDE_HTML = GUIDE_HTML.replace("__SELECTED_KW__", safe_kw)
     GUIDE_HTML = GUIDE_HTML.replace("__MC_PRODUCT__", safe_prod)
-    GUIDE_HTML = GUIDE_HTML.replace("__MC_OPTIONS__", json.dumps(mc_options, ensure_ascii=False))
+    GUIDE_HTML = GUIDE_HTML.replace("__OPT_ROWS__", json.dumps(opt_rows, ensure_ascii=False))
     GUIDE_HTML = GUIDE_HTML.replace("__PKG_TEXT__", safe_pkg)
 
     components.html(GUIDE_HTML, height=1550, scrolling=True)
