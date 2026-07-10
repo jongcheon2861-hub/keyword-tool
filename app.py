@@ -191,7 +191,7 @@ html, body { overflow: hidden !important; height: 100vh !important; }
     border: 1px solid #e6e8eb;
     border-radius: 16px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 
 .bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 10px; }
