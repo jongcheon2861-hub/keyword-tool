@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import requests, time, hmac, hashlib, base64
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered",
-                   initial_sidebar_state="collapsed")
+                   initial_sidebar_state="expanded")
 
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
@@ -173,7 +174,7 @@ def naver_related_keywords(seed):
         r = requests.get("https://api.searchad.naver.com" + path,
                          headers=headers, params=params, timeout=5)
         if r.status_code != 200:
-            return pd.DataFrame(columns=["키워드", "검색량"])
+            return pd.DataFrame(columns=["키워드", "검색량", "경쟁강도"])
         rows = []
         for it in r.json().get("keywordList", []):
             def to_int(x):
@@ -184,10 +185,11 @@ def naver_related_keywords(seed):
                 except Exception:
                     return 0
             vol = to_int(it.get("monthlyPcQcCnt", 0)) + to_int(it.get("monthlyMobileQcCnt", 0))
-            rows.append({"키워드": it.get("relKeyword", ""), "검색량": vol})
+            comp = it.get("compIdx", "-")  # 경쟁강도 (높음/중간/낮음)
+            rows.append({"키워드": it.get("relKeyword", ""), "검색량": vol, "경쟁강도": comp})
         return pd.DataFrame(rows)
     except Exception:
-        return pd.DataFrame(columns=["키워드", "검색량"])
+        return pd.DataFrame(columns=["키워드", "검색량", "경쟁강도"])
 
 def find_category_in_text(text):
     """텍스트(상품명 또는 연관어) 안에서 표의 상위어를 찾는다."""
@@ -301,7 +303,7 @@ def run_extract():
         result = all_kw.sort_values(["상품직결", "구매전환추정점수"],
                                     ascending=[False, False]).head(TOP_N)
         st.session_state.results = result[
-            ["키워드", "검색량", "구매의도", "구매전환추정점수"]].values.tolist()
+            ["키워드", "검색량", "경쟁강도", "구매전환추정점수"]].values.tolist()
     else:
         st.session_state.results = []
 
@@ -320,6 +322,10 @@ html, body { overflow: hidden !important; height: 100vh !important; }
     height: 100vh !important;
     overflow: hidden !important;
 }
+
+/* 사이드바 폭 넓히기 (계산기 표가 넓어서) */
+[data-testid="stSidebar"] { min-width: 720px !important; width: 720px !important; }
+[data-testid="stSidebar"] > div { width: 720px !important; }
 
 .topcard {
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
@@ -348,14 +354,12 @@ div[data-testid="stTextInput"] input::placeholder {
     color: #b0bec5 !important;
     font-weight: 400 !important;
 }
-/* 포커스 시 파란빛 글로우 */
 div[data-testid="stTextInput"] input:focus {
     border-color: #667eea !important;
     box-shadow: 0 0 0 3px rgba(102,126,234,0.15),
                 0 4px 14px rgba(102,126,234,0.18) !important;
     background: #fdfdff !important;
 }
-/* 기본 빨간 포커스 테두리 제거 */
 div[data-testid="stTextInput"] div[data-baseweb="input"] {
     border: none !important;
     box-shadow: none !important;
@@ -390,7 +394,6 @@ div[data-testid="stTextInput"] div[data-baseweb="input"] {
     transform: translateY(0) !important;
     box-shadow: 0 3px 10px rgba(102,126,234,0.35) !important;
 }
-
 
 .copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
@@ -466,6 +469,203 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 </style>
 """, unsafe_allow_html=True)
 
+# ---------- 사이드바: 쿠팡 마진 계산기 ----------
+MARGIN_CALC_HTML = """
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f4f6f9; margin: 0; padding: 12px; color: #333; }
+  h1 { font-size: 18px; text-align: center; color: #1a73e8; margin: 0 0 6px; }
+  .desc { text-align: center; font-size: 12px; color: #777; margin-bottom: 14px; }
+  .table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { border: 1px solid #e3e8ef; padding: 5px 5px; text-align: center; white-space: nowrap; }
+  thead th { background: #1a73e8; color: #fff; font-weight: 600; position: sticky; top: 0; }
+  tbody tr:nth-child(even) { background: #f9fbff; }
+  input, select { width: 100%; padding: 6px 5px; font-size: 12px; border: 1px solid #d5dae1; border-radius: 6px; outline: none; text-align: right; }
+  input[type="text"] { text-align: left; }
+  input:focus, select:focus { border-color: #1a73e8; }
+  .col-no { width: 32px; } .col-name { width: 220px; } .col-num { width: 60px; } .col-margin { width: 68px; } .col-out { width: 78px; }
+  td.result { font-weight: 700; background: #f0f5ff; color: #1a73e8; }
+  td.discount-cell { font-weight: 700; background: #fdeef0; color: #d63384; }
+  td.margin-cell { font-weight: 700; background: #eafaf3; color: #00a86b; }
+  .no-col { background:#f4f6f9; font-weight:600; color:#555; }
+  .buttons { margin: 12px auto 0; text-align: center; }
+  .btn { background: #1a73e8; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; margin: 0 4px; }
+  .btn.gray { background: #888; }
+  .btn:hover { opacity: 0.9; }
+  tfoot td { background: #fff7e6; font-weight: 700; color: #d35400; }
+</style>
+</head>
+<body>
+
+<h1>🧮 쿠팡 마진 계산기</h1>
+<div class="desc">판매가 100원 단위 내림 · 마진율 자동 보정 · 최대 10개</div>
+
+<div class="table-wrap">
+  <table>
+    <colgroup>
+      <col class="col-no"><col class="col-name"><col class="col-num"><col class="col-num">
+      <col class="col-num"><col class="col-num"><col class="col-margin">
+      <col class="col-out"><col class="col-margin"><col class="col-out"><col class="col-out">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>No</th><th>상품명</th><th>공급가</th><th>택배비</th>
+        <th>할인율<br>(%)</th><th>쿠팡<br>수수료(%)</th><th>마진율</th>
+        <th>판매가</th><th>마진액</th><th>쿠폰<br>할인금액</th><th>상품등록가<br>(정가)</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="7">합계</td>
+        <td id="sumFinal">-</td><td id="sumMargin">-</td><td id="sumDiscount">-</td><td id="sumOrig">-</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="buttons">
+  <button class="btn" onclick="addRow()">+ 행 추가</button>
+  <button class="btn gray" onclick="clearAll()">전체 초기화</button>
+</div>
+
+<script>
+  const ROWS = 10;
+  const DEFAULT_TARGET = 20.0;
+  const tbody = document.getElementById('tbody');
+
+  function marginOptions() {
+    let html = '';
+    for (let r = 40.0; r >= 9.99; r -= 0.1) {
+      const v = r.toFixed(1);
+      const selected = (v === '20.0') ? ' selected' : '';
+      html += `<option value="${v}"${selected}>${v}%</option>`;
+    }
+    return html;
+  }
+
+  function createRow(i) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="no-col">${i + 1}</td>
+      <td><input type="text" maxlength="40" placeholder="상품명 (최대 40자)"></td>
+      <td><input type="number" class="supply" placeholder="0" oninput="calc()"></td>
+      <td><input type="number" class="ship" value="0" oninput="calc()"></td>
+      <td><input type="number" class="disc" value="60" oninput="calc()"></td>
+      <td><input type="number" class="fee" value="12" step="0.1" oninput="calc()"></td>
+      <td><select class="margin" onchange="onMarginChange(this)">${marginOptions()}</select></td>
+      <td class="result finalOut">-</td>
+      <td class="margin-cell marginOut">-</td>
+      <td class="discount-cell discountOut">-</td>
+      <td class="result origOut">-</td>
+    `;
+    tr.querySelector('.margin').dataset.userTarget = DEFAULT_TARGET.toFixed(1);
+    return tr;
+  }
+
+  function buildTable() {
+    tbody.innerHTML = '';
+    for (let i = 0; i < ROWS; i++) tbody.appendChild(createRow(i));
+  }
+
+  function addRow() {
+    if (tbody.children.length >= ROWS) { alert('최대 ' + ROWS + '개까지 계산할 수 있습니다.'); return; }
+    tbody.appendChild(createRow(tbody.children.length));
+  }
+
+  function clearAll() {
+    if (confirm('입력한 내용을 모두 지울까요?')) { buildTable(); calc(); }
+  }
+
+  function won(n) { return Math.round(n).toLocaleString('ko-KR'); }
+
+  function onMarginChange(sel) {
+    sel.dataset.userTarget = parseFloat(sel.value).toFixed(1);
+    calc();
+  }
+
+  function setSelectToRate(sel, ratePct) {
+    let r = Math.round(ratePct * 10) / 10;
+    if (r > 40.0) r = 40.0;
+    if (r < 10.0) r = 10.0;
+    sel.value = r.toFixed(1);
+  }
+
+  function calc() {
+    let sumOrig = 0, sumDiscount = 0, sumFinal = 0, sumMargin = 0;
+
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const supply = parseFloat(tr.querySelector('.supply').value) || 0;
+      const ship = parseFloat(tr.querySelector('.ship').value) || 0;
+      const feeRate = (parseFloat(tr.querySelector('.fee').value) || 0) / 100;
+      const discRate = (parseFloat(tr.querySelector('.disc').value) || 0) / 100;
+      const marginSel = tr.querySelector('.margin');
+
+      const finalOut = tr.querySelector('.finalOut');
+      const marginOut = tr.querySelector('.marginOut');
+      const discountOut = tr.querySelector('.discountOut');
+      const origOut = tr.querySelector('.origOut');
+
+      const targetRate = (parseFloat(marginSel.dataset.userTarget) || DEFAULT_TARGET) / 100;
+
+      if (supply <= 0) {
+        setSelectToRate(marginSel, targetRate * 100);
+        finalOut.textContent = marginOut.textContent =
+          discountOut.textContent = origOut.textContent = '-';
+        return;
+      }
+
+      const denom = 1 - feeRate - targetRate;
+      if (denom <= 0) {
+        finalOut.textContent = marginOut.textContent =
+          discountOut.textContent = origOut.textContent = '오류';
+        return;
+      }
+
+      let finalPrice = (supply + ship) / denom;
+      finalPrice = Math.floor(finalPrice / 100) * 100;
+
+      const fee = finalPrice * feeRate;
+      const margin = finalPrice - supply - ship - fee;
+
+      const actualRate = margin / finalPrice * 100;
+      setSelectToRate(marginSel, actualRate);
+
+      const original = finalPrice * (1 + discRate);
+      const discountAmount = original - finalPrice;
+
+      finalOut.textContent = won(finalPrice);
+      marginOut.textContent = won(margin);
+      discountOut.textContent = won(discountAmount);
+      origOut.textContent = won(original);
+
+      sumFinal += finalPrice;
+      sumMargin += margin;
+      sumDiscount += discountAmount;
+      sumOrig += original;
+    });
+
+    document.getElementById('sumFinal').textContent = won(sumFinal);
+    document.getElementById('sumMargin').textContent = won(sumMargin);
+    document.getElementById('sumDiscount').textContent = won(sumDiscount);
+    document.getElementById('sumOrig').textContent = won(sumOrig);
+  }
+
+  buildTable();
+  calc();
+</script>
+</body>
+</html>
+"""
+
+with st.sidebar:
+    components.html(MARGIN_CALC_HTML, height=620, scrolling=True)
+
 # ---------- 팝업 ----------
 if st.session_state.get("popup"):
     pid = str(st.session_state.popup_id)
@@ -520,7 +720,7 @@ if st.session_state.get("results"):
                 unsafe_allow_html=True)
 
     with st.container(height=620):
-        for i, (kw, vol, intent, score) in enumerate(st.session_state.results):
+        for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
             c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
             already = kw in st.session_state.selected
             with c1:
@@ -530,7 +730,7 @@ if st.session_state.get("results"):
                           on_click=toggle_keyword, args=(kw,), use_container_width=True)
             c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
                         unsafe_allow_html=True)
-            c3.markdown("<div class='metric-val'>" + str(score) + "</div>",
+            c3.markdown("<div class='metric-val'>" + str(comp) + "</div>",
                         unsafe_allow_html=True)
 elif "results" in st.session_state:
     st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
