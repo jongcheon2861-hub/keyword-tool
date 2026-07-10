@@ -4,7 +4,7 @@ import requests, time, hmac, hashlib, base64
 import json, math
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="쿠팡 셀러 도구", layout="centered",
+st.set_page_config(page_title="쿠팡 셀러 도구", layout="wide",
                    initial_sidebar_state="collapsed")
 
 # ---------- 시크릿 ----------
@@ -314,8 +314,7 @@ def render_margin_calculator():
         "상품명", value=st.session_state.get("mc_product", ""),
         placeholder="상품명 (가이드의 노출상품명으로 전달)")
 
-    # 행 추가/삭제
-    ca, cb, cc = st.columns([1, 1, 2])
+    ca, cb, cc = st.columns([1, 1, 3])
     with ca:
         if st.button("＋ 행 추가", use_container_width=True):
             if len(st.session_state.mc_rows) < 10:
@@ -329,45 +328,63 @@ def render_margin_calculator():
         st.markdown(f"<div style='padding-top:8px;color:#607d8b;font-weight:600;'>"
                     f"행 {len(st.session_state.mc_rows)}개</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
+    # 컬럼 비율 (입력 6 + 결과 4)
+    COLS = [1.1, 1, 1, 0.9, 0.9, 0.9, 1, 1, 1, 1]
+
+    # 헤더 라벨 (한 번만)
+    h = st.columns(COLS)
+    heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
+             "판매가", "마진액", "쿠폰할인", "정가"]
+    for col, name in zip(h, heads):
+        col.markdown(f"<div style='font-size:12px;font-weight:700;color:#0d47a1;"
+                     f"text-align:center;'>{name}</div>", unsafe_allow_html=True)
 
     results = []
     for i, row in enumerate(st.session_state.mc_rows):
-        st.markdown(f"**행 {i+1}**")
-        c1, c2, c3 = st.columns(3)
-        row["opt"] = c1.text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
-                                   max_chars=6, placeholder="예: 1kg")
-        row["supply"] = c2.number_input("공급가", value=int(row["supply"]),
-                                        step=100, min_value=0, key=f"mc_sup_{i}")
-        row["ship"] = c3.number_input("택배비", value=int(row["ship"]),
-                                      step=100, min_value=0, key=f"mc_ship_{i}")
-        c4, c5, c6 = st.columns(3)
-        row["disc"] = c4.number_input("할인율(%)", value=float(row["disc"]),
-                                      step=1.0, min_value=0.0, key=f"mc_disc_{i}")
-        row["fee"] = c5.number_input("수수료(%)", value=float(row["fee"]),
-                                     step=0.1, min_value=0.0, key=f"mc_fee_{i}")
-        row["margin"] = c6.number_input("마진율(%)", value=float(row["margin"]),
-                                        step=0.1, min_value=0.0, key=f"mc_mrg_{i}")
+        c = st.columns(COLS)
+        row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
+                                     max_chars=6, label_visibility="collapsed",
+                                     placeholder="옵션")
+        row["supply"] = c[1].number_input("공급가", value=int(row["supply"]),
+                                          step=100, min_value=0, key=f"mc_sup_{i}",
+                                          label_visibility="collapsed")
+        row["ship"] = c[2].number_input("택배비", value=int(row["ship"]),
+                                        step=100, min_value=0, key=f"mc_ship_{i}",
+                                        label_visibility="collapsed")
+        row["disc"] = c[3].number_input("할인율", value=float(row["disc"]),
+                                        step=1.0, min_value=0.0, key=f"mc_disc_{i}",
+                                        label_visibility="collapsed")
+        row["fee"] = c[4].number_input("수수료", value=float(row["fee"]),
+                                       step=0.1, min_value=0.0, key=f"mc_fee_{i}",
+                                       label_visibility="collapsed")
+        row["margin"] = c[5].number_input("마진율", value=float(row["margin"]),
+                                          step=0.1, min_value=0.0, key=f"mc_mrg_{i}",
+                                          label_visibility="collapsed")
 
         res = calc_margin(row["supply"], row["ship"], row["disc"], row["fee"], row["margin"])
         if res:
-            r1, r2, r3, r4 = st.columns(4)
-            r1.metric("판매가", f"{int(res['final']):,}")
-            r2.metric("마진액", f"{int(res['margin']):,}")
-            r3.metric("쿠폰할인", f"{int(res['discount']):,}")
-            r4.metric("정가", f"{int(res['orig']):,}")
+            c[6].markdown(f"<div class='mc-out mc-final'>{int(res['final']):,}</div>",
+                          unsafe_allow_html=True)
+            c[7].markdown(f"<div class='mc-out mc-margin'>{int(res['margin']):,}</div>",
+                          unsafe_allow_html=True)
+            c[8].markdown(f"<div class='mc-out mc-disc'>{int(res['discount']):,}</div>",
+                          unsafe_allow_html=True)
+            c[9].markdown(f"<div class='mc-out mc-orig'>{int(res['orig']):,}</div>",
+                          unsafe_allow_html=True)
             results.append({
                 "opt": row["opt"], "final": int(res["final"]),
                 "margin": int(res["margin"]), "discount": int(res["discount"]),
                 "orig": int(res["orig"])
             })
         else:
-            st.caption("공급가를 입력하면 계산 결과가 표시됩니다.")
-        st.markdown("---")
+            for k in range(6, 10):
+                c[k].markdown("<div class='mc-out mc-empty'>-</div>", unsafe_allow_html=True)
 
+    st.markdown("")
     if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
         st.session_state.mc_sent = results
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
+
 
 # ==================================================================
 # 화면: 키워드 추출기
@@ -778,6 +795,14 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-
 .metric-val { min-height:44px; display:flex; align-items:center; justify-content:center;
     font-size:16px; font-weight:600; color:#607d8b; }
 div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
+
+.mc-out { min-height:38px; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; border-radius:6px; margin-top:2px; }
+.mc-final { background:#f0f5ff; color:#1a73e8; }
+.mc-margin { background:#eafaf3; color:#00a86b; }
+.mc-disc { background:#fdeef0; color:#d63384; }
+.mc-orig { background:#f0f5ff; color:#1a73e8; }
+.mc-empty { color:#bbb; }
 
 .center-popup {
     position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
