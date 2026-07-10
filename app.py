@@ -184,7 +184,7 @@ html, body { overflow: hidden !important; height: 100vh !important; }
 
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 [data-testid="stBaseButton-primary"] {
-    height: 30px !important; min-height: 52px !important;
+    height: 30px !important; min-height: 30px !important;
     padding: 0 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
 }
