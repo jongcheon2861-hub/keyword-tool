@@ -185,7 +185,7 @@ html, body { overflow: hidden !important; height: 100vh !important; }
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 [data-testid="stBaseButton-primary"] {
     height: 40px !important; min-height: 40px !important;
-    padding: 0 !important; margin: 0 !important;
+    padding: 10 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
 }
 [data-testid="stBaseButton-primary"] p {
@@ -301,7 +301,7 @@ st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 �
 
 ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
 with ta:
-    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스캣",
+    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스켓",
                   key="raw_input", on_change=run_extract,
                   label_visibility="collapsed")
 with tb:
