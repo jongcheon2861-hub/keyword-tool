@@ -309,9 +309,8 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
-header[data-testid="stHeader"] { background: transparent !important; height: 0 !important; }
-[data-testid="stToolbar"] { display: none !important; }
-[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stSidebar"] { display: block !important; visibility: visible !important; }
+[data-testid="stSidebarCollapsedControl"] { display: block !important; visibility: visible !important; z-index: 999999 !important; }
 
 html, body { overflow: hidden !important; height: 100vh !important; }
 [data-testid="stAppViewContainer"] { overflow: hidden !important; height: 100vh !important; }
