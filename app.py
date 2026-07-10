@@ -196,7 +196,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 }
 [data-testid="stCode"] code {
     color: #1565c0 !important; font-weight: 400 !important;
-    font-size: 14px !important; white-space: nowrap !important;
+    font-size: 10px !important; white-space: nowrap !important;
 }
 /* 가로 스크롤바 눈에 보이게 */
 [data-testid="stCode"] pre::-webkit-scrollbar { height: 9px; }
