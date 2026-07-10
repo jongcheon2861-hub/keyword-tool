@@ -3,7 +3,7 @@ import pandas as pd
 import requests, time, hmac, hashlib, base64
 
 st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered",
-                   initial_sidebar_state="expanded")
+                   initial_sidebar_state="collapsed")
 
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
@@ -204,13 +204,9 @@ def get_parent_and_related(product):
     2) 표 직접매칭 → 없으면 연관어에서 상위어 판단
     3) 상위어 반환 + 이미 뽑은 연관어(재활용)도 함께 반환
     """
-    # 1) 상품 연관어 1회 추출
     base_df = naver_related_keywords(product)
-
-    # 2) 표에서 직접 찾기
     big = find_category_in_text(product)
 
-    # 표에 없으면 연관어에서 상위어 판단
     if not big and not base_df.empty:
         rel_kws = [normalize(k) for k in base_df["키워드"].tolist()]
         best_cat, best_hit = "", 0
@@ -219,7 +215,7 @@ def get_parent_and_related(product):
             for m in members:
                 nm = normalize(m)
                 hit += sum(1 for rk in rel_kws if nm in rk)
-            hit += sum(2 for rk in rel_kws if normalize(cat) in rk)  # 키 자체 가중치
+            hit += sum(2 for rk in rel_kws if normalize(cat) in rk)
             if hit > best_hit:
                 best_hit, best_cat = hit, cat
         big = best_cat
@@ -254,10 +250,9 @@ def run_extract():
     norm_products = [normalize(p) for p in products]
     related_terms = set()
     intent_words = set(BUY_COMMON)
-    frames = []                 # 이미 뽑은 연관어 재활용
+    frames = []
     seen_seeds = set()
 
-    # 1단계: 상품별로 연관어 1회 추출 + 상위어 판단 (연관어 재활용)
     for p in products:
         big, base_df = get_parent_and_related(p)
         if not base_df.empty:
@@ -269,7 +264,6 @@ def run_extract():
 
     st.session_state.related_info = ", ".join(sorted(related_terms)) or "없음"
 
-    # 2단계: 상위어(포도 등)로 연관어 추가 추출 (중복 seed 제외)
     for t in related_terms:
         if normalize(t) in seen_seeds:
             continue
@@ -309,21 +303,9 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
-/* 헤더 바는 안 보이게(투명·높이0), 사이드바 버튼은 살리기 */
-header[data-testid="stHeader"] {
-    background: transparent !important;
-    height: 0 !important;
-    z-index: 999990 !important;
-}
+header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-
-/* 사이드바 열기 버튼만 떠 있게 */
-[data-testid="stSidebarCollapsedControl"] {
-    display: block !important;
-    visibility: visible !important;
-    z-index: 999999 !important;
-}
 
 html, body { overflow: hidden !important; height: 100vh !important; }
 [data-testid="stAppViewContainer"] { overflow: hidden !important; height: 100vh !important; }
@@ -361,14 +343,12 @@ div[data-testid="stTextInput"] input::placeholder {
     color: #b0bec5 !important;
     font-weight: 400 !important;
 }
-/* 포커스 시 파란빛 글로우 */
 div[data-testid="stTextInput"] input:focus {
     border-color: #667eea !important;
     box-shadow: 0 0 0 3px rgba(102,126,234,0.15),
                 0 4px 14px rgba(102,126,234,0.18) !important;
     background: #fdfdff !important;
 }
-/* 기본 빨간 포커스 테두리 제거 */
 div[data-testid="stTextInput"] div[data-baseweb="input"] {
     border: none !important;
     box-shadow: none !important;
@@ -404,6 +384,15 @@ div[data-testid="stTextInput"] div[data-baseweb="input"] {
     box-shadow: 0 3px 10px rgba(102,126,234,0.35) !important;
 }
 
+/* 마진 계산기 이동 링크 */
+[data-testid="stPageLink"] a {
+    background: linear-gradient(135deg,#1a73e8 0%,#0d47a1 100%) !important;
+    color: #fff !important; border-radius: 12px !important;
+    padding: 10px 16px !important; font-weight: 700 !important;
+    justify-content: center !important; margin: 8px 0 12px 0 !important;
+    box-shadow: 0 4px 12px rgba(26,115,232,0.3) !important;
+}
+[data-testid="stPageLink"] a p { color:#fff !important; font-weight:700 !important; }
 
 .copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
@@ -514,6 +503,9 @@ with ta:
 with tb:
     st.button("🔍 추출하기", use_container_width=True,
               on_click=run_extract, type="primary")
+
+# 마진 계산기 페이지로 이동
+st.page_link("pages/1_마진계산기.py", label="🧮 마진 계산기 열기")
 
 n = len(st.session_state.selected)
 st.markdown('<div class="copy-head">📋 복사용 키워드 '
