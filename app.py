@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
 import requests, time, hmac, hashlib, base64
+import streamlit.components.v1 as components
 
-st.set_page_config(page_title="쿠팡키워드 추출기", layout="centered",
+st.set_page_config(page_title="쿠팡 셀러 도구", layout="centered",
                    initial_sidebar_state="collapsed")
 
 # ---------- 시크릿 ----------
@@ -17,9 +18,7 @@ MAX_KEYWORDS = 20
 MIN_VOL = 10
 TOP_N = 50
 
-# ---------- 쿠팡식 소분류 카테고리표 (키=상위어, 값=별칭) ----------
 CATEGORY_MAP = {
-    # 과일
     "사과": ["사과", "부사", "홍로", "아오리"],
     "배": ["배", "신고배"],
     "감귤": ["감귤", "귤", "한라봉", "천혜향", "레드향", "만감류", "황금향"],
@@ -44,7 +43,6 @@ CATEGORY_MAP = {
     "망고": ["망고", "애플망고"],
     "아보카도": ["아보카도"],
     "자몽": ["자몽"],
-    # 채소
     "배추": ["배추", "알배기"],
     "양배추": ["양배추", "적양배추"],
     "상추": ["상추", "양상추", "쌈채소"],
@@ -75,10 +73,8 @@ CATEGORY_MAP = {
     "브로콜리": ["브로콜리"],
     "아스파라거스": ["아스파라거스"],
     "옥수수": ["옥수수", "초당옥수수"],
-    # 쌀/잡곡
     "쌀": ["쌀", "백미", "현미", "찹쌀"],
     "잡곡": ["잡곡", "보리", "귀리", "콩", "팥", "녹두", "수수", "기장", "율무", "혼합곡"],
-    # 축산
     "소고기": ["소고기", "쇠고기", "한우", "육우", "채끝", "안심", "등심", "차돌박이", "양지", "사태", "우삼겹"],
     "소갈비": ["소갈비", "엘에이갈비", "la갈비"],
     "삼겹살": ["삼겹살", "생삼겹", "냉동삼겹"],
@@ -89,7 +85,6 @@ CATEGORY_MAP = {
     "양고기": ["양고기", "양갈비", "양꼬치"],
     "계란": ["계란", "달걀", "구운계란", "훈제계란", "무정란", "유정란"],
     "메추리알": ["메추리알"],
-    # 수산 - 생선
     "갈치": ["갈치"],
     "고등어": ["고등어"],
     "삼치": ["삼치"],
@@ -106,7 +101,6 @@ CATEGORY_MAP = {
     "연어": ["연어", "훈제연어"],
     "장어": ["장어", "바다장어", "붕장어", "민물장어", "먹장어", "갯장어", "아나고", "하모"],
     "생선회": ["생선회", "회"],
-    # 수산 - 연체/갑각/패류
     "오징어": ["오징어", "건오징어", "물오징어"],
     "낙지": ["낙지"],
     "문어": ["문어"],
@@ -122,23 +116,19 @@ CATEGORY_MAP = {
     "굴": ["굴"],
     "소라": ["소라", "골뱅이"],
     "멍게": ["멍게", "해삼", "성게알"],
-    # 김/해조류
     "김": ["김", "조미김", "돌김"],
     "미역": ["미역"],
     "다시마": ["다시마"],
     "매생이": ["매생이"],
-    # 건어물
     "멸치": ["멸치", "다시멸치"],
     "쥐포": ["쥐포"],
     "건새우": ["건새우"],
     "과메기": ["과메기"],
     "진미채": ["진미채"],
-    # 젓갈/장류
     "명란젓": ["명란젓", "명란"],
     "새우젓": ["새우젓"],
     "게장": ["게장", "간장게장", "양념게장", "대하장"],
     "젓갈": ["젓갈", "오징어젓", "낙지젓", "조개젓", "창난젓", "토하젓"],
-    # 축산가공
     "족발": ["족발", "보쌈"],
     "돈가스": ["돈가스"],
     "떡갈비": ["떡갈비"],
@@ -150,10 +140,10 @@ CATEGORY_MAP = {
 }
 
 BUY_COMMON = ["구매", "주문", "배송", "택배", "가격", "최저가", "특가", "무료배송", "당일배송", "로켓배송", "정품"]
-BUY_CAT = {}  # 상위어별 추가 구매의도어(필요시 채우기)
+BUY_CAT = {}
 INFO_WORDS = ["효능", "칼로리", "방법", "레시피", "뜻", "의미", "부작용", "후기만", "나무위키"]
 
-# ---------- 함수 ----------
+# ---------- 키워드 추출 함수 ----------
 def normalize(s):
     return s.replace(" ", "").replace("머스켓", "머스캣")
 
@@ -184,14 +174,13 @@ def naver_related_keywords(seed):
                 except Exception:
                     return 0
             vol = to_int(it.get("monthlyPcQcCnt", 0)) + to_int(it.get("monthlyMobileQcCnt", 0))
-            comp = it.get("compIdx", "-")  # 경쟁강도 (높음/중간/낮음)
+            comp = it.get("compIdx", "-")
             rows.append({"키워드": it.get("relKeyword", ""), "검색량": vol, "경쟁강도": comp})
         return pd.DataFrame(rows)
     except Exception:
         return pd.DataFrame(columns=["키워드", "검색량", "경쟁강도"])
 
 def find_category_in_text(text):
-    """텍스트(상품명 또는 연관어) 안에서 표의 상위어를 찾는다."""
     nt = normalize(text)
     for cat, members in CATEGORY_MAP.items():
         if any(normalize(m) in nt or nt in normalize(m) for m in members):
@@ -199,14 +188,8 @@ def find_category_in_text(text):
     return ""
 
 def get_parent_and_related(product):
-    """
-    1) 상품명으로 연관어 1회 추출
-    2) 표 직접매칭 → 없으면 연관어에서 상위어 판단
-    3) 상위어 반환 + 이미 뽑은 연관어(재활용)도 함께 반환
-    """
     base_df = naver_related_keywords(product)
     big = find_category_in_text(product)
-
     if not big and not base_df.empty:
         rel_kws = [normalize(k) for k in base_df["키워드"].tolist()]
         best_cat, best_hit = "", 0
@@ -219,7 +202,6 @@ def get_parent_and_related(product):
             if hit > best_hit:
                 best_hit, best_cat = hit, cat
         big = best_cat
-
     return big, base_df
 
 # ---------- 상태 ----------
@@ -246,13 +228,11 @@ def run_extract():
     if not products:
         st.session_state.results = []
         return
-
     norm_products = [normalize(p) for p in products]
     related_terms = set()
     intent_words = set(BUY_COMMON)
     frames = []
     seen_seeds = set()
-
     for p in products:
         big, base_df = get_parent_and_related(p)
         if not base_df.empty:
@@ -261,29 +241,23 @@ def run_extract():
         if big:
             related_terms.add(big)
             intent_words |= set(BUY_CAT.get(big, []))
-
     st.session_state.related_info = ", ".join(sorted(related_terms)) or "없음"
-
     for t in related_terms:
         if normalize(t) in seen_seeds:
             continue
         frames.append(naver_related_keywords(t))
         seen_seeds.add(normalize(t))
         time.sleep(0.2)
-
     if frames and not all(f.empty for f in frames):
         all_kw = pd.concat(frames, ignore_index=True).drop_duplicates("키워드")
         norm_terms = [normalize(t) for t in related_terms]
-
         def is_related(kw):
             nk = normalize(kw)
             return any(t in nk for t in norm_products) or any(t in nk for t in norm_terms)
-
         all_kw = all_kw[all_kw["키워드"].apply(is_related)]
         if INFO_WORDS:
             all_kw = all_kw[~all_kw["키워드"].str.contains("|".join(INFO_WORDS))]
         all_kw = all_kw[all_kw["검색량"] >= MIN_VOL]
-
         iw = list(intent_words)
         all_kw["구매의도"] = all_kw["키워드"].apply(lambda k: sum(1 for w in iw if w in k))
         all_kw["상품직결"] = all_kw["키워드"].apply(
@@ -300,247 +274,353 @@ def run_extract():
     else:
         st.session_state.results = []
 
-# ---------- CSS ----------
+# ==================================================================
+# 화면 1: 키워드 추출기
+# ==================================================================
+def render_keyword_tool():
+    if st.session_state.get("popup"):
+        pid = str(st.session_state.popup_id)
+        msg = st.session_state.popup
+        anim = "popfade" + pid
+        ph = """
+        <style>
+        @keyframes ANIM {
+            0%{opacity:0;transform:translate(-50%,-50%) scale(0.8);}
+            15%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+            80%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+            100%{opacity:0;transform:translate(-50%,-50%) scale(0.9);}
+        }
+        #popup-PID { animation: ANIM 1s ease forwards; }
+        </style>
+        <div class="center-popup" id="popup-PID">✅ MSG</div>
+        """
+        ph = ph.replace("ANIM", anim).replace("PID", pid).replace("MSG", msg)
+        st.markdown(ph, unsafe_allow_html=True)
+        st.session_state.popup = None
+
+    st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
+                unsafe_allow_html=True)
+    ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
+    with ta:
+        st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스켓",
+                      key="raw_input", on_change=run_extract,
+                      label_visibility="collapsed")
+    with tb:
+        st.button("🔍 추출하기", use_container_width=True,
+                  on_click=run_extract, type="primary")
+
+    n = len(st.session_state.selected)
+    st.markdown('<div class="copy-head">📋 복사용 키워드 '
+                '<span class="copy-badge">' + str(n) + '개</span></div>',
+                unsafe_allow_html=True)
+    kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
+    st.code(kw_text, language=None)
+
+    if st.session_state.get("results"):
+        st.markdown('<div class="parent-box">자동 인식된 상위어: '
+                    + st.session_state.get("related_info", "") + '</div>',
+                    unsafe_allow_html=True)
+        st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
+                    unsafe_allow_html=True)
+        with st.container(height=520):
+            for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
+                c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
+                already = kw in st.session_state.selected
+                with c1:
+                    if already:
+                        st.markdown("<span class='kw-picked'></span>", unsafe_allow_html=True)
+                    st.button(kw, key="pick_" + str(i),
+                              on_click=toggle_keyword, args=(kw,), use_container_width=True)
+                c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
+                            unsafe_allow_html=True)
+                c3.markdown("<div class='metric-val'>" + str(comp) + "</div>",
+                            unsafe_allow_html=True)
+    elif "results" in st.session_state:
+        st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
+
+# ==================================================================
+# 화면 2: 마진 계산기
+# ==================================================================
+MARGIN_CALC_HTML = """
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif; background:#f4f6f9; margin:0; padding:16px; color:#333; }
+  h1 { font-size:20px; text-align:center; color:#1a73e8; margin:0 0 6px; }
+  .desc { text-align:center; font-size:12px; color:#777; margin-bottom:14px; }
+  .table-wrap { overflow-x:auto; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); padding:12px; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th,td { border:1px solid #e3e8ef; padding:5px; text-align:center; white-space:nowrap; }
+  thead th { background:#1a73e8; color:#fff; font-weight:600; position:sticky; top:0; }
+  tbody tr:nth-child(even) { background:#f9fbff; }
+  input,select { width:100%; padding:6px 5px; font-size:12px; border:1px solid #d5dae1; border-radius:6px; outline:none; text-align:right; }
+  input[type="text"] { text-align:left; }
+  input:focus,select:focus { border-color:#1a73e8; }
+  .col-name { width:240px; }
+  td.result { font-weight:700; background:#f0f5ff; color:#1a73e8; }
+  td.discount-cell { font-weight:700; background:#fdeef0; color:#d63384; }
+  td.margin-cell { font-weight:700; background:#eafaf3; color:#00a86b; }
+  .no-col { background:#f4f6f9; font-weight:600; color:#555; }
+  .buttons { margin:12px auto 0; text-align:center; }
+  .btn { background:#1a73e8; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-size:13px; cursor:pointer; margin:0 4px; }
+  .btn.gray { background:#888; }
+  tfoot td { background:#fff7e6; font-weight:700; color:#d35400; }
+</style></head><body>
+<h1>🧮 쿠팡 마진 계산기</h1>
+<div class="desc">판매가 100원 단위 내림 · 마진율 자동 보정 · 최대 10개</div>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>No</th><th>상품명</th><th>공급가</th><th>택배비</th><th>할인율(%)</th><th>수수료(%)</th>
+<th>마진율</th><th>판매가</th><th>마진액</th><th>쿠폰할인</th><th>정가</th>
+</tr></thead>
+<tbody id="tbody"></tbody>
+<tfoot><tr><td colspan="7">합계</td>
+<td id="sumFinal">-</td><td id="sumMargin">-</td><td id="sumDiscount">-</td><td id="sumOrig">-</td>
+</tr></tfoot></table></div>
+<div class="buttons">
+<button class="btn" onclick="addRow()">+ 행 추가</button>
+<button class="btn gray" onclick="clearAll()">전체 초기화</button>
+</div>
+<script>
+const ROWS=10, DEFAULT_TARGET=20.0, tbody=document.getElementById('tbody');
+function marginOptions(){let h='';for(let r=40.0;r>=9.99;r-=0.1){const v=r.toFixed(1);h+=`<option value="${v}"${v==='20.0'?' selected':''}>${v}%</option>`;}return h;}
+function createRow(i){const tr=document.createElement('tr');tr.innerHTML=`
+<td class="no-col">${i+1}</td>
+<td><input type="text" class="col-name" maxlength="40" placeholder="상품명"></td>
+<td><input type="number" class="supply" placeholder="0" oninput="calc()"></td>
+<td><input type="number" class="ship" value="0" oninput="calc()"></td>
+<td><input type="number" class="disc" value="60" oninput="calc()"></td>
+<td><input type="number" class="fee" value="12" step="0.1" oninput="calc()"></td>
+<td><select class="margin" onchange="onMarginChange(this)">${marginOptions()}</select></td>
+<td class="result finalOut">-</td><td class="margin-cell marginOut">-</td>
+<td class="discount-cell discountOut">-</td><td class="result origOut">-</td>`;
+tr.querySelector('.margin').dataset.userTarget=DEFAULT_TARGET.toFixed(1);return tr;}
+function buildTable(){tbody.innerHTML='';for(let i=0;i<ROWS;i++)tbody.appendChild(createRow(i));}
+function addRow(){if(tbody.children.length>=ROWS){alert('최대 '+ROWS+'개까지');return;}tbody.appendChild(createRow(tbody.children.length));}
+function clearAll(){if(confirm('모두 지울까요?')){buildTable();calc();}}
+function won(n){return Math.round(n).toLocaleString('ko-KR');}
+function onMarginChange(sel){sel.dataset.userTarget=parseFloat(sel.value).toFixed(1);calc();}
+function setSelectToRate(sel,p){let r=Math.round(p*10)/10;if(r>40)r=40;if(r<10)r=10;sel.value=r.toFixed(1);}
+function calc(){let sO=0,sD=0,sF=0,sM=0;
+tbody.querySelectorAll('tr').forEach(tr=>{
+const supply=parseFloat(tr.querySelector('.supply').value)||0;
+const ship=parseFloat(tr.querySelector('.ship').value)||0;
+const feeRate=(parseFloat(tr.querySelector('.fee').value)||0)/100;
+const discRate=(parseFloat(tr.querySelector('.disc').value)||0)/100;
+const ms=tr.querySelector('.margin');
+const fo=tr.querySelector('.finalOut'),mo=tr.querySelector('.marginOut'),
+dco=tr.querySelector('.discountOut'),oo=tr.querySelector('.origOut');
+const targetRate=(parseFloat(ms.dataset.userTarget)||DEFAULT_TARGET)/100;
+if(supply<=0){setSelectToRate(ms,targetRate*100);fo.textContent=mo.textContent=dco.textContent=oo.textContent='-';return;}
+const denom=1-feeRate-targetRate;
+if(denom<=0){fo.textContent=mo.textContent=dco.textContent=oo.textContent='오류';return;}
+let fp=(supply+ship)/denom;fp=Math.floor(fp/100)*100;
+const fee=fp*feeRate,margin=fp-supply-ship-fee;
+setSelectToRate(ms,margin/fp*100);
+const orig=fp*(1+discRate),disc=orig-fp;
+fo.textContent=won(fp);mo.textContent=won(margin);dco.textContent=won(disc);oo.textContent=won(orig);
+sF+=fp;sM+=margin;sD+=disc;sO+=orig;});
+document.getElementById('sumFinal').textContent=won(sF);
+document.getElementById('sumMargin').textContent=won(sM);
+document.getElementById('sumDiscount').textContent=won(sD);
+document.getElementById('sumOrig').textContent=won(sO);}
+buildTable();calc();
+</script></body></html>
+"""
+
+def render_margin_calculator():
+    components.html(MARGIN_CALC_HTML, height=760, scrolling=True)
+
+# ==================================================================
+# 화면 3: 상품등록가이드
+# ==================================================================
+def render_product_guide():
+    st.markdown('<div class="topcard"><div class="bar-title">📋 상품등록가이드</div></div>',
+                unsafe_allow_html=True)
+    st.caption("고정값은 미리 채워져 있고, 매번 바뀌는 값만 입력하면 됩니다. 맨 아래에서 전체 복사하세요.")
+
+    st.markdown("#### 1. 상품명 / 카테고리")
+    brand = st.text_input("브랜드", "브랜드없음(자체제작)")
+    show_name = st.text_input("노출상품명 (후킹+신뢰+핵심 키워드 5개)", "")
+    mng_name = st.text_input("등록상품명(판매자관리용)", "")
+    category = st.text_input("카테고리 (검색·선택)", "")
+
+    st.markdown("#### 2. 옵션 / 가격")
+    g1, g2 = st.columns(2)
+    weight = g1.text_input("중량", "")
+    qty = g2.text_input("수량", "")
+    p1, p2 = st.columns(2)
+    normal_price = p1.text_input("정상가", "")
+    sale_price = p2.text_input("판매가", "")
+
+    st.markdown("#### 3. 상품 상세 페이지")
+    st.info("대표이미지: 상품 대표 이미지 업로드 · 상세설명: 상세페이지 이미지/설명 등록")
+
+    st.markdown("#### 4. 상품 주요정보")
+    maker = st.text_input("제조사", brand.replace("브랜드없음(자체제작)", "") + "협력사"
+                          if brand and "협력사" not in brand else "(브랜드)협력사")
+    vat = st.text_input("부가세", "면세")
+
+    st.markdown("#### 5. 검색 노출")
+    tags = st.text_input("태그", "")
+    search_filter = st.text_input("검색필터", "")
+    notice = st.text_input("상품정보제공고시", "농수축산물 / 전체상품 상세페이지 참조")
+    item_name = st.text_input("품목 또는 명칭", "")
+    pack_unit = st.text_input("포장단위별 용량(중량)·수량·크기", "")
+    producer = st.text_input("생산자(수입자)", "(브랜드)협력사")
+    origin = st.text_input("원산지", "국내산")
+
+    st.markdown("#### 6. 판매자 배송 / 반품정보")
+    ship_from = st.text_input("출고지", "")
+    courier = st.text_input("택배사", "CJ대한통운")
+    ship_method = st.text_input("배송방법", "신선냉동")
+    ship_days = st.text_input("출고소요일", "3일")
+    return_addr = st.text_input("반품/교환지", "")
+
+    # 전체 요약 복사
+    st.markdown("#### 📋 전체 정리 (복사용)")
+    summary = f"""[상품명/카테고리]
+브랜드: {brand}
+노출상품명: {show_name}
+등록상품명: {mng_name}
+카테고리: {category}
+
+[옵션/가격]
+중량: {weight}
+수량: {qty}
+정상가: {normal_price}
+판매가: {sale_price}
+
+[상품 주요정보]
+제조사: {maker}
+부가세: {vat}
+
+[검색 노출]
+태그: {tags}
+검색필터: {search_filter}
+상품정보제공고시: {notice}
+품목/명칭: {item_name}
+포장단위 용량·수량·크기: {pack_unit}
+생산자(수입자): {producer}
+원산지: {origin}
+
+[배송/반품]
+출고지: {ship_from}
+택배사: {courier}
+배송방법: {ship_method}
+출고소요일: {ship_days}
+반품/교환지: {return_addr}"""
+    st.code(summary, language=None)
+
+# ==================================================================
+# 공통 CSS
+# ==================================================================
 st.markdown("""
 <style>
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-
-html, body { overflow: hidden !important; height: 100vh !important; }
-[data-testid="stAppViewContainer"] { overflow: hidden !important; height: 100vh !important; }
-[data-testid="stMain"] { overflow: hidden !important; }
-.block-container {
-    padding-top: 0.5rem !important;
-    height: 100vh !important;
-    overflow: hidden !important;
-}
+.block-container { padding-top: 0.6rem !important; }
 
 .topcard {
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
-    padding: 16px 20px 6px 20px;
-    border: 1px solid #e6e8eb;
-    border-radius: 16px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    margin-bottom: 20px;
+    padding: 14px 20px 6px 20px; border: 1px solid #e6e8eb;
+    border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); margin-bottom: 14px;
 }
-.bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 10px; }
+.bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 8px; }
 
-/* ===== 고급스러운 검색창 ===== */
-div[data-testid="stTextInput"] input {
-    height: 52px !important;
-    font-size: 16px !important;
-    font-weight: 500 !important;
-    color: #263238 !important;
-    padding: 0 18px !important;
-    border-radius: 14px !important;
-    border: 1.5px solid #dfe4ea !important;
-    background: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 2px rgba(0,0,0,0.02) !important;
-    transition: all 0.25s ease !important;
+/* 상단 메뉴(라디오) 탭 스타일 */
+div[role="radiogroup"] { gap: 8px !important; margin-bottom: 8px !important; }
+div[role="radiogroup"] label {
+    background:#f1f3f5 !important; border:1.5px solid #e6e8eb !important;
+    border-radius:12px !important; padding:8px 16px !important; font-weight:700 !important;
 }
-div[data-testid="stTextInput"] input::placeholder {
-    color: #b0bec5 !important;
-    font-weight: 400 !important;
+div[role="radiogroup"] label:has(input:checked) {
+    background:linear-gradient(135deg,#667eea,#764ba2) !important; color:#fff !important;
+    border-color:transparent !important;
+}
+div[role="radiogroup"] label:has(input:checked) div { color:#fff !important; }
+
+div[data-testid="stTextInput"] input {
+    height: 46px !important; font-size: 15px !important; color: #263238 !important;
+    padding: 0 14px !important; border-radius: 12px !important;
+    border: 1.5px solid #dfe4ea !important; background: #ffffff !important;
+    transition: all 0.2s ease !important;
 }
 div[data-testid="stTextInput"] input:focus {
     border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102,126,234,0.15),
-                0 4px 14px rgba(102,126,234,0.18) !important;
-    background: #fdfdff !important;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15) !important;
 }
 div[data-testid="stTextInput"] div[data-baseweb="input"] {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
+    border: none !important; box-shadow: none !important; background: transparent !important;
 }
 
-/* ===== 고급스러운 추출하기 버튼 ===== */
 [data-testid="stBaseButton-primary"] {
-    height: 40px !important;
-    min-height: 40px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    border-radius: 14px !important;
-    color: #ffffff !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    height: 46px !important; min-height: 46px !important; border: none !important;
+    border-radius: 12px !important; color: #fff !important;
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;
     box-shadow: 0 4px 14px rgba(102,126,234,0.35) !important;
-    transition: all 0.25s ease !important;
 }
-[data-testid="stBaseButton-primary"] p {
-    font-size: 16px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.3px !important;
-    color: #ffffff !important;
-}
-[data-testid="stBaseButton-primary"]:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 22px rgba(102,126,234,0.45) !important;
-    filter: brightness(1.05) !important;
-}
-[data-testid="stBaseButton-primary"]:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 3px 10px rgba(102,126,234,0.35) !important;
-}
+[data-testid="stBaseButton-primary"] p { font-size: 15px !important; font-weight: 800 !important; color:#fff !important; }
 
-/* 마진 계산기 이동 링크 */
-[data-testid="stPageLink"] a {
-    background: linear-gradient(135deg,#1a73e8 0%,#0d47a1 100%) !important;
-    color: #fff !important; border-radius: 12px !important;
-    padding: 10px 16px !important; font-weight: 700 !important;
-    justify-content: center !important; margin: 8px 0 12px 0 !important;
-    box-shadow: 0 4px 12px rgba(26,115,232,0.3) !important;
-}
-[data-testid="stPageLink"] a p { color:#fff !important; font-weight:700 !important; }
-
-.copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
+.copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 14px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
-[data-testid="stCode"] {
-    background: #f0f7ff !important; border: 1.5px solid #90caf9 !important;
-    border-radius: 10px !important; margin: 0 !important;
-}
-[data-testid="stCode"] pre {
-    background: transparent !important;
-    white-space: nowrap !important;
-    overflow-x: scroll !important;
-    overflow-y: hidden !important;
-    padding: 12px 52px 10px 14px !important;
-}
-[data-testid="stCode"] code {
-    color: #1565c0 !important; font-weight: 400 !important;
-    font-size: 12px !important; white-space: nowrap !important;
-}
-[data-testid="stCode"] pre::-webkit-scrollbar { height: 9px; }
-[data-testid="stCode"] pre::-webkit-scrollbar-thumb { background: #90caf9; border-radius: 6px; }
-[data-testid="stCode"] pre::-webkit-scrollbar-track { background: #e3f2fd; border-radius: 6px; }
+[data-testid="stCode"] { background:#f0f7ff !important; border:1.5px solid #90caf9 !important;
+    border-radius:10px !important; }
+[data-testid="stCode"] code { color:#1565c0 !important; font-size:12px !important; }
 
-.parent-box {
-    background:#e3f2fd; border-radius:10px; color:#1565c0;
-    font-size:14px; padding:12px 16px; margin:6px 0 4px 0;
-}
-.list-head { font-size:20px; font-weight:800; color:#263238; margin:14px 0 14px 0; }
+.parent-box { background:#e3f2fd; border-radius:10px; color:#1565c0;
+    font-size:14px; padding:12px 16px; margin:6px 0 4px 0; }
+.list-head { font-size:18px; font-weight:800; color:#263238; margin:14px 0 12px 0; }
 
 [data-testid="stBaseButton-secondary"] {
-    min-height: 44px !important; height: 44px !important;
-    padding: 0 14px !important;
+    min-height: 44px !important; height: 44px !important; padding: 0 14px !important;
     border-radius: 12px !important; border: 1.5px solid #e6e8eb !important;
-    background: #ffffff !important; transition: all .12s ease !important;
-    justify-content: flex-start !important;
+    background: #fff !important; justify-content: flex-start !important;
 }
 [data-testid="stBaseButton-secondary"] p {
-    font-size: 17px !important; font-weight: 500 !important; line-height: 1.1 !important;
+    font-size: 17px !important; font-weight: 500 !important;
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
 [data-testid="stBaseButton-secondary"]:hover { border-color:#ff7043 !important; }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] {
-    background: #eef6ff !important; border-color: #4a90d9 !important;
+    background:#eef6ff !important; border-color:#4a90d9 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] p {
-    color: #1565c0 !important; font-weight: 700 !important;
+    color:#1565c0 !important; font-weight:700 !important;
 }
-
 .kw-picked { display:block !important; height:0 !important; margin:0 !important;
     padding:0 !important; overflow:hidden !important; line-height:0 !important; }
 [data-testid="stElementContainer"]:has(.kw-picked) {
     height:0 !important; min-height:0 !important; margin:0 !important; padding:0 !important;
 }
-
-div[data-testid="stVerticalBlock"] { gap: 0.15rem !important; }
-div[data-testid="stHorizontalBlock"] { gap: 0.4rem !important; }
-[data-testid="stElementContainer"] { margin: 0 !important; }
-
 .metric-val { min-height:44px; display:flex; align-items:center; justify-content:center;
     font-size:16px; font-weight:600; color:#607d8b; }
-
 div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 
 .center-popup {
-    position: fixed; top: 30%; left: 50%;
-    transform: translate(-50%, -50%); z-index: 100000;
-    padding: 12px 26px; border-radius: 16px;
-    font-size: 22px; font-weight: 800; color: #ffffff;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 45%, #f093fb 100%);
-    box-shadow: 0 12px 30px rgba(118,75,162,0.45);
-    pointer-events: none; white-space: nowrap;
+    position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
+    z-index: 100000; padding: 12px 26px; border-radius: 16px;
+    font-size: 22px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 45%,#f093fb 100%);
+    box-shadow: 0 12px 30px rgba(118,75,162,0.45); pointer-events: none; white-space: nowrap;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- 팝업 ----------
-if st.session_state.get("popup"):
-    pid = str(st.session_state.popup_id)
-    msg = st.session_state.popup
-    anim = "popfade" + pid
-    ph = """
-    <style>
-    @keyframes ANIM {
-        0%{opacity:0;transform:translate(-50%,-50%) scale(0.8);}
-        15%{opacity:1;transform:translate(-50%,-50%) scale(1);}
-        80%{opacity:1;transform:translate(-50%,-50%) scale(1);}
-        100%{opacity:0;transform:translate(-50%,-50%) scale(0.9);}
-    }
-    #popup-PID { animation: ANIM 1s ease forwards; }
-    </style>
-    <div class="center-popup" id="popup-PID">✅ MSG</div>
-    """
-    ph = ph.replace("ANIM", anim).replace("PID", pid).replace("MSG", msg)
-    st.markdown(ph, unsafe_allow_html=True)
-    st.session_state.popup = None
-
 # ==================================================================
-# 1) 상단 박스 영역
+# 상단 메뉴 + 화면 전환
 # ==================================================================
-st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
-            unsafe_allow_html=True)
+menu = st.radio(
+    "메뉴",
+    ["🛒 쿠팡키워드 추출기", "🧮 마진계산기", "📋 상품등록가이드"],
+    horizontal=True,
+    label_visibility="collapsed",
+)
 
-ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
-with ta:
-    st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스켓",
-                  key="raw_input", on_change=run_extract,
-                  label_visibility="collapsed")
-with tb:
-    st.button("🔍 추출하기", use_container_width=True,
-              on_click=run_extract, type="primary")
-
-# 마진 계산기 페이지로 이동
-st.markdown(
-    '<a href="margin_calculator" target="_self" '
-    'style="display:inline-block;background:linear-gradient(135deg,#1a73e8,#0d47a1);'
-    'color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;'
-    'text-decoration:none;margin:8px 0 12px 0;">🧮 마진 계산기 열기</a>',
-    unsafe_allow_html=True)
-
-n = len(st.session_state.selected)
-st.markdown('<div class="copy-head">📋 복사용 키워드 '
-            '<span class="copy-badge">' + str(n) + '개</span></div>',
-            unsafe_allow_html=True)
-kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
-st.code(kw_text, language=None)
-
-# ==================================================================
-# 2) 추출된 키워드 영역
-# ==================================================================
-if st.session_state.get("results"):
-    st.markdown('<div class="parent-box">자동 인식된 상위어: '
-                + st.session_state.get("related_info", "") + '</div>',
-                unsafe_allow_html=True)
-    st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
-                unsafe_allow_html=True)
-
-    with st.container(height=620):
-        for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
-            c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
-            already = kw in st.session_state.selected
-            with c1:
-                if already:
-                    st.markdown("<span class='kw-picked'></span>", unsafe_allow_html=True)
-                st.button(kw, key="pick_" + str(i),
-                          on_click=toggle_keyword, args=(kw,), use_container_width=True)
-            c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
-                        unsafe_allow_html=True)
-            c3.markdown("<div class='metric-val'>" + str(comp) + "</div>",
-                        unsafe_allow_html=True)
-elif "results" in st.session_state:
-    st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
+if menu == "🛒 쿠팡키워드 추출기":
+    render_keyword_tool()
+elif menu == "🧮 마진계산기":
+    render_margin_calculator()
+else:
+    render_product_guide()
