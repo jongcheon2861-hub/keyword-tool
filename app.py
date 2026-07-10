@@ -180,7 +180,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     font-weight: 700 !important; border-radius: 10px !important;
 }
 
-.copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 14px 0; }
+.copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
 .copy-badge { background:#1565c0; color:#fff; font-size:12px; font-weight:700;
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 [data-testid="stCode"] {
