@@ -364,7 +364,7 @@ div[data-testid="stTextInput"] div[data-baseweb="input"] {
 
 /* ===== 고급스러운 추출하기 버튼 ===== */
 [data-testid="stBaseButton-primary"] {
-    height: 52px !important;
+    height: 40px !important;
     min-height: 52px !important;
     padding: 0 !important;
     margin: 0 !important;
