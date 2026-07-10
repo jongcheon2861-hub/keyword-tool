@@ -160,7 +160,16 @@ st.markdown("""
 header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
-.block-container { padding-top: 0.5rem !important; }
+
+/* ★ 페이지 전체 스크롤 막기 → 상단바 영역 고정 효과 */
+html, body { overflow: hidden !important; height: 100vh !important; }
+[data-testid="stAppViewContainer"] { overflow: hidden !important; height: 100vh !important; }
+[data-testid="stMain"] { overflow: hidden !important; }
+.block-container {
+    padding-top: 0.5rem !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+}
 
 /* 상단 카드 (고정 아님, 그냥 위에 배치) */
 .topcard {
@@ -190,23 +199,17 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 [data-testid="stCode"] pre {
     background: transparent !important;
     white-space: nowrap !important;
-    overflow-x: scroll !important;          /* auto → scroll : 스크롤바 항상 표시 */
+    overflow-x: scroll !important;
     overflow-y: hidden !important;
-    padding: 12px 52px 10px 14px !important;  /* 오른쪽 여백↑(복사버튼), 아래 여백↑(스크롤바) */
+    padding: 12px 52px 10px 14px !important;
 }
 [data-testid="stCode"] code {
     color: #1565c0 !important; font-weight: 400 !important;
     font-size: 12px !important; white-space: nowrap !important;
 }
-/* 가로 스크롤바 눈에 보이게 */
 [data-testid="stCode"] pre::-webkit-scrollbar { height: 9px; }
-[data-testid="stCode"] pre::-webkit-scrollbar-thumb {
-    background: #90caf9; border-radius: 6px;
-}
-[data-testid="stCode"] pre::-webkit-scrollbar-track {
-    background: #e3f2fd; border-radius: 6px;
-}
-
+[data-testid="stCode"] pre::-webkit-scrollbar-thumb { background: #90caf9; border-radius: 6px; }
+[data-testid="stCode"] pre::-webkit-scrollbar-track { background: #e3f2fd; border-radius: 6px; }
 
 /* 상위어 안내 */
 .parent-box {
@@ -287,7 +290,7 @@ if st.session_state.get("popup"):
     st.session_state.popup = None
 
 # ==================================================================
-# 1) 상단 박스 영역 (제목 + 검색 + 복사용 키워드)
+# 1) 상단 박스 영역 (제목 + 검색 + 복사용 키워드)  ← 스크롤 안 됨
 # ==================================================================
 st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
             unsafe_allow_html=True)
@@ -309,7 +312,7 @@ kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected
 st.code(kw_text, language=None)
 
 # ==================================================================
-# 2) 추출된 키워드 영역 (분리 + 최하단까지 스크롤 컨테이너)
+# 2) 추출된 키워드 영역 (분리 + 컨테이너 안에서만 스크롤)
 # ==================================================================
 if st.session_state.get("results"):
     st.markdown('<div class="parent-box">자동 인식된 상위어: '
