@@ -185,16 +185,28 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     padding:2px 10px; border-radius:12px; margin-left:6px; }
 [data-testid="stCode"] {
     background: #f0f7ff !important; border: 1.5px solid #90caf9 !important;
-    border-radius: 10px !important; margin: 0 !important; min-height: 46px !important;
+    border-radius: 10px !important; margin: 0 !important;
 }
 [data-testid="stCode"] pre {
-    background: transparent !important; white-space: nowrap !important;
-    overflow-x: auto !important; padding: 12px 44px 12px 14px !important; min-height: 22px !important;
+    background: transparent !important;
+    white-space: nowrap !important;
+    overflow-x: scroll !important;          /* auto → scroll : 스크롤바 항상 표시 */
+    overflow-y: hidden !important;
+    padding: 12px 52px 16px 14px !important;  /* 오른쪽 여백↑(복사버튼), 아래 여백↑(스크롤바) */
 }
 [data-testid="stCode"] code {
     color: #1565c0 !important; font-weight: 400 !important;
     font-size: 14px !important; white-space: nowrap !important;
 }
+/* 가로 스크롤바 눈에 보이게 */
+[data-testid="stCode"] pre::-webkit-scrollbar { height: 9px; }
+[data-testid="stCode"] pre::-webkit-scrollbar-thumb {
+    background: #90caf9; border-radius: 6px;
+}
+[data-testid="stCode"] pre::-webkit-scrollbar-track {
+    background: #e3f2fd; border-radius: 6px;
+}
+
 
 /* 상위어 안내 */
 .parent-box {
