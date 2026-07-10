@@ -309,7 +309,7 @@ def run_extract():
 # ---------- CSS ----------
 st.markdown("""
 <style>
-header[data-testid="stHeader"] { display: none !important; }
+header[data-testid="stHeader"] { background: transparent !important; height: 0 !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 
