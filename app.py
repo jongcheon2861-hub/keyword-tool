@@ -192,7 +192,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     white-space: nowrap !important;
     overflow-x: scroll !important;          /* auto → scroll : 스크롤바 항상 표시 */
     overflow-y: hidden !important;
-    padding: 12px 52px 16px 14px !important;  /* 오른쪽 여백↑(복사버튼), 아래 여백↑(스크롤바) */
+    padding: 12px 52px 20px 14px !important;  /* 오른쪽 여백↑(복사버튼), 아래 여백↑(스크롤바) */
 }
 [data-testid="stCode"] code {
     color: #1565c0 !important; font-weight: 400 !important;
