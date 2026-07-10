@@ -211,7 +211,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
 /* 상위어 안내 */
 .parent-box {
     background:#e3f2fd; border-radius:10px; color:#1565c0;
-    font-size:14px; padding:12px 16px; margin:20px 0 4px 0;
+    font-size:14px; padding:12px 16px; margin:8px 0 4px 0;
 }
 .list-head { font-size:22px; font-weight:800; color:#263238; margin:8px 0 8px 0; }
 
