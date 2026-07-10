@@ -180,12 +180,12 @@ html, body { overflow: hidden !important; height: 100vh !important; }
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
     margin-bottom: 6px;
 }
-.bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 10px; }
+.bar-title { font-size: 22px; font-weight: 800; color: #263238; margin-bottom: 20px; }
 
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 [data-testid="stBaseButton-primary"] {
     height: 40px !important; min-height: 40px !important;
-    padding: 10 !important; margin: 10 !important;
+    padding: 0 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
 }
 [data-testid="stBaseButton-primary"] p {
