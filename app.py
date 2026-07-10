@@ -156,28 +156,23 @@ header[data-testid="stHeader"] {display:none !important;}
 .copy-badge {background:#1565c0; color:#fff; font-size:12px; font-weight:700;
              padding:2px 10px; border-radius:12px; margin-left:6px;}
 
-/* 복사박스: 높이 고정 + 가로 스크롤바 항상 표시 */
+/* 복사박스: 높이 고정, 좌우로만 늘어남 (아래로 절대 안 늘어남) */
 .copy-box {
     background:#f0f7ff; border:1.5px solid #90caf9; border-radius:10px;
     color:#1565c0; font-size:15px; font-weight:500;
-    padding:12px 14px;
+    padding:0 14px;
+    height:46px; line-height:46px;          /* 고정 높이 */
     white-space:nowrap;
-    overflow-x:scroll;          /* 스크롤바 항상 표시 */
-    overflow-y:hidden;
+    overflow-x:auto; overflow-y:hidden;
     box-sizing:border-box;
-    margin-bottom:8px;
 }
-.copy-box::-webkit-scrollbar {height:10px;}
-.copy-box::-webkit-scrollbar-thumb {background:#90caf9; border-radius:6px;}
-.copy-box::-webkit-scrollbar-track {background:#e3f2fd; border-radius:6px;}
 
 /* 상위어 안내 */
 .parent-box {
     background:#e3f2fd; border-radius:10px; color:#1565c0;
     font-size:14px; padding:12px 16px; margin:14px 0 4px 0;
 }
-/* 목록 제목: 위쪽 간격 확실히 확보 */
-.list-head {font-size:24px; font-weight:800; color:#263238; margin:28px 0 10px 0;}
+.list-head {font-size:24px; font-weight:800; color:#263238; margin:6px 0 10px 0;}
 
 /* 입력창 / 버튼 높이 정렬 */
 div[data-testid="stTextInput"] input {height:52px !important; font-size:16px !important;}
@@ -214,7 +209,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-
     height:0 !important; margin:0 !important; padding:0 !important; min-height:0 !important;
 }
 
-/* 세로/가로 간격 축소 */
+/* 세로/가로 간격 축소 (처음부터 촘촘하게) */
 div[data-testid="stVerticalBlock"] {gap:0.15rem !important;}
 div[data-testid="stHorizontalBlock"] {gap:0.4rem !important;}
 [data-testid="stElementContainer"] {margin:0 !important;}
@@ -272,6 +267,7 @@ if parents:
 st.markdown("<div class='list-head'>추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>",
             unsafe_allow_html=True)
 
+# ★ 핵심: 목록만 고정 높이 컨테이너 안에서 스크롤 → 상단 항상 보이고 아래 안 늘어남
 with st.container(height=480):
     for i, row in enumerate(st.session_state.results):
         kw, vol, score = row["kw"], row["vol"], row["score"]
