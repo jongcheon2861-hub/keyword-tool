@@ -213,7 +213,7 @@ div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px 
     background:#e3f2fd; border-radius:10px; color:#1565c0;
     font-size:14px; padding:12px 16px; margin:6px 0 4px 0;
 }
-.list-head { font-size:20px; font-weight:800; color:#263238; margin:10px 0 8px 0; }
+.list-head { font-size:20px; font-weight:800; color:#263238; margin:14px 0 8px 0; }
 
 /* 키워드 버튼 */
 [data-testid="stBaseButton-secondary"] {
