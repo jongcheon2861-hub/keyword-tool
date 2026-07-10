@@ -184,9 +184,13 @@ html, body { overflow: hidden !important; height: 100vh !important; }
 
 div[data-testid="stTextInput"] input { height: 52px !important; font-size: 16px !important; }
 [data-testid="stBaseButton-primary"] {
-    height: 40px !important; min-height: 40px !important;
+    height: 52px !important; min-height: 52px !important;
     padding: 0 !important; margin: 0 !important;
     font-weight: 700 !important; border-radius: 10px !important;
+}
+[data-testid="stBaseButton-primary"] p {
+    font-size: 16px !important;
+    font-weight: 800 !important;
 }
 
 .copy-head { font-size: 15px; font-weight: 700; color:#37474f; margin: 8px 0 20px 0; }
