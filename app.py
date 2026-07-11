@@ -926,13 +926,22 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-
     font-size:16px; font-weight:600; color:#607d8b; }
 div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 
-/* 키워드 목록 행 간격 최소화 (선택돼도 높이 고정) */
+/* 키워드 목록 행 간격 최소화 */
+.st-key-container div[data-testid="stVerticalBlock"] { gap: 0 !important; }
+
 div[data-testid="stHorizontalBlock"]:has([data-testid="stBaseButton-secondary"]) {
-    margin-bottom: 2px !important; row-gap: 2px !important;
+    margin: 0 !important;
+    gap: 4px !important;        /* 좌우(버튼-숫자) 간격 */
+    row-gap: 0 !important;
+    min-height: 0 !important;
 }
 div[data-testid="stElementContainer"]:has([data-testid="stBaseButton-secondary"]) {
-    margin: 0 !important; padding: 0 !important;
+    margin: 0 !important; padding: 0 !important; min-height: 0 !important;
 }
+[data-testid="stBaseButton-secondary"] {
+    min-height: 34px !important; height: 34px !important;
+}
+.metric-val { min-height: 34px !important; }
 
 /* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
 div[data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
