@@ -499,8 +499,8 @@ def render_keyword_tool():
                 already = kw in st.session_state.selected
                 with c1:
                     if already:
-                        st.markdown("<span class='kw-
-                        picked'></span>", unsafe_allow_html=True)
+                        st.markdown("<span class='kw-picked'></span>", unsafe_allow_html=True)
+
                     st.button(kw, key="pick_" + str(i),
                               on_click=toggle_keyword, args=(kw,), use_container_width=True)
                 c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
@@ -957,6 +957,33 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 .st-key-kwlist div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] p {
     color: #1565c0 !important; font-weight: 700 !important;
 }
+
+/* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
+div[data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
+div[data-testid="column"] { padding: 0 2px !important; }
+.mc-out { min-height:38px; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; border-radius:6px; margin-top:2px;
+    white-space:nowrap; padding:0 4px; }
+.mc-final { background:#f0f5ff; color:#1a73e8; }
+.mc-margin { background:#eafaf3; color:#00a86b; }
+.mc-disc { background:#fdeef0; color:#d63384; }
+.mc-orig { background:#f0f5ff; color:#1a73e8; }
+.mc-rate { background:#fff3e0; color:#e65100; }
+.mc-empty { color:#bbb; }
+
+.center-popup {
+    position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
+    z-index: 100000; padding: 12px 26px; border-radius: 16px;
+    font-size: 22px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 45%,#f093fb 100%);
+    box-shadow: 0 12px 30px rgba(118,75,162,0.45); pointer-events: none; white-space: nowrap;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ==================================================================
+# 상단 메뉴 + 화면 전환
+# ==================================================================
 
 # ==================================================================
 # 상단 메뉴 + 화면 전환
