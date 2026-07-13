@@ -390,8 +390,7 @@ def render_margin_calculator():
     for i, row in enumerate(st.session_state.mc_rows):
         c = st.columns(COLS, gap="small")
         row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
-                                     max_chars=6, label_visibility="collapsed",
-                                     placeholder="옵션")
+                                     label_visibility="collapsed", placeholder="옵션")
         row["supply"] = c[1].number_input("공급가", value=int(row["supply"]),
                                           step=100, min_value=0, key=f"mc_sup_{i}",
                                           label_visibility="collapsed")
