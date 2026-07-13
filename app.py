@@ -623,26 +623,6 @@ def render_product_guide():
             kw_tag_text,
         ])
 
-    # 구글시트 자동 등록 버튼
-    st.markdown("<div style='font-size:14px;font-weight:800;color:#0d47a1;"
-                "margin:6px 0;'>📊 구글시트 자동 등록</div>", unsafe_allow_html=True)
-    reg_a, reg_b = st.columns([1.3, 3])
-    with reg_a:
-        do_register = st.button("📊 구글시트에 등록", type="primary",
-                                use_container_width=True)
-    with reg_b:
-        st.caption("버튼을 누르면 옵션별로 시트 맨 아래에 행이 추가됩니다. "
-                   "칼럼명(헤더)은 처음 한 번만 자동 생성됩니다.")
-    if do_register:
-        if not sheet_rows:
-            st.warning("마진계산기에서 먼저 옵션을 넘겨주세요.")
-        else:
-            try:
-                append_rows_to_sheet(sheet_rows)
-                st.success(f"✅ 구글시트에 {len(sheet_rows)}개 행을 추가했습니다.")
-            except Exception as e:
-                st.error(f"등록 실패: {e}")
-
     GUIDE_HTML = r"""
 <!doctype html>
 <html lang="ko">
@@ -734,7 +714,6 @@ def render_product_guide():
   const OPT_ROWS = __OPT_ROWS__;
   const PKG_TEXT = "__PKG_TEXT__";
   const COUPON_ROWS = __COUPON_ROWS__;
-  const SHEET_ROWS  = __SHEET_ROWS__;
 
   const TOP = [
     ["브랜드", "브랜드없음(자체제작)"],
@@ -875,7 +854,6 @@ def render_product_guide():
       box.appendChild(row);
     });
   })();
-
 </script>
 
 </body>
@@ -891,9 +869,22 @@ def render_product_guide():
     GUIDE_HTML = GUIDE_HTML.replace("__OPT_ROWS__", json.dumps(opt_rows, ensure_ascii=False))
     GUIDE_HTML = GUIDE_HTML.replace("__PKG_TEXT__", safe_pkg)
     GUIDE_HTML = GUIDE_HTML.replace("__COUPON_ROWS__", json.dumps(coupon_rows, ensure_ascii=False))
-    GUIDE_HTML = GUIDE_HTML.replace("__SHEET_ROWS__", json.dumps(sheet_rows, ensure_ascii=False))
 
-    components.html(GUIDE_HTML, height=2000, scrolling=True)
+    components.html(GUIDE_HTML, height=1500, scrolling=True)
+
+    # ---- 구글시트 자동 등록 (가이드 맨 아래) ----
+    st.markdown("<div style='font-size:14px;font-weight:800;color:#0d47a1;"
+                "margin:12px 0 6px;'>📊 구글시트 자동 등록</div>", unsafe_allow_html=True)
+    if st.button("📊 구글시트에 등록", type="primary", use_container_width=True):
+        if not sheet_rows:
+            st.warning("마진계산기에서 먼저 옵션을 넘겨주세요.")
+        else:
+            try:
+                append_rows_to_sheet(sheet_rows)
+                st.success(f"✅ 구글시트에 {len(sheet_rows)}개 행을 추가했습니다.")
+            except Exception as e:
+                st.error(f"등록 실패: {e}")
+
 
 # ==================================================================
 # 공통 CSS
