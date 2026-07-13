@@ -705,7 +705,16 @@ def render_product_guide():
 <div id="shipArea"></div>
 
 <div class="sec">쿠폰할인</div>
+
 <div id="couponArea"></div>
+<div class="sec">구글시트 표 (보관용)</div>
+<div style="overflow-x:auto;">
+  <table class="opt-table" id="sheetTable" style="table-layout:auto;"><thead><tr>
+    <th>노출상품명</th><th>등록상품명</th><th>옵션명</th><th>공급가</th><th>택배비</th>
+    <th>할인율</th><th>수수료</th><th>마진율</th><th>판매가</th><th>마진액</th>
+    <th>쿠폰할인</th><th>정상가</th><th>태그</th>
+  </tr></thead><tbody id="sheetBody"></tbody></table>
+</div>
 
 <script>
   const KEYWORD_TAGS = "__SELECTED_KW__";
@@ -714,6 +723,7 @@ def render_product_guide():
   const OPT_ROWS = __OPT_ROWS__;
   const PKG_TEXT = "__PKG_TEXT__";
   const COUPON_ROWS = __COUPON_ROWS__;
+  const SHEET_ROWS  = __SHEET_ROWS__;
 
   const TOP = [
     ["브랜드", "브랜드없음(자체제작)"],
@@ -854,6 +864,29 @@ def render_product_guide():
       box.appendChild(row);
     });
   })();
+
+    (function(){
+    const box = document.getElementById("couponArea");
+    if(!COUPON_ROWS || !COUPON_ROWS.length){
+      box.innerHTML = '<div class="empty-msg">마진계산기에서 넘기면 표시됩니다.</div>';
+      return;
+    }
+    COUPON_ROWS.forEach(([name, amt])=>{
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML =
+        '<div class="label">'+name+'</div>' +
+        '<input type="text" value="'+String(amt)+'">' +
+        '<button class="cbtn">복사</button>';
+      const inp = row.querySelector("input");
+      const btn = row.querySelector(".cbtn");
+      refreshFilled(inp);
+      inp.addEventListener("input", ()=>{ inp.classList.remove("copied"); refreshFilled(inp); });
+      btn.onclick = ()=> copyRowInput(inp);
+      box.appendChild(row);
+    });
+  })();
+
 </script>
 
 </body>
@@ -869,6 +902,7 @@ def render_product_guide():
     GUIDE_HTML = GUIDE_HTML.replace("__OPT_ROWS__", json.dumps(opt_rows, ensure_ascii=False))
     GUIDE_HTML = GUIDE_HTML.replace("__PKG_TEXT__", safe_pkg)
     GUIDE_HTML = GUIDE_HTML.replace("__COUPON_ROWS__", json.dumps(coupon_rows, ensure_ascii=False))
+    GUIDE_HTML = GUIDE_HTML.replace("__SHEET_ROWS__", json.dumps(sheet_rows, ensure_ascii=False))
 
     components.html(GUIDE_HTML, height=1500, scrolling=True)
 
