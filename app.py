@@ -368,7 +368,7 @@ def render_margin_calculator():
         else:
             first = st.session_state.mc_rows[0]
             base_res = calc_margin(first["supply"] or 0, first["ship"] or 0,
-                                   first["disc"], first["fee"], first["margin"])
+                                   first["disc"] or 0, first["fee"] or 0, first["margin"] or 0)
             if base_res:
                 st.session_state.mc_fixed_coupon = int(base_res["discount"])
                 st.rerun()
@@ -399,20 +399,26 @@ def render_margin_calculator():
         row["ship"] = c[2].number_input("택배비", value=ship_val,
                                         step=100, min_value=0, key=f"mc_ship_{i}",
                                         label_visibility="collapsed", placeholder="0")
-        row["disc"] = c[3].number_input("할인율", value=float(row["disc"]),
+        disc_val = row["disc"] if row["disc"] not in (None, 0, 0.0) else None
+        row["disc"] = c[3].number_input("할인율", value=disc_val,
                                         step=1.0, min_value=0.0, key=f"mc_disc_{i}",
-                                        label_visibility="collapsed")
-        row["fee"] = c[4].number_input("수수료", value=float(row["fee"]),
+                                        label_visibility="collapsed", placeholder="60")
+        fee_val = row["fee"] if row["fee"] not in (None, 0, 0.0) else None
+        row["fee"] = c[4].number_input("수수료", value=fee_val,
                                        step=0.1, min_value=0.0, key=f"mc_fee_{i}",
-                                       label_visibility="collapsed")
-        row["margin"] = c[5].number_input("마진율", value=float(row["margin"]),
+                                       label_visibility="collapsed", placeholder="12")
+        margin_val = row["margin"] if row["margin"] not in (None, 0, 0.0) else None
+        row["margin"] = c[5].number_input("마진율", value=margin_val,
                                           step=0.1, min_value=0.0, key=f"mc_mrg_{i}",
-                                          label_visibility="collapsed")
+                                          label_visibility="collapsed", placeholder="20")
 
         supply_v = row["supply"] or 0
         ship_v = row["ship"] or 0
-        res = calc_margin(supply_v, ship_v, row["disc"], row["fee"],
-                          row["margin"], fixed_coupon=fixed)
+        disc_v = row["disc"] or 0
+        fee_v = row["fee"] or 0
+        margin_v = row["margin"] or 0
+        res = calc_margin(supply_v, ship_v, disc_v, fee_v,
+                          margin_v, fixed_coupon=fixed)
         if res:
             c[6].markdown(f"<div class='mc-out mc-final'>{int(res['final']):,}</div>",
                           unsafe_allow_html=True)
@@ -427,10 +433,10 @@ def render_margin_calculator():
             results.append({
                 "opt": row["opt"],
                 "supply": int(supply_v),
-                "ship": int(ship_v),            
-                "disc": float(row["disc"]),
-                "fee": float(row["fee"]),
-                "margin_rate": float(row["margin"]),
+                "ship": int(ship_v),
+                "disc": float(disc_v),
+                "fee": float(fee_v),
+                "margin_rate": float(margin_v),
                 "final": int(res["final"]),
                 "margin": int(res["margin"]),
                 "discount": int(res["discount"]),
