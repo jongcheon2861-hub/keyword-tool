@@ -238,6 +238,21 @@ def toggle_keyword(kw):
         st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
     st.session_state.popup_id += 1
 
+def add_manual_keyword():
+    kw = st.session_state.get("manual_kw", "").strip()
+    if not kw:
+        return
+    if kw in st.session_state.selected:
+        st.session_state.popup = "이미 등록된 키워드예요"
+    elif len(st.session_state.selected) >= MAX_KEYWORDS:
+        st.session_state.popup = str(MAX_KEYWORDS) + " / " + str(MAX_KEYWORDS)
+    else:
+        st.session_state.selected.append(kw)
+        st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
+    st.session_state.popup_id += 1
+    st.session_state.manual_kw = ""   # 입력창 비우기
+
+
 def run_extract():
     products = st.session_state.get("raw_input", "").split()
     if not products:
@@ -506,6 +521,17 @@ def render_keyword_tool():
     st.code(kw_text, language=None)
     st.caption("💡 선택한 키워드는 '상품등록가이드'의 태그 항목에 자동으로 채워집니다.")
 
+    # 키워드 수동 추가
+    ma, mb = st.columns([3, 1.2], vertical_alignment="bottom")
+    with ma:
+        st.text_input("키워드 직접 입력", key="manual_kw",
+                      on_change=add_manual_keyword,
+                      placeholder="키워드를 입력하고 Enter 또는 추가",
+                      label_visibility="collapsed")
+    with mb:
+        st.button("➕ 추가", use_container_width=True,
+                  on_click=add_manual_keyword, type="primary")
+
     if st.session_state.get("results"):
         st.markdown('<div class="parent-box">자동 인식된 상위어: '
                     + st.session_state.get("related_info", "") + '</div>',
@@ -519,7 +545,6 @@ def render_keyword_tool():
                 with c1:
                     if already:
                         st.markdown("<span class='kw-picked'></span>", unsafe_allow_html=True)
-
                     st.button(kw, key="pick_" + str(i),
                               on_click=toggle_keyword, args=(kw,), use_container_width=True)
                 c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
