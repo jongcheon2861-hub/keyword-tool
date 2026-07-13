@@ -545,7 +545,7 @@ def render_keyword_tool():
         chips = st.columns(5)
         for idx, kw in enumerate(st.session_state.selected):
             with chips[idx % 5]:
-                st.button("✕ " + kw, key="del_" + str(idx),
+                st.button(kw + " ✕", key="del_" + str(idx),
                           on_click=remove_keyword, args=(kw,),
                           use_container_width=True)
 
