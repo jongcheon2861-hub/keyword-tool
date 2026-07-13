@@ -727,19 +727,6 @@ def render_product_guide():
 <div class="sec">쿠폰할인</div>
 <div id="couponArea"></div>
 
-<div class="sec">구글시트 표 (보관용)</div>
-<div style="margin-bottom:6px;">
-  <button class="wbtn" onclick="copySheet()">📋 전체 복사 (구글시트 붙여넣기용)</button>
-  <span id="copyMsg" style="font-size:12px;color:#2e7d32;font-weight:700;margin-left:8px;"></span>
-</div>
-<div style="overflow-x:auto;">
-  <table class="opt-table" id="sheetTable" style="table-layout:auto;"><thead><tr>
-    <th>노출상품명</th><th>등록상품명</th><th>옵션명</th><th>공급가</th><th>택배비</th>
-    <th>할인율</th><th>수수료</th><th>마진율</th><th>판매가</th><th>마진액</th>
-    <th>쿠폰할인</th><th>정상가</th><th>태그</th>
-  </tr></thead><tbody id="sheetBody"></tbody></table>
-</div>
-
 <script>
   const KEYWORD_TAGS = "__SELECTED_KW__";
   const MC_PRODUCT = "__MC_PRODUCT__";
@@ -889,32 +876,6 @@ def render_product_guide():
     });
   })();
 
-  (function(){
-    const tb = document.getElementById("sheetBody");
-    if(!SHEET_ROWS || !SHEET_ROWS.length){
-      tb.innerHTML = '<tr><td colspan="13" class="empty-msg">마진계산기에서 넘기면 표시됩니다.</td></tr>';
-      return;
-    }
-    SHEET_ROWS.forEach(r=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = r.map(v=>'<td style="font-size:11px;padding:4px;white-space:nowrap;">'+String(v)+'</td>').join("");
-      tb.appendChild(tr);
-    });
-  })();
-
-  function copySheet(){
-    if(!SHEET_ROWS || !SHEET_ROWS.length) return;
-    const head = ["노출상품명","등록상품명","옵션명","공급가","택배비","할인율",
-                  "수수료","마진율","판매가","마진액","쿠폰할인","정상가","태그"];
-    const lines = [head.join("\t")];
-    SHEET_ROWS.forEach(r=> lines.push(r.join("\t")));
-    const text = lines.join("\n");
-    navigator.clipboard.writeText(text).then(()=>{
-      const m = document.getElementById("copyMsg");
-      m.textContent = "복사됨 ✓ 구글시트에 붙여넣기 하세요";
-      setTimeout(()=>{ m.textContent=""; }, 2500);
-    });
-  }
 </script>
 
 </body>
