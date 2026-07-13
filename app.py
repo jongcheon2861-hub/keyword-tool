@@ -252,6 +252,11 @@ def add_manual_keyword():
     st.session_state.popup_id += 1
     st.session_state.manual_kw = ""   # 입력창 비우기
 
+def remove_keyword(kw):
+    if kw in st.session_state.selected:
+        st.session_state.selected.remove(kw)
+        st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
+        st.session_state.popup_id += 1
 
 def run_extract():
     products = st.session_state.get("raw_input", "").split()
@@ -531,6 +536,18 @@ def render_keyword_tool():
     with mb:
         st.button("➕ 추가", use_container_width=True,
                   on_click=add_manual_keyword, type="primary")
+
+    # 담긴 키워드 목록 (개별 삭제)
+    if st.session_state.selected:
+        st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;"
+                    "margin:6px 0 4px;'>🏷 담긴 키워드 (✕ 눌러 삭제)</div>",
+                    unsafe_allow_html=True)
+        chips = st.columns(5)
+        for idx, kw in enumerate(st.session_state.selected):
+            with chips[idx % 5]:
+                st.button("✕ " + kw, key="del_" + str(idx),
+                          on_click=remove_keyword, args=(kw,),
+                          use_container_width=True)
 
     if st.session_state.get("results"):
         st.markdown('<div class="parent-box">자동 인식된 상위어: '
