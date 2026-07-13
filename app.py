@@ -527,18 +527,14 @@ def render_keyword_tool():
         st.button("➕ 추가", use_container_width=True,
                   on_click=add_manual_keyword, type="primary")
 
-    # 담긴 키워드 목록 (개별 삭제) - 복사용 위에 배치
-    if st.session_state.selected:
-        st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;"
-                    "margin:6px 0 4px;'>🏷 담긴 키워드 (✕ 눌러 삭제)</div>",
-                    unsafe_allow_html=True)
-        with st.container(key="chips"):
-            chips = st.columns(8)
-            for idx, kw in enumerate(st.session_state.selected):
-                with chips[idx % 8]:
-                    st.button(kw + " ✕", key="del_" + str(idx),
-                              on_click=remove_keyword, args=(kw,),
-                              use_container_width=True)
+# 담긴 키워드 (개별 삭제)
+if st.session_state.selected:
+    st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;margin:6px 0 4px;'>🏷 담긴 키워드 (눌러서 삭제)</div>", unsafe_allow_html=True)
+    with st.container(key="chips"):
+        chips = st.columns(8)
+        for idx, kw in enumerate(st.session_state.selected):
+            with chips[idx % 8]:
+                st.button(kw, key="del_" + str(idx), on_click=remove_keyword, args=(kw,), use_container_width=True)
 
     # 복사용 키워드
     n = len(st.session_state.selected)
