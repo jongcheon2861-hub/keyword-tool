@@ -214,10 +214,10 @@ if "popup_id" not in st.session_state:
     st.session_state.popup_id = 0
 if "mc_product" not in st.session_state:
     st.session_state.mc_product = ""
-if "mc_rows" not in st.session_state:
-    st.session_state.mc_rows = [
-        {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0}
-    ]
+        if st.button("＋ 행 추가", use_container_width=True):
+            if len(st.session_state.mc_rows) < 10:
+                st.session_state.mc_rows.append(
+                    {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0})
 if "mc_sent" not in st.session_state:
     st.session_state.mc_sent = []  # 가이드로 넘긴 계산 결과
 if "mc_mgmt_name" not in st.session_state:
@@ -392,26 +392,21 @@ def render_margin_calculator():
         row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
                                      label_visibility="collapsed", placeholder="옵션")
         sup_val = row["supply"] if row["supply"] else None
-        row["supply"] = c[1].number_input("공급가", value=sup_val,
+    row["supply"] = c[1].number_input("공급가", value=int(row["supply"] or 0),
                                           step=100, min_value=0, key=f"mc_sup_{i}",
-                                          label_visibility="collapsed", placeholder="0")
-        ship_val = row["ship"] if row["ship"] else None
-        row["ship"] = c[2].number_input("택배비", value=ship_val,
+                                          label_visibility="collapsed")
+        row["ship"] = c[2].number_input("택배비", value=int(row["ship"] or 0),
                                         step=100, min_value=0, key=f"mc_ship_{i}",
-                                        label_visibility="collapsed", placeholder="0")
-        disc_val = row["disc"] if row["disc"] not in (None, 0, 0.0) else None
-        row["disc"] = c[3].number_input("할인율", value=disc_val,
+                                        label_visibility="collapsed")
+        row["disc"] = c[3].number_input("할인율", value=float(row["disc"] or 0),
                                         step=1.0, min_value=0.0, key=f"mc_disc_{i}",
-                                        label_visibility="collapsed", placeholder="60")
-        fee_val = row["fee"] if row["fee"] not in (None, 0, 0.0) else None
-        row["fee"] = c[4].number_input("수수료", value=fee_val,
+                                        label_visibility="collapsed")
+        row["fee"] = c[4].number_input("수수료", value=float(row["fee"] or 0),
                                        step=0.1, min_value=0.0, key=f"mc_fee_{i}",
-                                       label_visibility="collapsed", placeholder="12")
-        margin_val = row["margin"] if row["margin"] not in (None, 0, 0.0) else None
-        row["margin"] = c[5].number_input("마진율", value=margin_val,
+                                       label_visibility="collapsed")
+        row["margin"] = c[5].number_input("마진율", value=float(row["margin"] or 0),
                                           step=0.1, min_value=0.0, key=f"mc_mrg_{i}",
-                                          label_visibility="collapsed", placeholder="20")
-
+                                          label_visibility="collapsed")
         supply_v = row["supply"] or 0
         ship_v = row["ship"] or 0
         disc_v = row["disc"] or 0
@@ -452,6 +447,22 @@ def render_margin_calculator():
         st.session_state.mc_sent = results
         st.session_state.mc_mgmt_sent = st.session_state.get("mc_mgmt_name", "")
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
+
+    components.html("""
+    <script>
+    const doc = window.parent.document;
+    function bindSelect(){
+      doc.querySelectorAll('input[type="number"]').forEach(inp=>{
+        if(inp.dataset.selBound) return;
+        inp.dataset.selBound = "1";
+        inp.addEventListener("focus", ()=> setTimeout(()=> inp.select(), 0));
+      });
+    }
+    bindSelect();
+    const mo = new MutationObserver(()=> bindSelect());
+    mo.observe(doc.body, {childList:true, subtree:true});
+    </script>
+    """, height=0)
 
 # ==================================================================
 # 화면: 키워드 추출기
