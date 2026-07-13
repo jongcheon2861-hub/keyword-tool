@@ -212,6 +212,8 @@ if "popup" not in st.session_state:
     st.session_state.popup = None
 if "popup_id" not in st.session_state:
     st.session_state.popup_id = 0
+if "kw_sent" not in st.session_state:
+    st.session_state.kw_sent = []
 if "mc_product" not in st.session_state:
     st.session_state.mc_product = ""
 if "mc_rows" not in st.session_state:
@@ -240,13 +242,10 @@ def toggle_keyword(kw):
 
 def add_manual_keyword():
     raw = st.session_state.get("manual_kw", "")
-    # 쉼표 기준으로 나누고, 각 조각의 앞뒤 공백 제거
     parts = [k.strip() for k in raw.split(",")]
-    parts = [k for k in parts if k]  # 빈 문자열 제거
-
+    parts = [k for k in parts if k]
     if not parts:
         return
-
     added = 0
     dup = False
     full = False
@@ -259,18 +258,14 @@ def add_manual_keyword():
             break
         st.session_state.selected.append(kw)
         added += 1
-
-    # 상황에 맞는 팝업 메시지
     if full:
         st.session_state.popup = str(MAX_KEYWORDS) + " / " + str(MAX_KEYWORDS)
     elif dup and added == 0:
         st.session_state.popup = "이미 등록된 키워드예요"
     else:
         st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
-
     st.session_state.popup_id += 1
     st.session_state.manual_kw = ""
-
 
 def remove_keyword(kw):
     if kw in st.session_state.selected:
@@ -333,19 +328,15 @@ def run_extract():
 def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
     if not supply or supply <= 0:
         return None
-
     disc_rate = disc / 100.0
     fee_rate  = fee / 100.0
     target    = margin / 100.0
-
     denom = 1 - fee_rate - target
     if denom <= 0:
         return None
     fp = math.floor(((supply + ship) / denom) / 100) * 100
-
     fee_amt    = fp * fee_rate
     margin_amt = fp - supply - ship - fee_amt
-
     if fixed_coupon is not None:
         disc_amt = fixed_coupon
         orig     = fp + disc_amt
@@ -356,7 +347,6 @@ def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
         orig     = fp / (1 - disc_rate)
         disc_amt = orig - fp
         disc_rate_out = disc_rate
-
     return {
         "final":     fp,
         "margin":    margin_amt,
@@ -541,7 +531,7 @@ def render_keyword_tool():
     with ma:
         st.text_input("키워드 직접 입력", key="manual_kw",
                       on_change=add_manual_keyword,
-                      placeholder="키워드를 입력하고 Enter 또는 추가",
+                      placeholder="쉼표로 여러 개 입력 (예: 샤인머스켓, 김천, 꿀당도)",
                       label_visibility="collapsed")
     with mb:
         st.button("➕ 추가", use_container_width=True,
@@ -556,14 +546,15 @@ def render_keyword_tool():
                 with chips[idx % 8]:
                     st.button(kw, key="del_" + str(idx), on_click=remove_keyword, args=(kw,), use_container_width=True)
 
-    # 복사용 키워드
+    # 담긴 키워드 → 상품등록가이드로 넘기기
     n = len(st.session_state.selected)
-    st.markdown('<div class="copy-head">📋 복사용 키워드 '
+    st.markdown('<div class="copy-head">📋 담긴 키워드 '
                 '<span class="copy-badge">' + str(n) + '개</span></div>',
                 unsafe_allow_html=True)
-    kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
-    st.code(kw_text, language=None)
-    st.caption("💡 선택한 키워드는 '상품등록가이드'의 태그 항목에 자동으로 채워집니다.")
+    if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
+        st.session_state.kw_sent = list(st.session_state.selected)
+        st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
+    st.caption("💡 담긴 키워드가 '상품등록가이드'의 태그 항목과 구글시트 표에 채워집니다.")
 
     if st.session_state.get("results"):
         st.markdown('<div class="parent-box">자동 인식된 상위어: '
@@ -587,7 +578,6 @@ def render_keyword_tool():
     elif "results" in st.session_state:
         st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
 
-
 # ==================================================================
 # 화면: 상품등록가이드
 # ==================================================================
@@ -595,7 +585,9 @@ def render_product_guide():
     st.markdown('<div class="topcard"><div class="bar-title">📋 상품등록 가이드</div></div>',
                 unsafe_allow_html=True)
 
-    selected_kw = ", ".join(st.session_state.get("selected", []))
+    kw_list = st.session_state.get("kw_sent", []) or st.session_state.get("selected", [])
+    selected_kw = ", ".join(kw_list)
+    kw_tag_text = ", ".join(kw_list)
     mc_product = st.session_state.get("mc_product", "")
     mc_mgmt = st.session_state.get("mc_mgmt_sent", "")
     mc_sent = st.session_state.get("mc_sent", [])
@@ -615,6 +607,7 @@ def render_product_guide():
             r.get("fee", 0), r.get("margin_rate", 0),
             r.get("final", 0), r.get("margin", 0),
             r.get("discount", 0), r.get("orig", 0),
+            kw_tag_text,
         ])
 
     GUIDE_HTML = r"""
@@ -710,7 +703,7 @@ def render_product_guide():
   <table class="opt-table" id="sheetTable" style="table-layout:auto;"><thead><tr>
     <th>노출상품명</th><th>등록상품명</th><th>옵션명</th><th>공급가</th><th>택배비</th>
     <th>할인율</th><th>수수료</th><th>마진율</th><th>판매가</th><th>마진액</th>
-    <th>쿠폰할인</th><th>정상가</th>
+    <th>쿠폰할인</th><th>정상가</th><th>태그</th>
   </tr></thead><tbody id="sheetBody"></tbody></table>
 </div>
 
@@ -866,7 +859,7 @@ def render_product_guide():
   (function(){
     const tb = document.getElementById("sheetBody");
     if(!SHEET_ROWS || !SHEET_ROWS.length){
-      tb.innerHTML = '<tr><td colspan="12" class="empty-msg">마진계산기에서 넘기면 표시됩니다.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="13" class="empty-msg">마진계산기에서 넘기면 표시됩니다.</td></tr>';
       return;
     }
     SHEET_ROWS.forEach(r=>{
@@ -879,7 +872,7 @@ def render_product_guide():
   function copySheet(){
     if(!SHEET_ROWS || !SHEET_ROWS.length) return;
     const head = ["노출상품명","등록상품명","옵션명","공급가","택배비","할인율",
-                  "수수료","마진율","판매가","마진액","쿠폰할인","정상가"];
+                  "수수료","마진율","판매가","마진액","쿠폰할인","정상가","태그"];
     const lines = [head.join("\t")];
     SHEET_ROWS.forEach(r=> lines.push(r.join("\t")));
     const text = lines.join("\n");
