@@ -897,15 +897,26 @@ def render_product_guide():
     # ---- 구글시트 자동 등록 (가이드 맨 아래) ----
     st.markdown("<div style='font-size:14px;font-weight:800;color:#0d47a1;"
                 "margin:12px 0 6px;'>📊 구글시트 자동 등록</div>", unsafe_allow_html=True)
-    if st.button("📊 구글시트에 등록", type="primary", use_container_width=True):
-        if not sheet_rows:
-            st.warning("마진계산기에서 먼저 옵션을 넘겨주세요.")
-        else:
-            try:
-                append_rows_to_sheet(sheet_rows)
-                st.success(f"✅ 구글시트에 {len(sheet_rows)}개 행을 추가했습니다.")
-            except Exception as e:
-                st.error(f"등록 실패: {e}")
+    # 이미 등록한 데이터인지 확인 (중복 방지)
+    import hashlib as _hl
+    current_key = _hl.md5(json.dumps(sheet_rows, ensure_ascii=False).encode()).hexdigest()
+    already_done = st.session_state.get("last_registered_key") == current_key
+
+    if already_done:
+        st.success("✅ 이미 구글시트에 등록된 데이터입니다. (중복 등록 방지)")
+        st.caption("새로 등록하려면 마진계산기에서 데이터를 다시 넘겨주세요.")
+    else:
+        if st.button("📊 구글시트에 등록", type="primary", use_container_width=True):
+            if not sheet_rows:
+                st.warning("마진계산기에서 먼저 옵션을 넘겨주세요.")
+            else:
+                try:
+                    append_rows_to_sheet(sheet_rows)
+                    st.session_state.last_registered_key = current_key
+                    st.success(f"✅ 구글시트에 {len(sheet_rows)}개 행을 추가했습니다.")
+                except Exception as e:
+                    st.error(f"등록 실패: {e}")
+
 
 # ==================================================================
 # 공통 CSS
