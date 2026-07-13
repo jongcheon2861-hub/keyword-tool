@@ -331,12 +331,12 @@ def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
 # 화면: 마진 계산기
 # ==================================================================
 def render_margin_calculator():
-    st.markdown('<div class="topcard"><div class="bar-title">🧮 마진계산기</div></div>',
-                unsafe_allow_html=True)
+    st.markdown('<div class="topcard">...')
 
     st.session_state.mc_product = st.text_input(
         "노출상품명",
         value=st.session_state.get("mc_product", ""),
+        placeholder="...")
         placeholder="노출상품명 (가이드의 노출상품명으로 전달)")
 
     st.session_state.mc_mgmt_name = st.text_input(
