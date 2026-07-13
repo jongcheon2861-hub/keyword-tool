@@ -214,10 +214,10 @@ if "popup_id" not in st.session_state:
     st.session_state.popup_id = 0
 if "mc_product" not in st.session_state:
     st.session_state.mc_product = ""
-        if st.button("＋ 행 추가", use_container_width=True):
-            if len(st.session_state.mc_rows) < 10:
-                st.session_state.mc_rows.append(
-                    {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0})
+if "mc_rows" not in st.session_state:
+    st.session_state.mc_rows = [
+        {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0}
+    ]
 if "mc_sent" not in st.session_state:
     st.session_state.mc_sent = []  # 가이드로 넘긴 계산 결과
 if "mc_mgmt_name" not in st.session_state:
@@ -331,12 +331,12 @@ def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
 # 화면: 마진 계산기
 # ==================================================================
 def render_margin_calculator():
-    st.markdown('<div class="topcard">...')
+    st.markdown('<div class="topcard"><div class="bar-title">🧮 마진계산기</div></div>',
+                unsafe_allow_html=True)
 
     st.session_state.mc_product = st.text_input(
         "노출상품명",
         value=st.session_state.get("mc_product", ""),
-        placeholder="...")
         placeholder="노출상품명 (가이드의 노출상품명으로 전달)")
 
     st.session_state.mc_mgmt_name = st.text_input(
@@ -391,8 +391,7 @@ def render_margin_calculator():
         c = st.columns(COLS, gap="small")
         row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
                                      label_visibility="collapsed", placeholder="옵션")
-        sup_val = row["supply"] if row["supply"] else None
-    row["supply"] = c[1].number_input("공급가", value=int(row["supply"] or 0),
+        row["supply"] = c[1].number_input("공급가", value=int(row["supply"] or 0),
                                           step=100, min_value=0, key=f"mc_sup_{i}",
                                           label_visibility="collapsed")
         row["ship"] = c[2].number_input("택배비", value=int(row["ship"] or 0),
