@@ -19,6 +19,10 @@ MAX_KEYWORDS = 20
 MIN_VOL = 10
 TOP_N = 50
 
+SHEET_HEADERS = ["노출상품명", "등록상품명", "옵션명", "공급가", "택배비",
+                 "할인율", "수수료", "마진율", "판매가", "마진액",
+                 "쿠폰할인", "정상가", "태그"]
+
 CATEGORY_MAP = {
     "사과": ["사과", "부사", "홍로", "아오리"],
     "배": ["배", "신고배"],
@@ -143,6 +147,15 @@ CATEGORY_MAP = {
 BUY_COMMON = ["구매", "주문", "배송", "택배", "가격", "최저가", "특가", "무료배송", "당일배송", "로켓배송", "정품"]
 BUY_CAT = {}
 INFO_WORDS = ["효능", "칼로리", "방법", "레시피", "뜻", "의미", "부작용", "후기만", "나무위키"]
+
+# ---------- 구글시트 (앱스 스크립트 웹앱) ----------
+def append_rows_to_sheet(sheet_rows):
+    url = st.secrets["GAS_WEBAPP_URL"]
+    payload = {"headers": SHEET_HEADERS, "rows": sheet_rows}
+    r = requests.post(url, data=json.dumps(payload), timeout=10)
+    if r.status_code != 200:
+        raise Exception("응답 코드 " + str(r.status_code) + ": " + r.text[:200])
+    return r
 
 # ---------- 키워드 추출 함수 ----------
 def normalize(s):
@@ -554,7 +567,7 @@ def render_keyword_tool():
     if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
         st.session_state.kw_sent = list(st.session_state.selected)
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
-    st.caption("💡 담긴 키워드가 '상품등록가이드'의 태그 항목과 구글시트 표에 채워집니다.")
+    st.caption("💡 담긴 키워드가 '상품등록가이드'의 태그 항목과 구글시트에 채워집니다.")
 
     if st.session_state.get("results"):
         st.markdown('<div class="parent-box">자동 인식된 상위어: '
@@ -609,6 +622,26 @@ def render_product_guide():
             r.get("discount", 0), r.get("orig", 0),
             kw_tag_text,
         ])
+
+    # 구글시트 자동 등록 버튼
+    st.markdown("<div style='font-size:14px;font-weight:800;color:#0d47a1;"
+                "margin:6px 0;'>📊 구글시트 자동 등록</div>", unsafe_allow_html=True)
+    reg_a, reg_b = st.columns([1.3, 3])
+    with reg_a:
+        do_register = st.button("📊 구글시트에 등록", type="primary",
+                                use_container_width=True)
+    with reg_b:
+        st.caption("버튼을 누르면 옵션별로 시트 맨 아래에 행이 추가됩니다. "
+                   "칼럼명(헤더)은 처음 한 번만 자동 생성됩니다.")
+    if do_register:
+        if not sheet_rows:
+            st.warning("마진계산기에서 먼저 옵션을 넘겨주세요.")
+        else:
+            try:
+                append_rows_to_sheet(sheet_rows)
+                st.success(f"✅ 구글시트에 {len(sheet_rows)}개 행을 추가했습니다.")
+            except Exception as e:
+                st.error(f"등록 실패: {e}")
 
     GUIDE_HTML = r"""
 <!doctype html>
