@@ -219,7 +219,7 @@ if "mc_rows" not in st.session_state:
         {"opt": "", "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0}
     ]
 if "mc_sent" not in st.session_state:
-    st.session_state.mc_sent = []  # 가이드로 넘긴 계산 결과
+    st.session_state.mc_sent = []
 if "mc_mgmt_name" not in st.session_state:
     st.session_state.mc_mgmt_name = ""
 if "mc_mgmt_sent" not in st.session_state:
@@ -250,7 +250,7 @@ def add_manual_keyword():
         st.session_state.selected.append(kw)
         st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
     st.session_state.popup_id += 1
-    st.session_state.manual_kw = ""   # 입력창 비우기
+    st.session_state.manual_kw = ""
 
 def remove_keyword(kw):
     if kw in st.session_state.selected:
@@ -321,18 +321,16 @@ def calc_margin(supply, ship, disc, fee, margin, fixed_coupon=None):
     denom = 1 - fee_rate - target
     if denom <= 0:
         return None
-    fp = math.floor(((supply + ship) / denom) / 100) * 100  # 판매가
+    fp = math.floor(((supply + ship) / denom) / 100) * 100
 
     fee_amt    = fp * fee_rate
     margin_amt = fp - supply - ship - fee_amt
 
     if fixed_coupon is not None:
-        # 판매가 고정, 쿠폰할인 금액 고정 → 정상가/할인율만 재계산
         disc_amt = fixed_coupon
         orig     = fp + disc_amt
         disc_rate_out = (disc_amt / orig) if orig > 0 else 0.0
     else:
-        # 정가 대비 할인율 → 정상가 = 판매가 ÷ (1 - 할인율)
         if disc_rate >= 1:
             return None
         orig     = fp / (1 - disc_rate)
@@ -529,6 +527,20 @@ def render_keyword_tool():
         st.button("➕ 추가", use_container_width=True,
                   on_click=add_manual_keyword, type="primary")
 
+    # 담긴 키워드 목록 (개별 삭제) - 복사용 위에 배치
+    if st.session_state.selected:
+        st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;"
+                    "margin:6px 0 4px;'>🏷 담긴 키워드 (✕ 눌러 삭제)</div>",
+                    unsafe_allow_html=True)
+        with st.container(key="chips"):
+            chips = st.columns(8)
+            for idx, kw in enumerate(st.session_state.selected):
+                with chips[idx % 8]:
+                    st.button(kw + " ✕", key="del_" + str(idx),
+                              on_click=remove_keyword, args=(kw,),
+                              use_container_width=True)
+
+    # 복사용 키워드
     n = len(st.session_state.selected)
     st.markdown('<div class="copy-head">📋 복사용 키워드 '
                 '<span class="copy-badge">' + str(n) + '개</span></div>',
@@ -536,18 +548,6 @@ def render_keyword_tool():
     kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
     st.code(kw_text, language=None)
     st.caption("💡 선택한 키워드는 '상품등록가이드'의 태그 항목에 자동으로 채워집니다.")
-
-    # 담긴 키워드 목록 (개별 삭제)
-    if st.session_state.selected:
-        st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;"
-                    "margin:6px 0 4px;'>🏷 담긴 키워드 (✕ 눌러 삭제)</div>",
-                    unsafe_allow_html=True)
-        chips = st.columns(5)
-        for idx, kw in enumerate(st.session_state.selected):
-            with chips[idx % 5]:
-                st.button(kw + " ✕", key="del_" + str(idx),
-                          on_click=remove_keyword, args=(kw,),
-                          use_container_width=True)
 
     if st.session_state.get("results"):
         st.markdown('<div class="parent-box">자동 인식된 상위어: '
@@ -585,14 +585,11 @@ def render_product_guide():
     mc_options = [r["opt"] for r in mc_sent if r["opt"]]
     pkg_text = " ".join('"' + o + '",' for o in mc_options).rstrip(",")
 
-    # 넘어온 마진 결과: 옵션별 (옵션명, 중량빈칸, 정상가, 판매가)
     opt_rows = [[r["opt"], "", str(r["orig"]), str(r["final"])] for r in mc_sent]
 
-    # 쿠폰할인 목록 (옵션명 + 쿠폰할인금액)
     coupon_rows = [[(r.get("opt") or f"옵션{i+1}"), int(r.get("discount", 0))]
                    for i, r in enumerate(mc_sent)]
 
-    # 구글시트 표 (한 행 = 옵션 하나)
     sheet_rows = []
     for r in mc_sent:
         sheet_rows.append([
@@ -611,10 +608,8 @@ def render_product_guide():
 <style>
   * { box-sizing:border-box; font-family:'Malgun Gothic',sans-serif; }
   body { margin:0; padding:6px 4px; background:#fff; }
-
   .sec { font-size:14px; font-weight:800; color:#0d47a1;
          margin:14px 0 6px; padding-bottom:4px; border-bottom:2px solid #e3ecfb; }
-
   .row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
   .label { flex:0 0 150px; font-size:12.5px; font-weight:700; color:#333; }
   .row input { flex:1; height:36px; padding:4px 8px; font-size:12.5px;
@@ -626,7 +621,6 @@ def render_product_guide():
   .cbtn { flex:0 0 auto; height:36px; padding:0 12px; border:none; border-radius:6px;
           background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff;
           font-size:12px; font-weight:700; cursor:pointer; }
-
   .opt-table { width:100%; border-collapse:collapse; margin-top:4px; table-layout:fixed; }
   .opt-table th, .opt-table td { border:1px solid #d5dae1; padding:2px; text-align:center; }
   .opt-table th { background:#f1f6ff; font-size:11.5px; font-weight:800; color:#0d47a1; }
@@ -643,7 +637,6 @@ def render_product_guide():
              background:#fdecec; color:#d63031; font-size:12px; font-weight:800; cursor:pointer; padding:0; }
   .del-btn:hover { background:#f8d7da; }
   .empty-msg { font-size:12px; color:#999; text-align:center; padding:8px 0; }
-
   .wbtn { height:34px; padding:0 16px; border:1px solid #2e7d32; border-radius:6px;
           background:#fff; color:#2e7d32; font-size:12.5px; font-weight:700; cursor:pointer; }
   .wbtn:hover { background:#eefaf0; }
@@ -825,14 +818,12 @@ def render_product_guide():
     applyWeightAll(el.value.trim());
   }
 
-  // 마진계산기에서 넘어온 옵션 행 자동 생성
   if(OPT_ROWS && OPT_ROWS.length){
     OPT_ROWS.forEach(r=> addOptRow(r));
   } else {
     refreshEmptyMsg();
   }
 
-  // 쿠폰할인 목록 렌더
   (function(){
     const box = document.getElementById("couponArea");
     if(!COUPON_ROWS || !COUPON_ROWS.length){
@@ -855,7 +846,6 @@ def render_product_guide():
     });
   })();
 
-  // 구글시트 표 렌더
   (function(){
     const tb = document.getElementById("sheetBody");
     if(!SHEET_ROWS || !SHEET_ROWS.length){
@@ -869,7 +859,6 @@ def render_product_guide():
     });
   })();
 
-  // 구글시트 붙여넣기용 전체 복사
   function copySheet(){
     if(!SHEET_ROWS || !SHEET_ROWS.length) return;
     const head = ["노출상품명","등록상품명","옵션명","공급가","택배비","할인율",
@@ -988,7 +977,7 @@ div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-
     font-size:16px; font-weight:600; color:#607d8b; }
 div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 
-/* ===== 키워드 목록 간격 완전 제거 (kwlist 안에서만) ===== */
+/* 키워드 목록 간격 완전 제거 (kwlist 안에서만) */
 .st-key-kwlist div[data-testid="stVerticalBlock"] { gap: 0 !important; }
 .st-key-kwlist div[data-testid="stHorizontalBlock"] {
     margin: 0 !important; gap: 4px !important; row-gap: 0 !important; min-height: 0 !important;
@@ -1000,8 +989,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
     min-height: 34px !important; height: 34px !important; margin: 0 !important;
 }
 .st-key-kwlist .metric-val { min-height: 34px !important; }
-
-/* 선택 시 벌어지지 않게 kw-picked 완전 0높이 */
 .st-key-kwlist .kw-picked {
     display: block !important; height: 0 !important; max-height: 0 !important;
     margin: 0 !important; padding: 0 !important; line-height: 0 !important;
@@ -1011,13 +998,23 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
     height: 0 !important; min-height: 0 !important; max-height: 0 !important;
     margin: 0 !important; padding: 0 !important; overflow: hidden !important;
 }
-/* 선택 색상 표시 */
 .st-key-kwlist div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] {
     background: #eef6ff !important; border-color: #4a90d9 !important;
 }
 .st-key-kwlist div[data-testid="stHorizontalBlock"]:has(.kw-picked) [data-testid="stBaseButton-secondary"] p {
     color: #1565c0 !important; font-weight: 700 !important;
 }
+
+/* 담긴 키워드 칩: 글자·높이 절반 수준으로 축소 */
+.st-key-chips [data-testid="stBaseButton-secondary"] {
+    min-height: 22px !important; height: 22px !important; padding: 0 6px !important;
+    border-radius: 8px !important;
+}
+.st-key-chips [data-testid="stBaseButton-secondary"] p {
+    font-size: 11px !important; font-weight: 600 !important;
+}
+.st-key-chips div[data-testid="stHorizontalBlock"] { gap: 4px !important; }
+.st-key-chips div[data-testid="column"] { padding: 0 1px !important; }
 
 /* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
 div[data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
@@ -1041,10 +1038,6 @@ div[data-testid="column"] { padding: 0 2px !important; }
 }
 </style>
 """, unsafe_allow_html=True)
-
-# ==================================================================
-# 상단 메뉴 + 화면 전환
-# ==================================================================
 
 # ==================================================================
 # 상단 메뉴 + 화면 전환
