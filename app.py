@@ -377,7 +377,7 @@ def render_margin_calculator():
 
     fixed = st.session_state.mc_fixed_coupon
 
-    COLS = [1.2, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
+    COLS = [2.0, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
 
     h = st.columns(COLS, gap="small")
     heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
