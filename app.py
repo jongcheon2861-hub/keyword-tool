@@ -891,7 +891,8 @@ def render_product_guide():
     GUIDE_HTML = GUIDE_HTML.replace("__COUPON_ROWS__", json.dumps(coupon_rows, ensure_ascii=False))
     GUIDE_HTML = GUIDE_HTML.replace("__SHEET_ROWS__", json.dumps(sheet_rows, ensure_ascii=False))
 
-    components.html(GUIDE_HTML, height=1900, scrolling=True)
+    guide_height = 1150 + len(mc_sent) * 34
+    components.html(GUIDE_HTML, height=guide_height, scrolling=True)
 
     # ---- 구글시트 자동 등록 (가이드 맨 아래) ----
     st.markdown("<div style='font-size:14px;font-weight:800;color:#0d47a1;"
