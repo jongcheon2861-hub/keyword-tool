@@ -518,14 +518,6 @@ def render_keyword_tool():
         st.button("🔍 추출하기", use_container_width=True,
                   on_click=run_extract, type="primary")
 
-    n = len(st.session_state.selected)
-    st.markdown('<div class="copy-head">📋 복사용 키워드 '
-                '<span class="copy-badge">' + str(n) + '개</span></div>',
-                unsafe_allow_html=True)
-    kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
-    st.code(kw_text, language=None)
-    st.caption("💡 선택한 키워드는 '상품등록가이드'의 태그 항목에 자동으로 채워집니다.")
-
     # 키워드 수동 추가
     ma, mb = st.columns([3, 1.2], vertical_alignment="bottom")
     with ma:
@@ -536,6 +528,14 @@ def render_keyword_tool():
     with mb:
         st.button("➕ 추가", use_container_width=True,
                   on_click=add_manual_keyword, type="primary")
+
+    n = len(st.session_state.selected)
+    st.markdown('<div class="copy-head">📋 복사용 키워드 '
+                '<span class="copy-badge">' + str(n) + '개</span></div>',
+                unsafe_allow_html=True)
+    kw_text = ",".join(st.session_state.selected) + "," if st.session_state.selected else " "
+    st.code(kw_text, language=None)
+    st.caption("💡 선택한 키워드는 '상품등록가이드'의 태그 항목에 자동으로 채워집니다.")
 
     # 담긴 키워드 목록 (개별 삭제)
     if st.session_state.selected:
