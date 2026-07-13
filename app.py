@@ -239,18 +239,38 @@ def toggle_keyword(kw):
     st.session_state.popup_id += 1
 
 def add_manual_keyword():
-    kw = st.session_state.get("manual_kw", "").strip()
-    if not kw:
+    raw = st.session_state.get("manual_kw", "")
+    # 쉼표 기준으로 나누고, 각 조각의 앞뒤 공백 제거
+    parts = [k.strip() for k in raw.split(",")]
+    parts = [k for k in parts if k]  # 빈 문자열 제거
+
+    if not parts:
         return
-    if kw in st.session_state.selected:
-        st.session_state.popup = "이미 등록된 키워드예요"
-    elif len(st.session_state.selected) >= MAX_KEYWORDS:
-        st.session_state.popup = str(MAX_KEYWORDS) + " / " + str(MAX_KEYWORDS)
-    else:
+
+    added = 0
+    dup = False
+    full = False
+    for kw in parts:
+        if kw in st.session_state.selected:
+            dup = True
+            continue
+        if len(st.session_state.selected) >= MAX_KEYWORDS:
+            full = True
+            break
         st.session_state.selected.append(kw)
+        added += 1
+
+    # 상황에 맞는 팝업 메시지
+    if full:
+        st.session_state.popup = str(MAX_KEYWORDS) + " / " + str(MAX_KEYWORDS)
+    elif dup and added == 0:
+        st.session_state.popup = "이미 등록된 키워드예요"
+    else:
         st.session_state.popup = str(len(st.session_state.selected)) + " / " + str(MAX_KEYWORDS)
+
     st.session_state.popup_id += 1
     st.session_state.manual_kw = ""
+
 
 def remove_keyword(kw):
     if kw in st.session_state.selected:
