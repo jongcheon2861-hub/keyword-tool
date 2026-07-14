@@ -931,17 +931,17 @@ header[data-testid="stHeader"] { display: none !important; }
 .block-container { padding-top: 0.6rem !important; }
 
 section[data-testid="stSidebar"] {
-    width: 33vw !important;
-    min-width: 33vw !important;
-    max-width: 33vw !important;
-    flex: 0 0 33vw !important;
+    width: 16vw !important;
+    min-width: 16vw !important;
+    max-width: 16vw !important;
+    flex: 0 0 16vw !important;
 }
 section[data-testid="stSidebar"] > div:first-child {
-    width: 33vw !important;
-    min-width: 33vw !important;
+    width: 16vw !important;
+    min-width: 16vw !important;
 }
 div[data-testid="stSidebarContent"] {
-    width: 33vw !important;
+    width: 16vw !important;
 }
 
 .topcard {
