@@ -1112,13 +1112,13 @@ with st.sidebar:
     st.markdown("### 📂 메뉴")
     menu = st.radio(
         "메뉴",
-        ["🧮 마진계산", "🛒 키워드추출", "📋 상품등록"],
+        ["마진계산", "키워드추출", "상품등록"],
         label_visibility="collapsed",
     )
 
-if menu == "🧮 마진계산":
+if menu == "마진계산":
     render_margin_calculator()
-elif menu == "🛒 키워드추출":
+elif menu == "키워드추출":
     render_keyword_tool()
 else:
     render_product_guide()
