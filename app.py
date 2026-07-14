@@ -1077,16 +1077,18 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
     color: #1565c0 !important; font-weight: 700 !important;
 }
 
-/* 담긴 키워드 칩: 높이·줄간격 최소화 (4줄 표시) */
+/* 담긴 키워드 칩: 가운데 정렬 + 글자 확대 */
 .st-key-chips [data-testid="stBaseButton-secondary"] {
-    min-height: 18px !important; height: 18px !important; padding: 0 6px !important;
+    min-height: 22px !important; height: 22px !important; padding: 0 8px !important;
     border-radius: 8px !important;
+    justify-content: center !important;
 }
 .st-key-chips [data-testid="stBaseButton-secondary"] p {
-    font-size: 11px !important; font-weight: 600 !important;
+    font-size: 13px !important; font-weight: 600 !important;
+    text-align: center !important; width: 100% !important;
 }
 .st-key-chips div[data-testid="stHorizontalBlock"] {
-    gap: 4px !important; row-gap: 1px !important; margin: 0 !important;
+    gap: 4px !important; row-gap: 0px !important; margin: 0 !important;
 }
 .st-key-chips div[data-testid="column"] { padding: 0 1px !important; }
 .st-key-chips div[data-testid="stVerticalBlock"] { gap: 1px !important; }
@@ -1101,8 +1103,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
     padding-bottom: 2px !important;
 }
 .st-key-chips div[data-testid="stVerticalBlock"] {
-    gap: 1px !important;
-    padding-bottom: 6px !important;
+    gap: 0px !important;
+    padding-bottom: 4px !important;
 }
 
 /* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
