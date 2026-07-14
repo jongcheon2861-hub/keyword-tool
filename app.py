@@ -934,8 +934,13 @@ section[data-testid="stSidebar"] {
     width: 33vw !important;
     min-width: 33vw !important;
     max-width: 33vw !important;
+    flex: 0 0 33vw !important;
 }
-section[data-testid="stSidebar"] > div {
+section[data-testid="stSidebar"] > div:first-child {
+    width: 33vw !important;
+    min-width: 33vw !important;
+}
+div[data-testid="stSidebarContent"] {
     width: 33vw !important;
 }
 
