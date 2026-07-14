@@ -971,14 +971,40 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label p {
     font-size: 19px !important;
     font-weight: 800 !important;
 }
+/* 라디오그룹 폭 */
+section[data-testid="stSidebar"] div[role="radiogroup"] {
+    width: 100% !important;
+}
+
+/* 클릭(선택) 전 기본 색상 */
 section[data-testid="stSidebar"] div[role="radiogroup"] label {
     padding: 14px 18px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     justify-content: center !important;
+    background: #eef2ff !important;
+    border: 1.5px solid #c7d2fe !important;
+    border-radius: 12px !important;
+    color: #4a5bd0 !important;
+    transition: all 0.15s ease !important;
 }
-section[data-testid="stSidebar"] div[role="radiogroup"] {
-    width: 100% !important;
+
+/* 마우스 올렸을 때 */
+section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+    background: #e0e7ff !important;
+    border-color: #a5b4fc !important;
+}
+
+/* 클릭(선택)됐을 때 색상 변경 */
+section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+    background: #667eea !important;
+    border-color: #667eea !important;
+    color: #ffffff !important;
+}
+
+/* 선택된 버튼 글자색 흰색 유지 */
+section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {
+    color: #ffffff !important;
 }
 
 div[role="radiogroup"] label:has(input:checked) {
