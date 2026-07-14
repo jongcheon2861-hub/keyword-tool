@@ -555,7 +555,7 @@ def render_keyword_tool():
     # 담긴 키워드 (개별 삭제)
     if st.session_state.selected:
         st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;margin:6px 0 4px;'>🏷 담긴 키워드 (눌러서 삭제)</div>", unsafe_allow_html=True)
-        with st.container(key="chips"):
+        with st.container(key="chips", height=90):
             chips = st.columns(8)
             for idx, kw in enumerate(st.session_state.selected):
                 with chips[idx % 8]:
@@ -567,19 +567,16 @@ def render_keyword_tool():
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
 
     if st.session_state.get("results"):
-        lh1, lh2 = st.columns([0.54, 2], vertical_alignment="center")
-        with lh1:
-            st.markdown('<div class="parent-box">상위키워드: '
-                        + st.session_state.get("related_info", "") + '</div>',
-                        unsafe_allow_html=True)
-        with lh2:
-            hc1, hc2, hc3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
-            hc1.markdown('<div class="list-head">키워드버튼 클릭</div>',
-                         unsafe_allow_html=True)
-            hc2.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>검색량</div>",
-                         unsafe_allow_html=True)
-            hc3.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>경쟁강도</div>",
-                         unsafe_allow_html=True)
+        st.markdown('<div class="parent-box" style="display:inline-block;">상위키워드: '
+                    + st.session_state.get("related_info", "") + '</div>',
+                    unsafe_allow_html=True)
+        hc1, hc2, hc3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
+        hc1.markdown('<div class="list-head">키워드버튼 클릭</div>',
+                     unsafe_allow_html=True)
+        hc2.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>검색량</div>",
+                     unsafe_allow_html=True)
+        hc3.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>경쟁강도</div>",
+                     unsafe_allow_html=True)
         with st.container(height=520, key="kwlist"):
             for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
                 c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
