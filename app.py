@@ -1192,14 +1192,14 @@ with st.sidebar:
         ("🛒 판매·쇼핑몰", [
             ("쿠팡 윙(판매자)", "https://wing.coupang.com/", None),
             ("쿠팡", "https://www.coupang.com/", None),
-            ("네이버 스마트스토어", "https://sell.smartstore.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
+            ("스마트스토어", "https://sell.smartstore.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
             ("네이버 쇼핑", "https://shopping.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
         ]),
         ("🎨 디자인·제작", [
+            ("젠스파크", "https://www.genspark.ai/", None),
             ("미리캔버스", "https://www.miricanvas.com/ko", None),
             ("피그마", "https://www.figma.com/files/team/1646395474719723918/recents-and-sharing?fuid=1646395473034826290", None),
             ("후커블", "https://app.hookable.ai/", None),
-            ("젠스파크", "https://www.genspark.ai/", None),
         ]),
         ("📁 자료·문서", [
             ("구글 드라이브", "https://drive.google.com/", None),
