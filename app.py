@@ -973,7 +973,14 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label p {
 }
 section[data-testid="stSidebar"] div[role="radiogroup"] label {
     padding: 14px 18px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
 }
+section[data-testid="stSidebar"] div[role="radiogroup"] {
+    width: 100% !important;
+}
+
 div[role="radiogroup"] label:has(input:checked) {
     background:linear-gradient(135deg,#667eea,#764ba2) !important;
     border-color:transparent !important;
