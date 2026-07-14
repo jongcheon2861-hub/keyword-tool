@@ -562,14 +562,9 @@ def render_keyword_tool():
                     st.button(kw, key="del_" + str(idx), on_click=remove_keyword, args=(kw,), use_container_width=True)
 
     # 담긴 키워드 → 상품등록가이드로 넘기기
-    n = len(st.session_state.selected)
-    st.markdown('<div class="copy-head">📋 담긴 키워드 '
-                '<span class="copy-badge">' + str(n) + '개</span></div>',
-                unsafe_allow_html=True)
     if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
         st.session_state.kw_sent = list(st.session_state.selected)
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
-    st.caption("💡 담긴 키워드가 '상품등록가이드'의 태그 항목과 구글시트에 채워집니다.")
 
     if st.session_state.get("results"):
         st.markdown('<div class="parent-box">자동 인식된 상위어: '
