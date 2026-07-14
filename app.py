@@ -958,6 +958,18 @@ div[data-testid="stTextInput"] input {
     box-sizing: border-box !important;
     transition: all 0.2s ease !important;
 }
+div[data-testid="stTextInput"] {
+    margin-bottom: 10px !important;
+    overflow: visible !important;
+}
+div[data-testid="stTextInput"] div[data-baseweb="input"] {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+div[data-testid="stTextInput"] input:focus {
+    border-color: #667eea !important; box-shadow: 0 0 0 3px rgba(102,126,234,0.15) !important;
+}
 
 div[data-testid="stTextInput"] input:focus {
     border-color: #667eea !important; box-shadow: 0 0 0 3px rgba(102,126,234,0.15) !important;
