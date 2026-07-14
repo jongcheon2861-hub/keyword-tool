@@ -930,6 +930,15 @@ header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding-top: 0.6rem !important; }
 
+section[data-testid="stSidebar"] {
+    width: 33vw !important;
+    min-width: 33vw !important;
+    max-width: 33vw !important;
+}
+section[data-testid="stSidebar"] > div {
+    width: 33vw !important;
+}
+
 .topcard {
     background: linear-gradient(180deg,#ffffff 0%,#f5f7fa 100%);
     padding: 14px 20px 6px 20px; border: 1px solid #e6e8eb;
