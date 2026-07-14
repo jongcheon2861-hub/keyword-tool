@@ -1182,32 +1182,47 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🔗 바로가기")
 
-    links = [
-        ("파밍b2b", "https://titan.adminplus.co.kr/partner", None),
-        ("네이버 데이터랩", "https://datalab.naver.com/", None),
-        ("아이템스카우트", "https://itemscout.io/", None),
-        ("쿠팡 윙(판매자)", "https://wing.coupang.com/", None),
-        ("쿠팡", "https://www.coupang.com/", None),
-        ("네이버 스마트스토어", "https://sell.smartstore.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
-        ("판다랭크", "https://pandarank.net/", None),
-        ("네이버 쇼핑", "https://shopping.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
-        ("네이버 검색광고", "https://searchad.naver.com/", None),
-        ("구글 드라이브", "https://drive.google.com/", None),
-        ("코주부클래스", "https://www.cojooboo.co.kr/", None),
-        ("후커블", "https://app.hookable.ai/", None),
-        ("체험단", "https://forms.gle/sgcKq4tWhmX75Rui8", None),
-        ("젠스파크", "https://www.genspark.ai/", None),
-        ("상품저장목록", "https://docs.google.com/spreadsheets/d/1brG7bJKzqT7vEN6_zihPM76O_iT3ZoBRwlYuuSs-35A/edit?gid=541221609#gid=541221609", None),
-        ("미리캔버스", "https://www.miricanvas.com/ko", None),
-        ("피그마", "https://www.figma.com/files/team/1646395474719723918/recents-and-sharing?fuid=1646395473034826290", None),
+    link_groups = [
+        ("🔎 키워드·분석", [
+            ("아이템스카우트", "https://itemscout.io/", None),
+            ("판다랭크", "https://pandarank.net/", None),
+            ("네이버 데이터랩", "https://datalab.naver.com/", None),
+            ("네이버 검색광고", "https://searchad.naver.com/", None),
+        ]),
+        ("🛒 판매·쇼핑몰", [
+            ("쿠팡 윙(판매자)", "https://wing.coupang.com/", None),
+            ("쿠팡", "https://www.coupang.com/", None),
+            ("네이버 스마트스토어", "https://sell.smartstore.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
+            ("네이버 쇼핑", "https://shopping.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
+        ]),
+        ("🎨 디자인·제작", [
+            ("미리캔버스", "https://www.miricanvas.com/ko", None),
+            ("피그마", "https://www.figma.com/files/team/1646395474719723918/recents-and-sharing?fuid=1646395473034826290", None),
+            ("후커블", "https://app.hookable.ai/", None),
+            ("젠스파크", "https://www.genspark.ai/", None),
+        ]),
+        ("📁 자료·문서", [
+            ("구글 드라이브", "https://drive.google.com/", None),
+            ("상품저장목록", "https://docs.google.com/spreadsheets/d/1brG7bJKzqT7vEN6_zihPM76O_iT3ZoBRwlYuuSs-35A/edit?gid=541221609#gid=541221609", None),
+        ]),
+        ("🧾 기타", [
+            ("파밍b2b", "https://titan.adminplus.co.kr/partner", None),
+            ("코주부클래스", "https://www.cojooboo.co.kr/", None),
+            ("체험단", "https://forms.gle/sgcKq4tWhmX75Rui8", None),
+        ]),
     ]
-    for name, url, icon in links:
-        favicon = icon if icon else ("https://www.google.com/s2/favicons?domain=" + url + "&sz=32")
-        st.markdown(
-            f"<a href='{url}' target='_blank' rel='noopener noreferrer' class='side-link'>"
-            f"<img src='{favicon}' class='side-ico'>"
-            f"<span>{name}</span></a>",
-            unsafe_allow_html=True)
+
+    for group_name, group_links in link_groups:
+        st.markdown(f"<div class='side-group'>{group_name}</div>", unsafe_allow_html=True)
+        for i in range(0, len(group_links), 2):
+            cols = st.columns(2)
+            for j, (name, url, icon) in enumerate(group_links[i:i+2]):
+                favicon = icon if icon else ("https://www.google.com/s2/favicons?domain=" + url + "&sz=32")
+                cols[j].markdown(
+                    f"<a href='{url}' target='_blank' rel='noopener noreferrer' class='side-link'>"
+                    f"<img src='{favicon}' class='side-ico'>"
+                    f"<span>{name}</span></a>",
+                    unsafe_allow_html=True)
 
 if menu == "🧮 마진계산":
     render_margin_calculator()
