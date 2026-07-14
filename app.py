@@ -1195,6 +1195,7 @@ with st.sidebar:
         ("구글 드라이브", "https://drive.google.com/", None),
         ("코주부클래스", "https://www.cojooboo.co.kr/", None),
         ("후커블", "https://app.hookable.ai/", None),
+        ("체험단", "https://forms.gle/sgcKq4tWhmX75Rui8", None),
     ]
     for name, url, icon in links:
         favicon = icon if icon else ("https://www.google.com/s2/favicons?domain=" + url + "&sz=32")
