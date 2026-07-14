@@ -660,7 +660,7 @@ def render_product_guide():
              background:#fdecec; color:#d63031; font-size:12px; font-weight:800; cursor:pointer; padding:0; }
   .del-btn:hover { background:#f8d7da; }
   .empty-msg { font-size:12px; color:#999; text-align:center; padding:8px 0; }
-  .legend { font-size:11.5px; color:#777; margin:4px 0 2px; }
+  .legend { font-size:11.5px; color:#777; margin:4px 0 14px; }
   .legend b { padding:1px 6px; border-radius:4px; }
   .legend .lg-fill { background:#fff8e1; color:#8a6d00; }
   .legend .lg-copy { background:#eafaf3; color:#00794c; }
