@@ -566,7 +566,7 @@ def render_keyword_tool():
         st.session_state.kw_sent = list(st.session_state.selected)
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
 
-       if st.session_state.get("results"):
+     if st.session_state.get("results"):
         hc1, hc2, hc3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
         hc1.markdown(
             '<div style="display:flex;align-items:center;gap:10px;">'
@@ -579,6 +579,7 @@ def render_keyword_tool():
                      unsafe_allow_html=True)
         hc3.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>경쟁강도</div>",
                      unsafe_allow_html=True)
+
         with st.container(height=520, key="kwlist"):
             for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
                 c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
