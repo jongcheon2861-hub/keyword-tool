@@ -566,13 +566,15 @@ def render_keyword_tool():
         st.session_state.kw_sent = list(st.session_state.selected)
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
 
-    if st.session_state.get("results"):
-        st.markdown('<div class="parent-box" style="display:inline-block;">상위키워드: '
-                    + st.session_state.get("related_info", "") + '</div>',
-                    unsafe_allow_html=True)
+       if st.session_state.get("results"):
         hc1, hc2, hc3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
-        hc1.markdown('<div class="list-head">키워드버튼 클릭</div>',
-                     unsafe_allow_html=True)
+        hc1.markdown(
+            '<div style="display:flex;align-items:center;gap:10px;">'
+            '<span class="list-head" style="margin:0;">키워드버튼 클릭</span>'
+            '<span class="parent-box" style="margin:0;padding:4px 10px;font-size:12px;white-space:nowrap;">'
+            '상위키워드: ' + st.session_state.get("related_info", "") + '</span>'
+            '</div>',
+            unsafe_allow_html=True)
         hc2.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>검색량</div>",
                      unsafe_allow_html=True)
         hc3.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>경쟁강도</div>",
