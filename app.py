@@ -1196,6 +1196,9 @@ with st.sidebar:
         ("코주부클래스", "https://www.cojooboo.co.kr/", None),
         ("후커블", "https://app.hookable.ai/", None),
         ("체험단", "https://forms.gle/sgcKq4tWhmX75Rui8", None),
+        ("젠스파크", "https://www.genspark.ai/", None),
+        ("상품저장목록", "https://docs.google.com/spreadsheets/d/1brG7bJKzqT7vEN6_zihPM76O_iT3ZoBRwlYuuSs-35A/edit?gid=541221609#gid=541221609", None),
+
     ]
     for name, url, icon in links:
         favicon = icon if icon else ("https://www.google.com/s2/favicons?domain=" + url + "&sz=32")
