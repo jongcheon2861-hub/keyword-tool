@@ -1183,14 +1183,18 @@ with st.sidebar:
     st.markdown("### 🔗 바로가기")
 
     links = [
+        ("파밍b2b", "https://titan.adminplus.co.kr/partner"),
+        ("네이버 데이터랩", "https://datalab.naver.com/"),
         ("아이템스카우트", "https://itemscout.io/"),
-        ("판다랭크", "https://pandarank.net/"),
         ("쿠팡 윙(판매자)", "https://wing.coupang.com/"),
         ("쿠팡", "https://www.coupang.com/"),
+        ("네이버 스마트스토어", "https://sell.smartstore.naver.com/"),
+        ("판다랭크", "https://pandarank.net/"),
         ("네이버 쇼핑", "https://shopping.naver.com/"),
         ("네이버 검색광고", "https://searchad.naver.com/"),
-        ("네이버 데이터랩", "https://datalab.naver.com/"),
-        ("구글시트", "https://docs.google.com/spreadsheets/"),
+        ("구글 드라이브", "https://drive.google.com/"),
+        ("코주부클래스", "https://www.cojooboo.co.kr/"),
+        ("후커블", "https://app.hookable.ai/"),
     ]
     for name, url in links:
         favicon = "https://www.google.com/s2/favicons?domain=" + url + "&sz=32"
