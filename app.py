@@ -1093,6 +1093,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 .st-key-chips div[data-testid="stElementContainer"] {
     margin: 0 !important; min-height: 0 !important; padding: 0 !important;
 }
+.st-key-chips [data-testid="stVerticalBlockBorderWrapper"] > div {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.st-key-chips div[data-testid="stVerticalBlock"] {
+    gap: 1px !important;
+    padding-bottom: 6px !important;
+}
 
 /* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
 div[data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
