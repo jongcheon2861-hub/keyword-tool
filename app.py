@@ -5,7 +5,7 @@ import json, math
 import streamlit.components.v1 as components
 
 st.set_page_config(page_title="쿠팡 셀러 도구", layout="wide",
-                   initial_sidebar_state="collapsed")
+                   initial_sidebar_state="expanded")
 
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
@@ -941,6 +941,7 @@ div[role="radiogroup"] { gap: 8px !important; margin-bottom: 10px !important; }
 div[role="radiogroup"] label {
     background:#f1f3f5 !important; border:1.5px solid #e6e8eb !important;
     border-radius:12px !important; padding:8px 16px !important; font-weight:700 !important;
+    width: 100% !important;
 }
 div[role="radiogroup"] label:has(input:checked) {
     background:linear-gradient(135deg,#667eea,#764ba2) !important;
@@ -1093,12 +1094,13 @@ div[data-testid="column"] { padding: 0 2px !important; }
 # ==================================================================
 # 상단 메뉴 + 화면 전환
 # ==================================================================
-menu = st.radio(
-    "메뉴",
-    ["🧮 마진계산기", "🛒 쿠팡키워드 추출기", "📋 상품등록가이드"],
-    horizontal=True,
-    label_visibility="collapsed",
-)
+with st.sidebar:
+    st.markdown("### 📂 메뉴")
+    menu = st.radio(
+        "메뉴",
+        ["🧮 마진계산기", "🛒 쿠팡키워드 추출기", "📋 상품등록가이드"],
+        label_visibility="collapsed",
+    )
 
 if menu == "🧮 마진계산기":
     render_margin_calculator()
