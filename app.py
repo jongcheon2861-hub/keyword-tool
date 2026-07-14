@@ -530,6 +530,7 @@ def render_keyword_tool():
 
     st.markdown('<div class="topcard"><div class="bar-title">🛒 쿠팡키워드 추출기</div></div>',
                 unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:-12px;'></div>", unsafe_allow_html=True)
     ta, tb = st.columns([3, 1.2], vertical_alignment="bottom")
     with ta:
         st.text_input("상품명 (여러 개는 띄어쓰기)", "샤인머스켓",
