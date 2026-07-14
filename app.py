@@ -581,6 +581,11 @@ def render_keyword_tool():
                      unsafe_allow_html=True)
         hc3.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>경쟁강도</div>",
                      unsafe_allow_html=True)
+        comp_map = {
+            "낮음": ("아주좋음", "#1b8a3a", "#e6f7ec"),
+            "중간": ("보통", "#c77700", "#fff3e0"),
+            "높음": ("나쁨", "#d63031", "#fdecec"),
+        }
         with st.container(height=520, key="kwlist"):
             for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
                 c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
@@ -592,8 +597,14 @@ def render_keyword_tool():
                               on_click=toggle_keyword, args=(kw,), use_container_width=True)
                 c2.markdown("<div class='metric-val'>" + format(vol, ",") + "</div>",
                             unsafe_allow_html=True)
-                c3.markdown("<div class='metric-val'>" + str(comp) + "</div>",
-                            unsafe_allow_html=True)
+                label, txt_color, bg_color = comp_map.get(
+                    str(comp), (str(comp), "#607d8b", "#f0f2f5"))
+                c3.markdown(
+                    "<div class='metric-val'>"
+                    "<span style='background:" + bg_color + ";color:" + txt_color + ";"
+                    "font-weight:800;font-size:13px;padding:3px 12px;border-radius:12px;'>"
+                    + label + "</span></div>",
+                    unsafe_allow_html=True)
     elif "results" in st.session_state:
         st.warning("수집된 키워드가 없습니다. 상품명이나 개수를 조정해 보세요.")
 
