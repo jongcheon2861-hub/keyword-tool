@@ -968,11 +968,11 @@ div[data-testid="stSidebarContent"] {
 
 div[role="radiogroup"] { gap: 8px !important; margin-bottom: 10px !important; }
 section[data-testid="stSidebar"] div[role="radiogroup"] label p {
-    font-size: 20px !important;
+    font-size: 15px !important;
     font-weight: 800 !important;
 }
 section[data-testid="stSidebar"] div[role="radiogroup"] label {
-    padding: 12px 18px !important;
+    padding: 8px 14px !important;
 }
 div[role="radiogroup"] label:has(input:checked) {
     background:linear-gradient(135deg,#667eea,#764ba2) !important;
