@@ -567,11 +567,14 @@ def render_keyword_tool():
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
 
     if st.session_state.get("results"):
-        st.markdown('<div class="parent-box">자동 인식된 상위어: '
-                    + st.session_state.get("related_info", "") + '</div>',
-                    unsafe_allow_html=True)
-        st.markdown('<div class="list-head">키워드 버튼 클릭</div>',
-                    unsafe_allow_html=True)
+        lh1, lh2 = st.columns([1.2, 2], vertical_alignment="center")
+        with lh1:
+            st.markdown('<div class="parent-box">자동 인식된 상위어: '
+                        + st.session_state.get("related_info", "") + '</div>',
+                        unsafe_allow_html=True)
+        with lh2:
+            st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
+                        unsafe_allow_html=True)
         with st.container(height=520, key="kwlist"):
             for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
                 c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
