@@ -952,10 +952,12 @@ div[data-testid="stSidebarContent"] {
 .bar-title { font-size: 20px; font-weight: 700; color: #263238; margin-bottom: 8px; }
 
 div[role="radiogroup"] { gap: 8px !important; margin-bottom: 10px !important; }
-div[role="radiogroup"] label {
-    background:#f1f3f5 !important; border:1.5px solid #e6e8eb !important;
-    border-radius:12px !important; padding:8px 16px !important; font-weight:700 !important;
-    width: 100% !important;
+section[data-testid="stSidebar"] div[role="radiogroup"] label p {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+}
+section[data-testid="stSidebar"] div[role="radiogroup"] label {
+    padding: 12px 18px !important;
 }
 div[role="radiogroup"] label:has(input:checked) {
     background:linear-gradient(135deg,#667eea,#764ba2) !important;
