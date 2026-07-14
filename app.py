@@ -1182,20 +1182,27 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🔗 바로가기")
 
-    links = [
-        ("파밍b2b", "https://titan.adminplus.co.kr/partner"),
-        ("네이버 데이터랩", "https://datalab.naver.com/"),
-        ("아이템스카우트", "https://itemscout.io/"),
-        ("쿠팡 윙(판매자)", "https://wing.coupang.com/"),
-        ("쿠팡", "https://www.coupang.com/"),
-        ("네이버 스마트스토어", "https://sell.smartstore.naver.com/"),
-        ("판다랭크", "https://pandarank.net/"),
-        ("네이버 쇼핑", "https://shopping.naver.com/"),
-        ("네이버 검색광고", "https://searchad.naver.com/"),
-        ("구글 드라이브", "https://drive.google.com/"),
-        ("코주부클래스", "https://www.cojooboo.co.kr/"),
-        ("후커블", "https://app.hookable.ai/"),
+ links = [
+        ("파밍b2b", "https://titan.adminplus.co.kr/partner", None),
+        ("네이버 데이터랩", "https://datalab.naver.com/", None),
+        ("아이템스카우트", "https://itemscout.io/", None),
+        ("쿠팡 윙(판매자)", "https://wing.coupang.com/", None),
+        ("쿠팡", "https://www.coupang.com/", None),
+        ("스마트스토어", "https://sell.smartstore.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
+        ("판다랭크", "https://pandarank.net/", None),
+        ("네이버 쇼핑", "https://shopping.naver.com/", "https://ssl.pstatic.net/sstatic/search/favicon/favicon_191118.ico"),
+        ("네이버 검색광고", "https://searchad.naver.com/", None),
+        ("구글 드라이브", "https://drive.google.com/", None),
+        ("코주부클래스", "https://www.cojooboo.co.kr/", None),
+        ("후커블", "https://app.hookable.ai/", None),
     ]
+    for name, url, icon in links:
+        favicon = icon if icon else ("https://www.google.com/s2/favicons?domain=" + url + "&sz=32")
+        st.markdown(
+            f"<a href='{url}' target='_blank' class='side-link'>"
+            f"<img src='{favicon}' class='side-ico'>"
+            f"<span>{name}</span></a>",
+            unsafe_allow_html=True)
     for name, url in links:
         favicon = "https://www.google.com/s2/favicons?domain=" + url + "&sz=32"
         st.markdown(
