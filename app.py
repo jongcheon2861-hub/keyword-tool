@@ -553,13 +553,15 @@ def render_keyword_tool():
                   on_click=add_manual_keyword, type="primary")
 
     # 담긴 키워드 (개별 삭제)
-    if st.session_state.selected:
-        st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;margin:6px 0 4px;'>🏷 담긴 키워드 (눌러서 삭제)</div>", unsafe_allow_html=True)
-        with st.container(key="chips", height=90):
+    st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;margin:6px 0 4px;'>🏷 담긴 키워드 (눌러서 삭제)</div>", unsafe_allow_html=True)
+    with st.container(key="chips", height=90):
+        if st.session_state.selected:
             chips = st.columns(8)
             for idx, kw in enumerate(st.session_state.selected):
                 with chips[idx % 8]:
                     st.button(kw, key="del_" + str(idx), on_click=remove_keyword, args=(kw,), use_container_width=True)
+        else:
+            st.markdown("<div style='font-size:12px;color:#aaa;padding:6px 2px;'>아직 담긴 키워드가 없습니다. 키워드를 추가해 보세요.</div>", unsafe_allow_html=True)
 
     # 담긴 키워드 → 상품등록가이드로 넘기기
     if st.button("📤 상품등록가이드로 넘기기", type="primary", use_container_width=True):
