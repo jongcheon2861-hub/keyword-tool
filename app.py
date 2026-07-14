@@ -947,12 +947,18 @@ div[role="radiogroup"] label:has(input:checked) {
 div[role="radiogroup"] label:has(input:checked) div { color:#fff !important; }
 
 div[data-testid="stTextInput"] input {
-    height: 44px !important; font-size: 14px !important; color: #263238 !important;
-    padding: 0 14px !important; border-radius: 12px !important;
-    line-height: 44px !important;
-    border: 1.5px solid #dfe4ea !important; background: #ffffff !important;
+    height: 44px !important;
+    font-size: 14px !important;
+    color: #263238 !important;
+    padding: 0 14px !important;
+    border-radius: 12px !important;
+    line-height: normal !important;
+    border: 1.5px solid #dfe4ea !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
     transition: all 0.2s ease !important;
 }
+
 div[data-testid="stTextInput"] input:focus {
     border-color: #667eea !important; box-shadow: 0 0 0 3px rgba(102,126,234,0.15) !important;
 }
