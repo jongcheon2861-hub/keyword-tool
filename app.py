@@ -947,8 +947,9 @@ div[role="radiogroup"] label:has(input:checked) {
 div[role="radiogroup"] label:has(input:checked) div { color:#fff !important; }
 
 div[data-testid="stTextInput"] input {
-    height: 46px !important; font-size: 15px !important; color: #263238 !important;
+    height: 44px !important; font-size: 14px !important; color: #263238 !important;
     padding: 0 14px !important; border-radius: 12px !important;
+    line-height: 44px !important;
     border: 1.5px solid #dfe4ea !important; background: #ffffff !important;
     transition: all 0.2s ease !important;
 }
