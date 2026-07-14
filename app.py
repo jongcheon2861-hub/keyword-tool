@@ -946,17 +946,17 @@ header[data-testid="stHeader"] { display: none !important; }
 .block-container { padding-top: 0.6rem !important; }
 
 section[data-testid="stSidebar"] {
-    width: 21vw !important;
-    min-width: 21vw !important;
-    max-width: 21vw !important;
-    flex: 0 0 21vw !important;
+    width: 27vw !important;
+    min-width: 27vw !important;
+    max-width: 27vw !important;
+    flex: 0 0 27vw !important;
 }
 section[data-testid="stSidebar"] > div:first-child {
-    width: 21vw !important;
-    min-width: 21vw !important;
+    width: 27vw !important;
+    min-width: 27vw !important;
 }
 div[data-testid="stSidebarContent"] {
-    width: 21vw !important;
+    width: 27vw !important;
 }
 
 .topcard {
