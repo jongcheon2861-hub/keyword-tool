@@ -573,8 +573,13 @@ def render_keyword_tool():
                         + st.session_state.get("related_info", "") + '</div>',
                         unsafe_allow_html=True)
         with lh2:
-            st.markdown('<div class="list-head">추출된 키워드 · 클릭하면 담겨요 (다시 누르면 삭제)</div>',
-                        unsafe_allow_html=True)
+            hc1, hc2, hc3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
+            hc1.markdown('<div class="list-head">키워드버튼 클릭</div>',
+                         unsafe_allow_html=True)
+            hc2.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>검색량</div>",
+                         unsafe_allow_html=True)
+            hc3.markdown("<div class='metric-val' style='font-weight:800;color:#0d47a1;'>경쟁강도</div>",
+                         unsafe_allow_html=True)
         with st.container(height=520, key="kwlist"):
             for i, (kw, vol, comp, score) in enumerate(st.session_state.results):
                 c1, c2, c3 = st.columns([3, 1.4, 1.2], vertical_alignment="center")
