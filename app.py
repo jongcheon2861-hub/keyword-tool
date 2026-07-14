@@ -964,6 +964,9 @@ div[data-testid="stTextInput"] {
     margin-bottom: 10px !important;
     overflow: visible !important;
 }
+div[data-testid="stHorizontalBlock"] div[data-testid="stTextInput"] {
+    margin-bottom: 0 !important;
+}
 div[data-testid="stTextInput"] div[data-baseweb="input"] {
     overflow: visible !important;
     height: auto !important;
