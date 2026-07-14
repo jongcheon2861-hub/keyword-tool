@@ -1077,16 +1077,22 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
     color: #1565c0 !important; font-weight: 700 !important;
 }
 
-/* 담긴 키워드 칩: 글자·높이 절반 수준으로 축소 */
+/* 담긴 키워드 칩: 높이·줄간격 최소화 (4줄 표시) */
 .st-key-chips [data-testid="stBaseButton-secondary"] {
-    min-height: 22px !important; height: 22px !important; padding: 0 6px !important;
+    min-height: 18px !important; height: 18px !important; padding: 0 6px !important;
     border-radius: 8px !important;
 }
 .st-key-chips [data-testid="stBaseButton-secondary"] p {
     font-size: 11px !important; font-weight: 600 !important;
 }
-.st-key-chips div[data-testid="stHorizontalBlock"] { gap: 4px !important; }
+.st-key-chips div[data-testid="stHorizontalBlock"] {
+    gap: 4px !important; row-gap: 1px !important; margin: 0 !important;
+}
 .st-key-chips div[data-testid="column"] { padding: 0 1px !important; }
+.st-key-chips div[data-testid="stVerticalBlock"] { gap: 1px !important; }
+.st-key-chips div[data-testid="stElementContainer"] {
+    margin: 0 !important; min-height: 0 !important; padding: 0 !important;
+}
 
 /* 마진계산기 칸 여백 축소 + 결과값 잘림 방지 */
 div[data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
