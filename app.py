@@ -4,8 +4,12 @@ import requests, time, hmac, hashlib, base64
 import json, math
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="쿠팡 셀러 도구", layout="wide",
-                   initial_sidebar_state="expanded")
+st.set_page_config(
+    page_title="쿠팡 셀러 도구",
+    page_icon="favicon.png",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
