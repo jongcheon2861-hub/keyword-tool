@@ -1200,7 +1200,7 @@ with st.sidebar:
     for name, url, icon in links:
         favicon = icon if icon else ("https://www.google.com/s2/favicons?domain=" + url + "&sz=32")
         st.markdown(
-            f"<a href='{url}' target='_blank' class='side-link'>"
+            f"<a href='{url}' target='_blank' rel='noopener noreferrer' class='side-link'>"
             f"<img src='{favicon}' class='side-ico'>"
             f"<span>{name}</span></a>",
             unsafe_allow_html=True)
