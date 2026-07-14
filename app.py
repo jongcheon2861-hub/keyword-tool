@@ -1131,6 +1131,33 @@ div[data-testid="column"] { padding: 0 2px !important; }
 .mc-rate { background:#fff3e0; color:#e65100; }
 .mc-empty { color:#bbb; }
 
+.side-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 10px;
+    background: #f1f3f5;
+    border: 1.5px solid #e6e8eb;
+    color: #37474f !important;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+}
+.side-link:hover {
+    background: #eef2ff;
+    border-color: #667eea;
+    color: #4a5bd0 !important;
+}
+.side-ico {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    flex: 0 0 auto;
+}
+
 .center-popup {
     position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
     z-index: 100000; padding: 12px 26px; border-radius: 16px;
@@ -1148,9 +1175,30 @@ with st.sidebar:
     st.markdown("### 📂 메뉴")
     menu = st.radio(
         "메뉴",
-        ["마진계산", "키워드추출", "상품등록"],
+        ["🧮 마진계산", "🛒 키워드추출", "📋 상품등록"],
         label_visibility="collapsed",
     )
+
+    st.markdown("---")
+    st.markdown("### 🔗 바로가기")
+
+  links = [
+        ("아이템스카우트", "https://itemscout.io/"),
+        ("판다랭크", "https://pandarank.net/"),
+        ("쿠팡 윙(판매자)", "https://wing.coupang.com/"),
+        ("쿠팡", "https://www.coupang.com/"),
+        ("네이버 쇼핑", "https://shopping.naver.com/"),
+        ("네이버 검색광고", "https://searchad.naver.com/"),
+        ("네이버 데이터랩", "https://datalab.naver.com/"),
+        ("구글시트", "https://docs.google.com/spreadsheets/"),
+    ]
+    for name, url in links:
+        favicon = "https://www.google.com/s2/favicons?domain=" + url + "&sz=32"
+        st.markdown(
+            "<a href='" + url + "' target='_blank' class='side-link'>"
+            "<img src='" + favicon + "' class='side-ico'>"
+            "<span>" + name + "</span></a>",
+            unsafe_allow_html=True)
 
 if menu == "마진계산":
     render_margin_calculator()
