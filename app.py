@@ -567,7 +567,7 @@ def render_keyword_tool():
         st.success("✅ 상품등록가이드로 넘겼습니다. '상품등록가이드' 탭에서 확인하세요.")
 
     if st.session_state.get("results"):
-        lh1, lh2 = st.columns([0.67, 2], vertical_alignment="center")
+        lh1, lh2 = st.columns([0.54, 2], vertical_alignment="center")
         with lh1:
             st.markdown('<div class="parent-box">상위키워드: '
                         + st.session_state.get("related_info", "") + '</div>',
