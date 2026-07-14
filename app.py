@@ -553,7 +553,7 @@ def render_keyword_tool():
                   on_click=add_manual_keyword, type="primary")
 
     # 담긴 키워드 (개별 삭제)
-    st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;margin:6px 0 4px;'>🏷 담긴 키워드 (눌러서 삭제)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:13px;font-weight:700;color:#37474f;margin:2px 0 0;'>🏷 담긴 키워드 (눌러서 삭제)</div>", unsafe_allow_html=True)
     with st.container(key="chips", height=90):
         if st.session_state.selected:
             chips = st.columns(8)
@@ -1093,8 +1093,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] { border:none !important; }
 .st-key-chips div[data-testid="stElementContainer"] {
     margin: 0 !important; min-height: 0 !important; padding: 0 !important;
 }
+.st-key-chips {
+    margin-top: -6px !important;
+}
 .st-key-chips [data-testid="stVerticalBlockBorderWrapper"] > div {
-    padding-top: 2px !important;
+    padding-top: 0 !important;
     padding-bottom: 2px !important;
 }
 .st-key-chips div[data-testid="stVerticalBlock"] {
