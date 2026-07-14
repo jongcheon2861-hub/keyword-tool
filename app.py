@@ -539,6 +539,7 @@ def render_keyword_tool():
         st.button("🔍 추출하기", use_container_width=True,
                   on_click=run_extract, type="primary")
 
+    st.markdown("<div style='margin-top:-14px;'></div>", unsafe_allow_html=True)
     # 키워드 수동 추가
     ma, mb = st.columns([3, 1.2], vertical_alignment="bottom")
     with ma:
