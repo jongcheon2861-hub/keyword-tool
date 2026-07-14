@@ -1182,7 +1182,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🔗 바로가기")
 
-  links = [
+    links = [
         ("아이템스카우트", "https://itemscout.io/"),
         ("판다랭크", "https://pandarank.net/"),
         ("쿠팡 윙(판매자)", "https://wing.coupang.com/"),
@@ -1200,10 +1200,10 @@ with st.sidebar:
             "<span>" + name + "</span></a>",
             unsafe_allow_html=True)
 
-if menu == "마진계산":
+
+if menu == "🧮 마진계산":
     render_margin_calculator()
-elif menu == "키워드추출":
+elif menu == "🛒 키워드추출":
     render_keyword_tool()
 else:
     render_product_guide()
-
