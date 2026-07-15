@@ -409,8 +409,10 @@ def render_margin_calculator():
     if toggle_coupon:
         if applied:
             st.session_state.mc_fixed_coupon = None
+            st.session_state.mc_coupon_off = True   # 사용자가 직접 해제함
             st.rerun()
         else:
+            st.session_state.mc_coupon_off = False  # 사용자가 직접 적용함
             first = st.session_state.mc_rows[0]
             base_res = calc_margin(first["supply"] or 0, first["ship"] or 0,
                                    first["disc"] or 0, first["fee"] or 0, first["margin"] or 0)
@@ -420,16 +422,18 @@ def render_margin_calculator():
             else:
                 st.warning("1번 행의 공급가를 먼저 입력하세요.")
 
+    # 기본 적용: 사용자가 직접 해제하지 않았고, 아직 미적용이며, 1번 행에 공급가가 있으면 자동 적용
+    if not applied and not st.session_state.get("mc_coupon_off", False):
+        first = st.session_state.mc_rows[0]
+        if first["supply"]:
+            base_res = calc_margin(first["supply"] or 0, first["ship"] or 0,
+                                   first["disc"] or 0, first["fee"] or 0, first["margin"] or 0)
+            if base_res:
+                st.session_state.mc_fixed_coupon = int(base_res["discount"])
+                st.rerun()
+
     fixed = st.session_state.mc_fixed_coupon
 
-    COLS = [2.0, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
-
-    h = st.columns(COLS, gap="small")
-    heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
-             "판매가", "마진액", "쿠폰할인", "정상가", "적용할인%"]
-    for col, name in zip(h, heads):
-        col.markdown(f"<div style='font-size:12px;font-weight:700;color:#0d47a1;"
-                     f"text-align:center;'>{name}</div>", unsafe_allow_html=True)
 
     results = []
     for i, row in enumerate(st.session_state.mc_rows):
