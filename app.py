@@ -1206,6 +1206,59 @@ div[data-testid="column"] { padding: 0 2px !important; }
     background: linear-gradient(135deg,#667eea 0%,#764ba2 45%,#f093fb 100%);
     box-shadow: 0 12px 30px rgba(118,75,162,0.45); pointer-events: none; white-space: nowrap;
 }
+
+/* ============ 📱 스마트폰 최적화 (화면 폭 768px 이하) ============ */
+@media (max-width: 768px) {
+
+    /* 사이드바: vw 고정 해제 → 화면의 82% 폭으로 (펼쳤을 때 링크가 안 깨지게) */
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div:first-child,
+    div[data-testid="stSidebarContent"] {
+        width: 82vw !important;
+        min-width: 82vw !important;
+        max-width: 82vw !important;
+        flex: 0 0 82vw !important;
+    }
+
+    /* 본문 좌우 여백 축소 */
+    .block-container { padding: 0.5rem 0.5rem !important; }
+
+    /* 상단 카드/제목 축소 */
+    .topcard { padding: 10px 12px 4px 12px !important; margin-bottom: 10px !important; }
+    .bar-title { font-size: 17px !important; }
+
+    /* 입력창은 최소 16px (iOS에서 탭할 때 자동 확대 방지) */
+    div[data-testid="stTextInput"] input { font-size: 16px !important; height: 42px !important; }
+
+    /* 사이드바 메뉴 버튼 살짝 축소 */
+    section[data-testid="stSidebar"] div[role="radiogroup"] label { padding: 10px 12px !important; }
+    section[data-testid="stSidebar"] div[role="radiogroup"] label p { font-size: 16px !important; }
+
+    /* 바로가기 링크 축소 */
+    .side-link { font-size: 12px !important; padding: 7px 8px !important; gap: 6px !important; }
+    .side-ico { width: 16px !important; height: 16px !important; }
+
+    /* 마진계산기 표: 11칸이 좁은 화면에서 안 깨지게 가로 스크롤 처리 */
+    .main div[data-testid="stHorizontalBlock"] {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+    }
+    .main div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+        min-width: 68px !important;
+        flex: 0 0 auto !important;
+    }
+    /* 표 안 입력칸·결과값 글자 축소 */
+    .main div[data-testid="column"] input { font-size: 13px !important; }
+    .mc-out { font-size: 12px !important; min-height: 34px !important; }
+
+    /* 키워드 목록 검색량/경쟁강도 글자 축소 */
+    .metric-val { font-size: 13px !important; }
+    .list-head { font-size: 15px !important; margin: 8px 0 8px 0 !important; }
+
+    /* 담긴 키워드 칩 글자 약간 축소 */
+    .st-key-chips [data-testid="stBaseButton-secondary"] p { font-size: 12px !important; }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
