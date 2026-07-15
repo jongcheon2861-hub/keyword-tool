@@ -434,10 +434,10 @@ def render_margin_calculator():
 
     fixed = st.session_state.mc_fixed_coupon
 
-    COLS = [2.0, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
+    COLS = [1.6, 0.9, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
 
     h = st.columns(COLS, gap="small")
-    heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
+    heads = ["옵션명", "수량", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
              "판매가", "마진액", "쿠폰할인", "정상가", "적용할인%"]
     for col, name in zip(h, heads):
         col.markdown(f"<div style='font-size:12px;font-weight:700;color:#0d47a1;"
@@ -446,45 +446,48 @@ def render_margin_calculator():
     results = []
     for i, row in enumerate(st.session_state.mc_rows):
         c = st.columns(COLS, gap="small")
-
-
         row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
                                      label_visibility="collapsed", placeholder="옵션")
-        row["supply"] = c[1].number_input("공급가", value=int(row["supply"] or 0),
+        row["qty"] = c[1].number_input("수량", value=int(row.get("qty", 1) or 1),
+                                       step=1, min_value=1, key=f"mc_qty_{i}",
+                                       label_visibility="collapsed")
+        row["supply"] = c[2].number_input("공급가", value=int(row["supply"] or 0),
                                           step=100, min_value=0, key=f"mc_sup_{i}",
                                           label_visibility="collapsed")
-        row["ship"] = c[2].number_input("택배비", value=int(row["ship"] or 0),
+        row["ship"] = c[3].number_input("택배비", value=int(row["ship"] or 0),
                                         step=100, min_value=0, key=f"mc_ship_{i}",
                                         label_visibility="collapsed")
-        row["disc"] = c[3].number_input("할인율", value=float(row["disc"] or 0),
+        row["disc"] = c[4].number_input("할인율", value=float(row["disc"] or 0),
                                         step=1.0, min_value=0.0, key=f"mc_disc_{i}",
                                         label_visibility="collapsed")
-        row["fee"] = c[4].number_input("수수료", value=float(row["fee"] or 0),
+        row["fee"] = c[5].number_input("수수료", value=float(row["fee"] or 0),
                                        step=0.1, min_value=0.0, key=f"mc_fee_{i}",
                                        label_visibility="collapsed")
-        row["margin"] = c[5].number_input("마진율", value=float(row["margin"] or 0),
+        row["margin"] = c[6].number_input("마진율", value=float(row["margin"] or 0),
                                           step=0.1, min_value=0.0, key=f"mc_mrg_{i}",
                                           label_visibility="collapsed")
-        supply_v = row["supply"] or 0
-        ship_v = row["ship"] or 0
+        qty_v = row.get("qty", 1) or 1
+        supply_v = (row["supply"] or 0) * qty_v
+        ship_v = (row["ship"] or 0) * qty_v
         disc_v = row["disc"] or 0
         fee_v = row["fee"] or 0
         margin_v = row["margin"] or 0
         res = calc_margin(supply_v, ship_v, disc_v, fee_v,
                           margin_v, fixed_coupon=fixed)
         if res:
-            c[6].markdown(f"<div class='mc-out mc-final'>{int(res['final']):,}</div>",
+            c[7].markdown(f"<div class='mc-out mc-final'>{int(res['final']):,}</div>",
                           unsafe_allow_html=True)
-            c[7].markdown(f"<div class='mc-out mc-margin'>{int(res['margin']):,}</div>",
+            c[8].markdown(f"<div class='mc-out mc-margin'>{int(res['margin']):,}</div>",
                           unsafe_allow_html=True)
-            c[8].markdown(f"<div class='mc-out mc-disc'>{int(res['discount']):,}</div>",
+            c[9].markdown(f"<div class='mc-out mc-disc'>{int(res['discount']):,}</div>",
                           unsafe_allow_html=True)
-            c[9].markdown(f"<div class='mc-out mc-orig'>{int(res['orig']):,}</div>",
-                          unsafe_allow_html=True)
-            c[10].markdown(f"<div class='mc-out mc-rate'>{res['disc_rate']:.1f}%</div>",
+            c[10].markdown(f"<div class='mc-out mc-orig'>{int(res['orig']):,}</div>",
+                           unsafe_allow_html=True)
+            c[11].markdown(f"<div class='mc-out mc-rate'>{res['disc_rate']:.1f}%</div>",
                            unsafe_allow_html=True)
             results.append({
                 "opt": row["opt"],
+                "qty": int(qty_v),
                 "supply": int(supply_v),
                 "ship": int(ship_v),
                 "disc": float(disc_v),
@@ -497,7 +500,7 @@ def render_margin_calculator():
                 "disc_rate": round(res["disc_rate"], 1),
             })
         else:
-            for k in range(6, 11):
+            for k in range(7, 12):
                 c[k].markdown("<div class='mc-out mc-empty'>-</div>", unsafe_allow_html=True)
 
     st.markdown("")
