@@ -235,7 +235,7 @@ if "mc_product" not in st.session_state:
     st.session_state.mc_product = ""
 if "mc_rows" not in st.session_state:
     st.session_state.mc_rows = [
-        {"opt": "", "qty": 1, "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0}
+        {"opt": "", "qty": 1, "supply": 0, "ship": 0, "disc": 50.0, "fee": 12.0, "margin": 20.0}
     ]
 if "mc_sent" not in st.session_state:
     st.session_state.mc_sent = []
@@ -396,7 +396,7 @@ def render_margin_calculator():
         if st.button("＋ 행 추가", use_container_width=True):
             if len(st.session_state.mc_rows) < 10:
                 st.session_state.mc_rows.append(
-                    {"opt": "", "qty": 1, "supply": 0, "ship": 0, "disc": 60.0, "fee": 12.0, "margin": 20.0})
+                    {"opt": "", "qty": 1, "supply": 0, "ship": 0, "disc": 50.0, "fee": 12.0, "margin": 20.0})
     with cb:
         if st.button("－ 행 삭제", use_container_width=True):
             if len(st.session_state.mc_rows) > 1:
