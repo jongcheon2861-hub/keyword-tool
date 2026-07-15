@@ -468,7 +468,7 @@ def render_margin_calculator():
                                           label_visibility="collapsed")
         qty_v = row.get("qty", 1) or 1
         supply_v = (row["supply"] or 0) * qty_v
-        ship_v = (row["ship"] or 0) * qty_v
+        ship_v = (row["ship"] or 0)
         disc_v = row["disc"] or 0
         fee_v = row["fee"] or 0
         margin_v = row["margin"] or 0
