@@ -436,9 +436,17 @@ def render_margin_calculator():
 
     COLS = [2.0, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
 
+    h = st.columns(COLS, gap="small")
+    heads = ["옵션명", "공급가", "택배비", "할인율%", "수수료%", "마진율%",
+             "판매가", "마진액", "쿠폰할인", "정상가", "적용할인%"]
+    for col, name in zip(h, heads):
+        col.markdown(f"<div style='font-size:12px;font-weight:700;color:#0d47a1;"
+                     f"text-align:center;'>{name}</div>", unsafe_allow_html=True)
+
     results = []
     for i, row in enumerate(st.session_state.mc_rows):
         c = st.columns(COLS, gap="small")
+
 
         row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
                                      label_visibility="collapsed", placeholder="옵션")
