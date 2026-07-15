@@ -23,7 +23,7 @@ MAX_KEYWORDS = 20
 MIN_VOL = 10
 TOP_N = 50
 
-SHEET_HEADERS = ["노출상품명", "등록상품명", "옵션명", "공급가", "택배비",
+SHEET_HEADERS = ["노출상품명", "등록상품명", "옵션명", "수량", "공급가", "택배비",
                  "할인율", "수수료", "마진율", "판매가", "마진액",
                  "쿠폰할인", "정상가", "태그"]
 
@@ -653,7 +653,7 @@ def render_product_guide():
     sheet_rows = []
     for r in mc_sent:
         sheet_rows.append([
-            mc_product, mc_mgmt, r.get("opt", ""),
+            mc_product, mc_mgmt, r.get("opt", ""), r.get("qty", 1),
             r.get("supply", 0), r.get("ship", 0), r.get("disc", 0),
             r.get("fee", 0), r.get("margin_rate", 0),
             r.get("final", 0), r.get("margin", 0),
@@ -745,7 +745,7 @@ def render_product_guide():
 <div class="sec">구글시트 표 (보관용)</div>
 <div style="overflow-x:auto;">
   <table class="opt-table" id="sheetTable" style="table-layout:auto;"><thead><tr>
-    <th>노출상품명</th><th>등록상품명</th><th>옵션명</th><th>공급가</th><th>택배비</th>
+    <th>노출상품명</th><th>등록상품명</th><th>옵션명</th><th>수량</th><th>공급가</th><th>택배비</th>
     <th>할인율</th><th>수수료</th><th>마진율</th><th>판매가</th><th>마진액</th>
     <th>쿠폰할인</th><th>정상가</th><th>태그</th>
   </tr></thead><tbody id="sheetBody"></tbody></table>
@@ -903,7 +903,7 @@ def render_product_guide():
   (function(){
     const tb = document.getElementById("sheetBody");
     if(!SHEET_ROWS || !SHEET_ROWS.length){
-      tb.innerHTML = '<tr><td colspan="13" class="empty-msg">마진계산기에서 넘기면 표시됩니다.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="14" class="empty-msg">마진계산기에서 넘기면 표시됩니다.</td></tr>';
       return;
     }
     SHEET_ROWS.forEach(r=>{
