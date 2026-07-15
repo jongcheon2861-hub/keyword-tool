@@ -434,10 +434,12 @@ def render_margin_calculator():
 
     fixed = st.session_state.mc_fixed_coupon
 
+    COLS = [2.0, 1.3, 1.2, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3, 1.3, 1.1]
 
     results = []
     for i, row in enumerate(st.session_state.mc_rows):
         c = st.columns(COLS, gap="small")
+
         row["opt"] = c[0].text_input("옵션명", value=row["opt"], key=f"mc_opt_{i}",
                                      label_visibility="collapsed", placeholder="옵션")
         row["supply"] = c[1].number_input("공급가", value=int(row["supply"] or 0),
