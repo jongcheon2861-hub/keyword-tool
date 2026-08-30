@@ -210,4 +210,4 @@ MARGIN_CALC_HTML = """
 </html>
 """
 
-components.html(MARGIN_CALC_HTML, height=800, scrolling=True)
+components.html(MARGIN_CALC_HTML, height=850, scrolling=True)
