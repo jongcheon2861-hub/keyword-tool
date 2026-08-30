@@ -8,8 +8,35 @@ st.set_page_config(
     page_title="쿠팡 셀러 도구",
     page_icon="favicon.png",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
+
+st.markdown("""
+<style>
+/* 모바일에서 사이드바 여는 화살표 버튼 크고 잘 보이게 */
+[data-testid="collapsedControl"] {
+    background: #00a86b !important;
+    border-radius: 8px !important;
+    padding: 6px !important;
+    top: 12px !important;
+    left: 12px !important;
+    z-index: 999999 !important;
+}
+[data-testid="collapsedControl"] svg {
+    width: 32px !important;
+    height: 32px !important;
+    color: #fff !important;
+}
+/* 모바일에서 사이드바가 화면을 다 덮지 않게 폭 제한 */
+@media (max-width: 640px) {
+    section[data-testid="stSidebar"] {
+        min-width: 75vw !important;
+        max-width: 85vw !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # ---------- 시크릿 ----------
 API_KEY = st.secrets["API_KEY"]
