@@ -13,12 +13,23 @@ MARGIN_CALC_HTML = """
 <meta charset="UTF-8">
 <style>
   * { box-sizing: border-box; }
-  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; -webkit-text-size-adjust: 100%; }
   h1 { font-size: 22px; text-align: center; color: #1a73e8; margin: 0 0 8px; }
   .desc { text-align: center; font-size: 13px; color: #777; margin-bottom: 20px; }
-  .table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 16px; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 16px; }
+  table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 13px; }
   th, td { border: 1px solid #e3e8ef; padding: 6px 6px; text-align: center; white-space: nowrap; }
+
+  @media (max-width: 640px) {
+    body { padding: 10px; }
+    h1 { font-size: 18px; }
+    .desc { font-size: 12px; margin-bottom: 12px; }
+    .table-wrap { padding: 8px; }
+    table { font-size: 12px; }
+    th, td { padding: 4px 4px; }
+    input, select { font-size: 12px !important; padding: 5px 4px !important; }
+  }
+
   thead th { background: #1a73e8; color: #fff; font-weight: 600; position: sticky; top: 0; }
   tbody tr:nth-child(even) { background: #f9fbff; }
   input, select { width: 100%; padding: 7px 6px; font-size: 13px; border: 1px solid #d5dae1; border-radius: 6px; outline: none; text-align: right; }
