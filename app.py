@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="쿠팡 셀러 도구",
     page_icon="favicon.png",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 st.markdown("""
